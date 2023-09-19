@@ -1,0 +1,15 @@
+[package]
+name = "rust_sorts"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "rust_sorts"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.19.0"
+rand = "0.8.5"
+introsort = { version = "0.6.0", features = [ "float" ] }
+pdqsort = "1.0.3"
