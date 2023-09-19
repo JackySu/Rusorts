@@ -9,6 +9,7 @@ name = "rust_sorts"
 crate-type = ["cdylib"]
 
 [dependencies]
+cpython = "0.7.1"
 pyo3 = "0.19.0"
 rand = "0.8.5"
 introsort = { version = "0.6.0", features = [ "float" ] }
