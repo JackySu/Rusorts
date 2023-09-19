@@ -85,6 +85,6 @@ In my personal test with C w and w/o SSE intrinsics (Modified from concurrent pr
 > 
 >  - 909853 microseconds, 3269327112 cycles
 
-I re-exported it to python as stated above and get the approximate same results.
+I re-exported it to python as stated above and get approximately(?) the same results.
 
 <img src="https://github.com/JackySu/Rusorts/blob/master/sorts.png"></img>
