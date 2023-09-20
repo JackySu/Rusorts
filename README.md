@@ -28,12 +28,12 @@ TODO:
 
 - install Maturin, enter virtual env and build release version of sorting package
 
-```
+```shell
 pip install maturin
 python3 -m venv .venv
 source .venv/bin/activate
 pip install .
-maturin develop --release
+maturin develop --release (-b cffi if cffi is used)
 ```
 
 - `cd rust_sorts && python3 sorts.py`
