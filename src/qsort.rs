@@ -158,37 +158,51 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Copy>(arr: &mut [T]) {
 		let (mut i, mut j, mut k, mut l) = (left + 2, left + 2, right - 1, right - 1);
 		let (p1, p2, p3) = (*p1, *p2, *p3);
 		while j <= k {
+			// j moves right until arr[j] >= p2
 			while arr[j] < p2 {
+				// arr[<i] -> elements that are less than p1, arr[i] is not less than p1
 				if arr[j] < p1 {
 					arr.swap(i, j);
 					i += 1;
 				}
 				j += 1;
 			}
+			// k moves left until arr[k] <= p2
 			while arr[k] > p2 {
+				// arr[>l] -> elements that are greater than p3, arr[l] is not greater than p3
 				if arr[k] > p3 {
 					arr.swap(k, l);
 					l -= 1;
 				}
 				k -= 1;
 			}
+			// if j is still less than k
 			if j <= k {
 				if arr[j] > p3 {
 					if arr[k] < p1 {
+						// if arr[j] > p3 and arr[k] < p1, 
+						// rotate arr[j] to k and arr[k] to i because arr[<i] < p1
 						rotate3(arr, j, i, k);
 						i += 1;
 					} else {
+						// if arr[j] > p3 and arr[k] >= p1,
+						// simply swap arr[j] and arr[k]
 						arr.swap(j, k);
 					}
+					// at this moment arr[k] must be greater than p3
+					// swap it with arr[l] to move it to the right
 					arr.swap(k, l);
 					l -= 1;
 				} else { 
+					// if arr[j] <= p3, we do the same logic as above
 					if arr[k] < p1 {
 						rotate3(arr, j, i, k);
 						i += 1;
 					} else {
 						arr.swap(j, k);
 					}
+					// at this moment arr[j] must be less than or equal p1
+					// arr[k] must be less than or equal p3
 				}
 				j += 1;
 				k -= 1;
@@ -199,7 +213,8 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Copy>(arr: &mut [T]) {
 		j -= 1;
 		k += 1;
 		l += 1;
-
+		// at this point arr[<=i] < p1, arr[i..=j] >= p1 and <= p2, arr[k..=l] >= p2 and <= p3, arr[>=l] > p3 (j == k)
+		// move p2 from arr[left + 1] to vacant position arr[j] (in the middle) 
 		rotate3(arr, left + 1, i, j);
 		// arr.swap(left + 1, i);
 		// arr.swap(i, j);
