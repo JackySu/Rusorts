@@ -14,7 +14,8 @@ use qsort::{quick_sort, double_pivot_quicksort, triple_pivot_quicksort};
 #[no_mangle]
 pub unsafe extern "C" fn f32_std_sort(v: *mut f32, size: usize) {
 	let v = unsafe { std::slice::from_raw_parts_mut(v, size) };
-	v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+	let v: &mut [FloatOrd] = std::mem::transmute(v);
+	v.sort();
 }
 
 #[no_mangle]

@@ -8,7 +8,6 @@ import rust_sorts
 RUNS = 1
 TIME_STATS = []
 TIME_STATS_N = [
-    100,
     1_000,
     10_000,
     100_000,

@@ -6,6 +6,19 @@ const RELEASE_INSERTION_SORT_THRESHOLD: usize = 27;
 const QUICKSORT_STACK_SIZE: usize = 64;
 
 
+fn rotate3<T: Copy>(arr: &mut [T], a: usize, b: usize, c: usize) {
+	unsafe {
+		let pa: *mut T = arr.get_unchecked_mut(a);
+		let pb: *mut T = arr.get_unchecked_mut(b);
+		let pc: *mut T = arr.get_unchecked_mut(c);
+		let tmp = *pa;
+		*pa = *pb;
+		*pb = *pc;
+		*pc = tmp;
+	}
+}
+
+
 pub fn quick_sort<T: PartialOrd>(arr: &mut [T]) {
 	#[cfg(debug_assertions)]
 	if arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
@@ -115,8 +128,6 @@ pub fn double_pivot_quicksort<T: PartialOrd>(arr: &mut [T]) {
 }
 
 pub fn triple_pivot_quicksort<T: PartialOrd + Copy>(arr: &mut [T]) {
-	let (left, right) = (0, arr.len() - 1);
-	
 	#[cfg(debug_assertions)]
 	if arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
 		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -127,123 +138,87 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Copy>(arr: &mut [T]) {
 		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
 	}
 
+	let (left, right) = (0, arr.len() - 1);
+	
 	unsafe {
-
-		let mut mid = (left + right) / 2;
-		let pivot1: *mut T = &mut arr[mid - 1];
-		let pivot2: *mut T = &mut arr[mid];
-		let pivot3: *mut T = &mut arr[right];
-
-		if *pivot1 > *pivot2 { arr.swap(mid - 1, mid); }
-		if *pivot1 > *pivot3 { arr.swap(mid - 1, right); }
-		if *pivot2 > *pivot3 { arr.swap(mid, right); }
-
-		let pivot1_val = *pivot1.clone();
-		let pivot2_val = *pivot2.clone();
-		let pivot3_val = *pivot3.clone();
-		
-		// partition indexes
-
-		// |            left part          | mid |          right part          |
-		// | partition 0 | ... | partition 1 | partition 2 | ... | partition 3 |
-
-		// TODO: optimize the following code (turn them into loops or function calls)
-		// ==========================================================================
-		// put left part elements less than pivot1 into partition 0
-		let mut pivot1_index = left;
-		for i in left..mid - 1 {
-			if arr[i] <= pivot1_val {
-				arr.swap(i, pivot1_index);
-				pivot1_index += 1;
-			}
+		let p1: *mut T = &mut arr[left];
+		let p2: *mut T = &mut arr[left + 1];
+		let p3: *mut T = &mut arr[right];
+	
+		if *p1 > *p2 {
+			arr.swap(left, left + 1);
 		}
-		arr.swap(pivot1_index, mid - 1);
-
-		// put right part elements greater than pivot3 on the rightmost side
-		arr.swap(mid + 1, right);
-		let mut pivot3_index = right;
-		for i in (mid + 2..=right).rev() {
-			if arr[i] >= pivot3_val {
-				arr.swap(i, pivot3_index);
-				pivot3_index -= 1;
-			}
+		if *p2 > *p3 {
+			arr.swap(left + 1, right);
 		}
-		arr.swap(pivot3_index, mid + 1);
-		// ==========================================================================
-		
-		let mut pivot2_index = mid;
-		if pivot1_index + 2 < pivot3_index {
-			arr.swap(pivot3_index - 1, mid);
-
-			let mut l = pivot1_index + 1;
-			for k in pivot1_index + 1..pivot3_index - 1 {
-				if arr[k] <= pivot2_val {
-					arr.swap(l, k);
-					l += 1;
-				}
-			}
-			arr.swap(l, pivot3_index - 1);
-			pivot2_index = l;
+		if *p1 > *p2 {
+			arr.swap(left, left + 1);
 		}
 
-		// new mid as pivot2_index
-		mid = pivot2_index;
-
-		// partition arr[left..mid] and arr[mid + 1..right]
-		// if mid == 0, then arr[left..mid] is empty
-		// if mid == right - 1, then arr[mid + 1..right] is empty
-
-		// partition arr[left..pivot2_index]
-		// move pivot1 to the end of | partition 0 | ... | partition 1 |
-		
-		// DO NOT remove equal sign, otherwise it will cause error
-		if pivot2_index >= left {
-			arr.swap(mid - 1, pivot1_index);
-
-			let mut i = left;
-			for j in left..mid - 1 {
-				if arr[j] <= pivot1_val {
+		let (mut i, mut j, mut k, mut l) = (left + 2, left + 2, right - 1, right - 1);
+		let (p1, p2, p3) = (*p1, *p2, *p3);
+		while j <= k {
+			while arr[j] < p2 {
+				if arr[j] < p1 {
 					arr.swap(i, j);
 					i += 1;
 				}
+				j += 1;
 			}
-			arr.swap(i, mid - 1);
-			pivot1_index = i;
-		}
-		// partition arr[pivot2_index + 1..right]
-
-		// move pivot3 to the end of | partition 2 | ... | partition 3 |
-		// DO NOT remove equal sign, otherwise it will cause error
-		if pivot3_index <= right {
-			arr.swap(right, pivot3_index);
-
-			let mut i = mid + 1;
-			for j in mid + 1..right {
-				if arr[j] <= pivot3_val {	
-					arr.swap(i, j);
-					i += 1;
+			while arr[k] > p2 {
+				if arr[k] > p3 {
+					arr.swap(k, l);
+					l -= 1;
 				}
+				k -= 1;
 			}
-			arr.swap(i, right);
-			pivot3_index = i;
+			if j <= k {
+				if arr[j] > p3 {
+					if arr[k] < p1 {
+						rotate3(arr, j, i, k);
+						i += 1;
+					} else {
+						arr.swap(j, k);
+					}
+					arr.swap(k, l);
+					l -= 1;
+				} else { 
+					if arr[k] < p1 {
+						rotate3(arr, j, i, k);
+						i += 1;
+					} else {
+						arr.swap(j, k);
+					}
+				}
+				j += 1;
+				k -= 1;
+			}
 		}
+		
+		i -= 1;
+		j -= 1;
+		k += 1;
+		l += 1;
 
-		// all the followings have to be xx + C < yy, C = 1, C > 1 will cause error 
-		if pivot1_index > left + 1 {
-			triple_pivot_quicksort(&mut arr[left..pivot1_index]);
+		rotate3(arr, left + 1, i, j);
+		// arr.swap(left + 1, i);
+		// arr.swap(i, j);
+
+		i -= 1;
+
+		arr.swap(left, i);
+		arr.swap(right, l);
+		if left + 1 < i {
+			triple_pivot_quicksort(&mut arr[left..i]);
 		}
-
-		if pivot1_index + 1 < pivot2_index {
-			triple_pivot_quicksort(&mut arr[pivot1_index + 1..pivot2_index]);
+		if i + 1 < j {
+			triple_pivot_quicksort(&mut arr[i + 1..j]);
 		}
-
-		if pivot2_index + 1 < pivot3_index {
-			triple_pivot_quicksort(&mut arr[pivot2_index + 1..pivot3_index]);
+		if j + 1 < l {
+			triple_pivot_quicksort(&mut arr[j + 1..l]);
 		}
-
-		if pivot3_index + 1 < right {
-			triple_pivot_quicksort(&mut arr[pivot3_index + 1..=right]);
+		if l + 1 < right {
+			triple_pivot_quicksort(&mut arr[l + 1..=right]);
 		}
-
 	}
 }
