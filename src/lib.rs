@@ -8,7 +8,7 @@ pub mod qsort;
 pub mod ty;
 
 use ty::FloatOrd;
-use qsort::{quick_sort, double_pivot_quicksort, triple_pivot_quicksort};
+use qsort::*;
 
 
 #[no_mangle]
@@ -39,9 +39,15 @@ pub unsafe extern "C" fn f32_unstable_sort(v: *mut f32, size: usize) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn f32_quicksort(v: *mut f32, size: usize) {
+pub unsafe extern "C" fn f32_quicksort_hoare(v: *mut f32, size: usize) {
 	let v = std::slice::from_raw_parts_mut(v, size);
-	quick_sort(v);
+	quick_sort_hoare_partition(v);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn f32_quicksort_lomuto(v: *mut f32, size: usize) {
+	let v = std::slice::from_raw_parts_mut(v, size);
+	quick_sort_lomuto_partition(v);
 }
 
 #[no_mangle]

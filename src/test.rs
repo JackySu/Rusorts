@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test {
 
-    use crate::util::{default_vec, is_sorted, time_it};
+    use crate::util::*;
     use crate::qsort::*;
     use crate::ty::FloatOrd;
 
@@ -91,19 +91,21 @@ mod test {
         let arr: Vec<f32> = default_vec(1_000);
 
 		let mut copy = arr.clone();
-        // copy.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let dur = time_it(|| quick_sort(&mut copy));
+        let dur = time_it(|| quick_sort_hoare_partition(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-		println!("quick sort 1-pivot already sorted array cost: {:?}ns", dur);
+		println!("quick sort 1-pivot (hoare partition) already sorted array cost: {:?}ns", dur);
+
+        let mut copy = arr.clone();
+        let dur = time_it(|| quick_sort_lomuto_partition(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+		println!("quick sort 1-pivot (lomuto_partition) already sorted array cost: {:?}ns", dur);
         
         let mut copy = arr.clone();
-        // copy.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let dur = time_it(|| double_pivot_quicksort(&mut copy));
         assert_eq!(is_sorted(&copy), true);
 		println!("quick sort 2-pivot already sorted array cost: {:?}ns", dur);
         
 		let mut copy = arr.clone();
-		// copy.sort_by(|a, b| a.partial_cmp(b).unwrap());
 		let dur = time_it(|| triple_pivot_quicksort(&mut copy));
 
 		assert_eq!(is_sorted(&copy), true);
@@ -119,8 +121,13 @@ mod test {
         assert_eq!(is_sorted(&copy), true);
 
 		let mut copy = arr.clone();
-        let dur = time_it(|| quick_sort(&mut copy));
-        println!("quick sort 1-pivot 10m array cost: {:?}ns", dur);
+        let dur = time_it(|| quick_sort_hoare_partition(&mut copy));
+        println!("quick sort 1-pivot (hoare partition) 10m array cost: {:?}ns", dur);
+        assert_eq!(is_sorted(&copy), true);
+
+        let mut copy = arr.clone();
+        let dur = time_it(|| quick_sort_lomuto_partition(&mut copy));
+        println!("quick sort 1-pivot (lomuto_partition) 10m array cost: {:?}ns", dur);
         assert_eq!(is_sorted(&copy), true);
 
 		let mut copy = arr.clone();

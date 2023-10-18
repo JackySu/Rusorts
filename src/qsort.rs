@@ -6,20 +6,18 @@ const RELEASE_INSERTION_SORT_THRESHOLD: usize = 27;
 const QUICKSORT_STACK_SIZE: usize = 64;
 
 
-fn rotate3<T: Copy>(arr: &mut [T], a: usize, b: usize, c: usize) {
-	unsafe {
-		let pa: *mut T = arr.get_unchecked_mut(a);
-		let pb: *mut T = arr.get_unchecked_mut(b);
-		let pc: *mut T = arr.get_unchecked_mut(c);
-		let tmp = *pa;
-		*pa = *pb;
-		*pb = *pc;
-		*pc = tmp;
-	}
+#[inline(always)]
+unsafe fn rotate3<T: Copy>(arr: &mut [T], a: usize, b: usize, c: usize) {
+	let pa: *mut T = arr.get_unchecked_mut(a);
+	let pb: *mut T = arr.get_unchecked_mut(b);
+	let pc: *mut T = arr.get_unchecked_mut(c);
+	let tmp = *pa;
+	*pa = *pb;
+	*pb = *pc;
+	*pc = tmp;
 }
 
-
-pub fn quick_sort<T: PartialOrd>(arr: &mut [T]) {
+pub fn quick_sort_lomuto_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
 	#[cfg(debug_assertions)]
 	if arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
 		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -30,32 +28,69 @@ pub fn quick_sort<T: PartialOrd>(arr: &mut [T]) {
 		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
 	}
 
-	let pivot = arr.len() - 1;
-
-	// partition
-	let mut i = 0;
-	for j in 0..pivot {
-		if arr[j] <= arr[pivot] {
+	let (left, right) = (0, arr.len() - 1);
+	let pivot = arr[right];
+	let mut i = left;
+	for j in left..right {
+		if arr[j] <= pivot {
 			arr.swap(i, j);
 			i += 1;
 		}
 	}
-	arr.swap(i, pivot);
+	arr.swap(i, right);
 	// if left part has more than 1 element
 	if i > 1 {
-		quick_sort(&mut arr[..=i - 1]);
+		quick_sort_lomuto_partition(&mut arr[..=i - 1]);
 	}
 	// if right part has more than 1 element
 	if i + 2 < arr.len() {
-		quick_sort(&mut arr[i + 1..]);
+		quick_sort_lomuto_partition(&mut arr[i + 1..]);
+	}
+}
+
+pub fn quick_sort_hoare_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
+	#[cfg(debug_assertions)]
+	if arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
+		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
 	}
 
+	#[cfg(not(debug_assertions))]
+	if arr.len() < RELEASE_INSERTION_SORT_THRESHOLD {
+		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
+	}
+
+	let pivot = arr[0];
+	let mut i = -1;
+	let mut j = arr.len() as i32;
+	loop {
+		i += 1;
+		while arr[i as usize] < pivot {
+			i += 1;
+		}
+
+		j -= 1;
+		while arr[j as usize] > pivot {
+			j -= 1;
+		}
+
+		if i >= j {
+			break;
+		}
+		arr.swap(i as usize, j as usize);
+	}
+
+	if j > 1 {
+		quick_sort_lomuto_partition(&mut arr[..=j as usize]);
+	}
+	if j + 2 < arr.len() as i32 {
+		quick_sort_hoare_partition(&mut arr[(j + 1) as usize..]);
+	}
 }
 
 // In respect to 
 // - https://github.com/veddan/rust-introsort/blob/master/src/sort.rs
 // - https://github.com/rosacris/rust-doublepivot-quicksort/blob/master/src/lib.rs
-pub fn double_pivot_quicksort<T: PartialOrd>(arr: &mut [T]) {
+pub fn double_pivot_quicksort<T: PartialOrd + Clone>(arr: &mut [T]) {
 	let (left, right) = (0, arr.len() - 1);
 
 	#[cfg(debug_assertions)]
@@ -127,7 +162,7 @@ pub fn double_pivot_quicksort<T: PartialOrd>(arr: &mut [T]) {
 	}
 }
 
-pub fn triple_pivot_quicksort<T: PartialOrd + Copy>(arr: &mut [T]) {
+pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 	#[cfg(debug_assertions)]
 	if arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
 		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());

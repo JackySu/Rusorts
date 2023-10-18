@@ -18,7 +18,8 @@ SORT_FUNCS = {
     "Std sort": rust_sorts.lib.f32_std_sort,
     "Introsort": rust_sorts.lib.f32_introsort,
     "PDQSort": rust_sorts.lib.f32_pdqsort,
-    "Quicksort": rust_sorts.lib.f32_quicksort,
+    "Quicksort hoare partition": rust_sorts.lib.f32_quicksort_hoare,
+    "Quicksort lomuto partition": rust_sorts.lib.f32_quicksort_lomuto,
     "Double Pivot Quicksort": rust_sorts.lib.f32_double_pivot_quicksort,
     "Triple Pivot Quicksort": rust_sorts.lib.f32_triple_pivot_quicksort,
 }

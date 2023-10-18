@@ -6,6 +6,7 @@ use rand::distributions::Standard;
 use rand::prelude::Distribution;
 
 #[derive(PartialEq, PartialOrd, Debug, Clone, Copy)]
+#[repr(transparent)]  // guarantees same layout as a single f32
 pub struct FloatOrd(f32);
 
 impl Deref for FloatOrd {
