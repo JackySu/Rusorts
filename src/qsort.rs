@@ -1,10 +1,27 @@
 // #![allow(dead_code)]
 #![allow(unused)]
 
+use std::{fmt::Debug, mem::swap};
+use std::simd::{cmp::SimdPartialOrd, *};
+
 const DEBUG_INSERTION_SORT_THRESHOLD: usize = 5;
 const RELEASE_INSERTION_SORT_THRESHOLD: usize = 27;
 const QUICKSORT_STACK_SIZE: usize = 64;
 
+macro_rules! conditional_sort {
+    (debug, $arr: expr) => {
+        #[cfg(debug_assertions)]
+        if $arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
+            return $arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        }
+    };
+    (release, $arr: expr) => {
+        #[cfg(not(debug_assertions))]
+        if $arr.len() < RELEASE_INSERTION_SORT_THRESHOLD {
+            return $arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        }
+    };
+}
 
 #[inline(always)]
 unsafe fn rotate3<T: Copy>(arr: &mut [T], a: usize, b: usize, c: usize) {
@@ -18,15 +35,8 @@ unsafe fn rotate3<T: Copy>(arr: &mut [T], a: usize, b: usize, c: usize) {
 }
 
 pub fn quick_sort_lomuto_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
-	#[cfg(debug_assertions)]
-	if arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
-		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
-	}
-
-	#[cfg(not(debug_assertions))]
-	if arr.len() < RELEASE_INSERTION_SORT_THRESHOLD {
-		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
-	}
+    conditional_sort!(debug, arr);
+    conditional_sort!(release, arr);
 
 	let (left, right) = (0, arr.len() - 1);
 	let pivot = arr[right];
@@ -49,15 +59,8 @@ pub fn quick_sort_lomuto_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
 }
 
 pub fn quick_sort_hoare_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
-	#[cfg(debug_assertions)]
-	if arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
-		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
-	}
-
-	#[cfg(not(debug_assertions))]
-	if arr.len() < RELEASE_INSERTION_SORT_THRESHOLD {
-		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
-	}
+    conditional_sort!(debug, arr);
+    conditional_sort!(release, arr);
 
 	let pivot = arr[0];
 	let mut i = -1;
@@ -91,17 +94,9 @@ pub fn quick_sort_hoare_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
 // - https://github.com/veddan/rust-introsort/blob/master/src/sort.rs
 // - https://github.com/rosacris/rust-doublepivot-quicksort/blob/master/src/lib.rs
 pub fn double_pivot_quicksort<T: PartialOrd + Clone>(arr: &mut [T]) {
+    conditional_sort!(debug, arr);
+    conditional_sort!(release, arr);
 	let (left, right) = (0, arr.len() - 1);
-
-	#[cfg(debug_assertions)]
-	if arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
-		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
-	}
-
-	#[cfg(not(debug_assertions))]
-	if arr.len() < RELEASE_INSERTION_SORT_THRESHOLD {
-		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
-	}
 
 	unsafe {
 		// pivots
@@ -163,15 +158,8 @@ pub fn double_pivot_quicksort<T: PartialOrd + Clone>(arr: &mut [T]) {
 }
 
 pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
-	#[cfg(debug_assertions)]
-	if arr.len() < DEBUG_INSERTION_SORT_THRESHOLD {
-		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
-	}
-
-	#[cfg(not(debug_assertions))]
-	if arr.len() < RELEASE_INSERTION_SORT_THRESHOLD {
-		return arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
-	}
+    conditional_sort!(debug, arr);
+    conditional_sort!(release, arr);
 
 	let (left, right) = (0, arr.len() - 1);
 	
@@ -271,4 +259,195 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 			triple_pivot_quicksort(&mut arr[l + 1..=right]);
 		}
 	}
+}
+
+#[inline]
+pub unsafe fn sort_ptrs<T: PartialOrd + Copy>(ptrs: &[*mut T]) {
+	// better not use this for pivots < 4
+	let mut data = ptrs.iter().map(|&p| *p).collect::<Vec<T>>();
+	data.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+	for (i, p) in ptrs.iter().zip(data.iter()) {
+		**i = *p;
+	}
+}
+
+use once_cell::unsync::Lazy;
+static mut ARENA: Lazy<Vec<Vec<f32>>> = Lazy::new(||
+    vec![Vec::with_capacity(100_000_000); 10]
+);
+
+
+#[inline]
+fn thread_local_arena_reset() {
+    unsafe {
+        ARENA.iter_mut().for_each(|bucket| bucket.clear());
+    }
+}
+
+#[inline]
+fn thread_local_arena_push(i: usize, n: f32) {
+    unsafe {
+        ARENA[i].push(n);
+    };
+}
+
+#[inline]
+fn thread_local_arena_clear_lane(i: usize) {
+    unsafe {
+        ARENA[i].clear();
+    }
+}
+
+pub fn quadro_pivot_quicksort(arr: &mut [f32]) {
+	conditional_sort!(debug, arr);
+    conditional_sort!(release, arr);
+    let n = arr.len();
+    if n < 27 {
+        arr.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        return;
+    }
+    let mut pivots = [
+        arr[arr.len() / 4].clone() as f32,
+        arr[arr.len() / 2].clone(),
+        arr[arr.len() * 3 / 4].clone(),
+        arr[arr.len() - 1].clone(),
+    ];
+    pivots.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+    let pivot_vec = f32x4::from_array(pivots);
+    // compare with array elements, put elements less than pivot0 into the first bucket of arena, put elements less than pivot1 into the second bucket of arena, and so on
+    let mut bucket_sizes = [0; 5];
+    // the size of arr is guaranteed to be a multiple of 8
+    
+    unsafe {
+    thread_local_arena_reset();
+    for &mut x in arr.into_iter() {
+        // don't worry, the slice is always aligned to 16 bytes, won't be performance penalty
+        let x_vec = f32x4::splat(x);
+        let mask = x_vec.simd_ge(pivot_vec);
+        let mask = mask.to_bitmask() as usize;
+        match mask {
+            0b0000 => {
+                thread_local_arena_push(0, x);
+                bucket_sizes[0] += 1;
+            }
+            0b0001 => {
+                thread_local_arena_push(1, x);
+                bucket_sizes[1] += 1;
+            }
+            0b0011 => {
+                thread_local_arena_push(2, x);
+                bucket_sizes[2] += 1;
+            }
+            0b0111 => {
+                thread_local_arena_push(3, x);
+                bucket_sizes[3] += 1;
+            }
+            0b1111 => {
+                thread_local_arena_push(4, x);
+                bucket_sizes[4] += 1;
+            }
+            _ => unreachable!(),
+        }
+        // let mask = mask.to_bitmask() as usize;
+
+        // let bucket = unsafe { arena.assume_init_mut().get_unchecked_mut(mask) };
+        // push elements greater than or equal to pivot0 into the first bucket
+    }
+        // copy elements from buckets to arr
+    
+        // memcpy from buckets back to arr
+        let mut arr_ptr = arr.as_mut_ptr();
+        for bucket in ARENA.iter() {
+            // assert!(arr_ptr.align_offset(16) == 0);
+            let bucket_ptr = bucket.as_ptr();
+            // assert!(bucket_ptr.align_offset(16) == 0);
+            let bucket_len = bucket.len();
+            std::ptr::copy_nonoverlapping(bucket_ptr, arr_ptr, bucket_len);
+            arr_ptr = arr_ptr.add(bucket_len);
+        };
+    }
+
+    quadro_pivot_quicksort(&mut arr[0..bucket_sizes[0]]);
+    quadro_pivot_quicksort(&mut arr[bucket_sizes[0]..bucket_sizes[0] + bucket_sizes[1]]);
+    quadro_pivot_quicksort(&mut arr[bucket_sizes[0] + bucket_sizes[1]..bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2]]);
+    quadro_pivot_quicksort(&mut arr[bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2]..bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2] + bucket_sizes[3]]);
+    quadro_pivot_quicksort(&mut arr[bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2] + bucket_sizes[3]..]);
+    
+}
+
+pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
+    conditional_sort!(debug, arr);
+    conditional_sort!(release, arr);
+    let n = arr.len();
+    
+    let n_pivots = 4;
+    
+    let mut pivots = [
+        arr[arr.len() / 4].clone(),
+        arr[arr.len() / 2].clone(),
+        arr[arr.len() * 3 / 4].clone(),
+        arr[arr.len() - 1].clone(),
+    ];
+    pivots.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    
+    // compare with array elements, put elements less than pivot0 into the first bucket of arena, put elements less than pivot1 into the second bucket of arena, and so on
+    let mut bucket_sizes = [0; 5];
+    // the size of arr is guaranteed to be a multiple of 8 in the first step, but not for the remainings
+    
+    let mut a = arr.to_vec();
+    thread_local_arena_reset();
+    for i in 0..n_pivots {
+        if i > 0 { a = unsafe { ARENA[i].clone() }; }
+        // dbg!(&a.len());
+        thread_local_arena_clear_lane(i);
+        let pivot_vec = f32x8::splat(pivots[i]);
+        let chunks = a.chunks_exact(8);
+        for x in chunks.clone() {
+            let x_vec = f32x8::from_slice(x);
+            let mask = x_vec.simd_le(pivot_vec);
+            let mut mask = mask.to_bitmask() as usize;
+            for j in 0..8 {
+                if mask & 1 == 1 {
+                    thread_local_arena_push(i, x[j]);
+                    bucket_sizes[i] += 1;
+                } else {
+                    thread_local_arena_push(i + 1, x[j]);
+                }
+                mask >>= 1;
+            }
+        }
+        let r = chunks.remainder();
+        for &x in r {
+            if x <= pivots[i] {
+                thread_local_arena_push(i, x);
+                bucket_sizes[i] += 1;
+            } else {
+                thread_local_arena_push(i + 1, x);
+            }
+        }
+        if i < n_pivots - 1 { a.clear(); }
+        // dbg!(&a.len(), bucket_sizes);
+    }
+    bucket_sizes[n_pivots] = unsafe { ARENA[n_pivots].len() };
+    // memcpy from buckets back to arr
+    // dbg!(bucket_sizes);
+    unsafe {
+        let mut arr_ptr = arr.as_mut_ptr();
+        for i in 0..=n_pivots {
+            // assert!(arr_ptr.align_offset(16) == 0);
+            let bucket_ptr = ARENA[i].as_ptr();
+            // assert!(bucket_ptr.align_offset(16) == 0);
+            let bucket_len = bucket_sizes[i];
+            // dbg!(bucket_len);
+            std::ptr::copy_nonoverlapping(bucket_ptr, arr_ptr, bucket_len);
+            arr_ptr = arr_ptr.add(bucket_len);
+        };
+    }
+    // bg!(n, bucket_sizes);
+    quadro_pivot_quicksort_2(&mut arr[0..bucket_sizes[0]]);
+    quadro_pivot_quicksort_2(&mut arr[bucket_sizes[0]..bucket_sizes[0] + bucket_sizes[1]]);
+    quadro_pivot_quicksort_2(&mut arr[bucket_sizes[0] + bucket_sizes[1]..bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2]]);
+    quadro_pivot_quicksort_2(&mut arr[bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2]..bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2] + bucket_sizes[3]]);
+    quadro_pivot_quicksort_2(&mut arr[bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2] + bucket_sizes[3]..]);
 }

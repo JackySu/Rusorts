@@ -1,5 +1,4 @@
 use core::cmp::Ordering;
-use core::cmp::Ord;
 use std::ops::Deref;
 
 use rand::distributions::Standard;

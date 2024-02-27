@@ -1,3 +1,5 @@
+#![feature(portable_simd)]
+
 extern crate rand;
 extern crate introsort;
 extern crate pdqsort;
@@ -6,6 +8,7 @@ pub mod util;
 pub mod test;
 pub mod qsort;
 pub mod ty;
+pub mod macros;
 
 use ty::FloatOrd;
 use qsort::*;

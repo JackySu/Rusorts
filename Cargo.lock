@@ -126,6 +126,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "once_cell"
+version = "1.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
+
+[[package]]
 name = "pdqsort"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -209,15 +215,17 @@ name = "rust_sorts"
 version = "0.1.0"
 dependencies = [
  "introsort",
+ "once_cell",
  "pdqsort",
  "rand 0.8.5",
+ "rustc-serialize",
 ]
 
 [[package]]
 name = "rustc-serialize"
-version = "0.3.24"
+version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcf128d1287d2ea9d80910b5f1120d0b8eede3fbf1abe91c40d39ea7d51e6fda"
+checksum = "fe834bc780604f4674073badbad26d7219cadfb4a2275802db12cbae17498401"
 
 [[package]]
 name = "unreachable"

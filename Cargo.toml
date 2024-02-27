@@ -12,3 +12,5 @@ crate-type = ["cdylib"]
 rand = "0.8.5"
 introsort = { version = "0.6.0", features = [ "float" ] }
 pdqsort = "1.0.3"
+rustc-serialize = "0.3.25"
+once_cell = "1.19"

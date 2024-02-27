@@ -139,5 +139,40 @@ mod test {
 		let dur = time_it(|| triple_pivot_quicksort(&mut copy));
 		println!("quick sort 3-pivot 10m array cost: {:?}ns", dur);
 		assert_eq!(is_sorted(&copy), true);
+
+        let mut copy = arr.clone();
+        // transmute copy from Vec<FloatOrd> to Vec<f32>
+		let dur = time_it(|| quadro_pivot_quicksort(&mut copy));
+		println!("quick sort 4-pivot 10m array cost: {:?}ns", dur);
+		assert_eq!(is_sorted(&copy), true);
+
+        let mut copy = arr.clone();
+		let dur = time_it(|| quadro_pivot_quicksort_2(&mut copy));
+		println!("quick sort 4-pivot 10m array cost: {:?}ns", dur);
+		assert_eq!(is_sorted(&copy), true);
+
+    }
+
+    #[test]
+    fn test_sort_by_ptrs() {
+        let v = vec![5, 7, 1, 3, 2, 4, 6];
+        unsafe {
+            // test with contiguous vector
+            let raw_ptr: *const i32 = v.as_ptr();
+            let len = v.len();
+            let v_ptrs: Vec<*mut i32> = (0..len).map(|i| raw_ptr.add(i) as *mut i32).collect::<Vec<_>>();
+            sort_ptrs(&v_ptrs);
+            assert_eq!(v_ptrs.iter().map(|&x| *x).collect::<Vec<_>>(), vec![1, 2, 3, 4, 5, 6, 7]);
+        }
+    }
+
+    #[test]
+    fn test_4_pivots_qsort() {
+        let arr: Vec<f32> = default_vec(20);
+		let mut copy = [0.0846004486, 0.324027538, 0.247496307, 0.346324563, 0.32713002, 0.524065554, 0.0999410152, 0.448016822, 0.157732904, 0.249729276, 0.360087872, 0.937479197];
+        let dur = time_it(|| quadro_pivot_quicksort(&mut copy));
+        println!("{:#?}", copy);
+        println!("std sort 10m array cost: {:?}ns", dur);
+        assert_eq!(is_sorted(&copy), true);
     }
 }
