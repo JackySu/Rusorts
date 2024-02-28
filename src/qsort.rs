@@ -426,3 +426,83 @@ pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
     quadro_pivot_quicksort_2(&mut arr[bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2]..bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2] + bucket_sizes[3]]);
     quadro_pivot_quicksort_2(&mut arr[bucket_sizes[0] + bucket_sizes[1] + bucket_sizes[2] + bucket_sizes[3]..]);
 }
+
+
+#[macro_export]
+macro_rules! generate_non_4n_pivot_qsort {
+    ($n:expr, $arr_repeat_times:expr, $pivot_repeat_times:expr, $func_name:ident, $data_type:ty, $simd_len:expr, $simd_type:ty) => {
+        pub fn penta_pivot_quicksort(arr: &mut [$data_type], pindex: &[usize]) {
+            conditional_sort!(debug, arr);
+            conditional_sort!(release, arr);
+            let mut pivots = pindex.iter().map(|&i| arr[i]).collect::<Vec<_>>();
+            pivots.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        
+            let mut bucket_sizes = [0; $n + 1];
+        
+            let arr_chunks = arr.chunks_exact($simd_len);
+            thread_local_arena_reset();
+            for chunk in arr_chunks.clone() {
+                let mut result = 0;
+                let arr_repeated = chunk.iter()
+                    .flat_map(|&x| std::iter::repeat(x).take($arr_repeat_times))
+                    .collect::<Vec<f32>>();
+                let arr_chunks = arr_repeated.chunks_exact($simd_len);
+                let filled = pivots.repeat($pivot_repeat_times); // 4 times
+                let pivots_vecs = filled.chunks($simd_len); // 5 chunks each with 4 elements
+                for (i, (arr_chunk, pivots_vec)) in (arr_chunks.zip(pivots_vecs)).enumerate() {
+                    let arr_vec = <$simd_type>::from_slice(arr_chunk);
+                    let mask = arr_vec.simd_le(<$simd_type>::from_slice(pivots_vec));
+                    let mask = mask.to_bitmask() as usize;
+                    result |= mask << (i * $simd_len);
+                }
+                for i in 0..$simd_len {
+                    let mask = 2usize.pow($n) - 1;  // 0b11111
+                    let sub_result = result >> (i * $n) & mask;
+                    if sub_result == 0 {
+                        thread_local_arena_push($n, chunk[i]);
+                        continue;
+                    }
+                    for j in 0..$n {
+                        if sub_result & 1 << j > 0 {
+                            thread_local_arena_push(j, chunk[i]);
+                            break;
+                        }
+                    }
+                }
+            }
+            let r = arr_chunks.remainder();
+            for &x in r {
+                if x > pivots[$n - 1] { // 5 - 1
+                    thread_local_arena_push($n, x);
+                    continue;
+                }
+                for i in 0..$n {
+                    if x <= pivots[i] {
+                        thread_local_arena_push(i, x);
+                        break;
+                    }
+                }
+            }
+            
+            unsafe {
+                let mut arr_ptr = arr.as_mut_ptr();
+                for i in 0..=$n {
+                    let bucket = ARENA.get_unchecked(i);
+                    let bucket_ptr = bucket.as_ptr();
+                    let bucket_len = bucket.len();
+                    bucket_sizes[i] = bucket_len;
+                    std::ptr::copy_nonoverlapping(bucket_ptr, arr_ptr, bucket_len);
+                    arr_ptr = arr_ptr.add(bucket_len);
+                };
+            }
+            $func_name(&mut arr[0..bucket_sizes[0]], pindex);
+            for i in 1..=5 {
+                $func_name(&mut arr[bucket_sizes[..i].iter().sum::<usize>()..bucket_sizes[..i + 1].iter().sum::<usize>()], pindex);
+            }
+        
+        }
+    };
+}
+
+// params: $n, $arr_repeat_times, $pivot_repeat_times, $func_name, $data_type, $simd_len, $simd_type
+generate_non_4n_pivot_qsort!(5, 5, 4, penta_pivot_quicksort, f32, 4, f32x4);
