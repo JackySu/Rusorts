@@ -430,8 +430,8 @@ pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
 
 #[macro_export]
 macro_rules! generate_non_4n_pivot_qsort {
-    ($n:expr, $arr_repeat_times:expr, $pivot_repeat_times:expr, $func_name:ident, $data_type:ty, $simd_len:expr, $simd_type:ty) => {
-        pub fn penta_pivot_quicksort(arr: &mut [$data_type], pindex: &[usize]) {
+    ($n:expr, $pivot_repeat_times:expr, $func_name:ident, $data_type:ty, $simd_len:expr, $simd_type:ty) => {
+        pub fn $func_name(arr: &mut [$data_type], pindex: &[usize]) {
             conditional_sort!(debug, arr);
             conditional_sort!(release, arr);
             let mut pivots = pindex.iter().map(|&i| arr[i]).collect::<Vec<_>>();
@@ -439,12 +439,12 @@ macro_rules! generate_non_4n_pivot_qsort {
         
             let mut bucket_sizes = [0; $n + 1];
         
-            let arr_chunks = arr.chunks_exact($simd_len);
+            let arr_chunks = arr.chunks_exact($pivot_repeat_times);
             thread_local_arena_reset();
             for chunk in arr_chunks.clone() {
                 let mut result = 0;
                 let arr_repeated = chunk.iter()
-                    .flat_map(|&x| std::iter::repeat(x).take($arr_repeat_times))
+                    .flat_map(|&x| std::iter::repeat(x).take($n))
                     .collect::<Vec<f32>>();
                 let arr_chunks = arr_repeated.chunks_exact($simd_len);
                 let filled = pivots.repeat($pivot_repeat_times); // 4 times
@@ -455,7 +455,7 @@ macro_rules! generate_non_4n_pivot_qsort {
                     let mask = mask.to_bitmask() as usize;
                     result |= mask << (i * $simd_len);
                 }
-                for i in 0..$simd_len {
+                for i in 0..$pivot_repeat_times {
                     let mask = 2usize.pow($n) - 1;  // 0b11111
                     let sub_result = result >> (i * $n) & mask;
                     if sub_result == 0 {
@@ -505,4 +505,5 @@ macro_rules! generate_non_4n_pivot_qsort {
 }
 
 // params: $n, $arr_repeat_times, $pivot_repeat_times, $func_name, $data_type, $simd_len, $simd_type
-generate_non_4n_pivot_qsort!(5, 5, 4, penta_pivot_quicksort, f32, 4, f32x4);
+generate_non_4n_pivot_qsort!(5, 4, penta_pivot_quicksort, f32, 4, f32x4);
+generate_non_4n_pivot_qsort!(6, 2, hexa_pivot_quicksort, f32, 4, f32x4);
