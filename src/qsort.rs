@@ -496,7 +496,7 @@ macro_rules! generate_non_4n_pivot_qsort {
                 };
             }
             $func_name(&mut arr[0..bucket_sizes[0]], pindex);
-            for i in 1..=5 {
+            for i in 1..=$n {
                 $func_name(&mut arr[bucket_sizes[..i].iter().sum::<usize>()..bucket_sizes[..i + 1].iter().sum::<usize>()], pindex);
             }
         
@@ -504,6 +504,7 @@ macro_rules! generate_non_4n_pivot_qsort {
     };
 }
 
-// params: $n, $arr_repeat_times, $pivot_repeat_times, $func_name, $data_type, $simd_len, $simd_type
+// params: $n, $pivot_repeat_times, $func_name, $data_type, $simd_len, $simd_type
 generate_non_4n_pivot_qsort!(5, 4, penta_pivot_quicksort, f32, 4, f32x4);
 generate_non_4n_pivot_qsort!(6, 2, hexa_pivot_quicksort, f32, 4, f32x4);
+generate_non_4n_pivot_qsort!(7, 4, hepta_pivot_quicksort, f32, 4, f32x4);
