@@ -148,7 +148,22 @@ mod test {
 
         let mut copy = arr.clone();
 		let dur = time_it(|| quadro_pivot_quicksort_2(&mut copy));
-		println!("quick sort 4-pivot 10m array cost: {:?}ns", dur);
+		println!("quick sort 4-pivot (2nd) 10m array cost: {:?}ns", dur);
+		assert_eq!(is_sorted(&copy), true);
+
+        let mut copy = arr.clone();
+		let dur = time_it(|| penta_pivot_quicksort(&mut copy, &[0, 1, 2, 3, 4]));
+		println!("quick sort 5-pivot 10m array cost: {:?}ns", dur);
+		assert_eq!(is_sorted(&copy), true);
+
+        let mut copy = arr.clone();
+		let dur = time_it(|| hexa_pivot_quicksort(&mut copy, &[0, 1, 2, 3, 4, 5]));
+		println!("quick sort 6-pivot 10m array cost: {:?}ns", dur);
+		assert_eq!(is_sorted(&copy), true);
+
+        let mut copy = arr.clone();
+		let dur = time_it(|| hepta_pivot_quicksort(&mut copy, &[0, 1, 2, 3, 4, 5, 6]));
+		println!("quick sort 7-pivot 10m array cost: {:?}ns", dur);
 		assert_eq!(is_sorted(&copy), true);
 
         let mut copy = arr.clone();

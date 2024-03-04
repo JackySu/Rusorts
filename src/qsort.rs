@@ -298,7 +298,8 @@ fn thread_local_arena_clear_lane(i: usize) {
     }
 }
 
-macro_rules! generate_n_pivot_qsort {
+#[macro_export]
+macro_rules! impl_4n_pivot_qsort {
     ($n:expr, $func_name:ident, $simd_type:ty) => {
         pub fn $func_name(arr: &mut [f32], pindex: &[usize]) {
             conditional_sort!(debug, arr);
@@ -345,11 +346,11 @@ macro_rules! generate_n_pivot_qsort {
                 $func_name(&mut arr[bucket_sizes[..i].iter().sum::<usize>()..bucket_sizes[..i + 1].iter().sum::<usize>()], pindex);
             }
         }
-    };
+    }
 }
 
-generate_n_pivot_qsort!(4, quadro_pivot_quicksort, f32x4);
-generate_n_pivot_qsort!(8, octal_pivot_quicksort, f32x8);
+impl_4n_pivot_qsort!(4, quadro_pivot_quicksort, f32x4);
+impl_4n_pivot_qsort!(8, octal_pivot_quicksort, f32x8);
 
 pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
     conditional_sort!(debug, arr);
@@ -429,7 +430,7 @@ pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
 
 
 #[macro_export]
-macro_rules! generate_non_4n_pivot_qsort {
+macro_rules! impl_non_4n_pivot_qsort {
     ($n:expr, $pivot_repeat_times:expr, $func_name:ident, $data_type:ty, $simd_len:expr, $simd_type:ty) => {
         pub fn $func_name(arr: &mut [$data_type], pindex: &[usize]) {
             conditional_sort!(debug, arr);
@@ -440,16 +441,25 @@ macro_rules! generate_non_4n_pivot_qsort {
             let mut bucket_sizes = [0; $n + 1];
         
             let arr_chunks = arr.chunks_exact($pivot_repeat_times);
+            let r = arr_chunks.remainder().clone();
             thread_local_arena_reset();
-            for chunk in arr_chunks.clone() {
+
+            let filled = pivots.repeat($pivot_repeat_times);
+            let pivots_vecs = filled.chunks($simd_len); // construct pivots_vecs
+            // for n = 5 it looks like
+            // [p0, p1, p2, p3, p4, p0, p1, p2, p3, p4, p0, p1, p2, p3, p4, p0, p1, p2, p3, p4]
+            
+            let mut arr_repeated = [0 as $data_type; $n * $pivot_repeat_times];
+            for chunk in arr_chunks {
                 let mut result = 0;
-                let arr_repeated = chunk.iter()
-                    .flat_map(|&x| std::iter::repeat(x).take($n))
-                    .collect::<Vec<f32>>();
-                let arr_chunks = arr_repeated.chunks_exact($simd_len);
-                let filled = pivots.repeat($pivot_repeat_times); // 4 times
-                let pivots_vecs = filled.chunks($simd_len); // 5 chunks each with 4 elements
-                for (i, (arr_chunk, pivots_vec)) in (arr_chunks.zip(pivots_vecs)).enumerate() {
+                for i in 0..$pivot_repeat_times {
+                    for j in 0..$n {
+                        arr_repeated[i * $n + j] = chunk[i];
+                    }
+                }
+                let elem_chunks = arr_repeated.chunks_exact($simd_len);
+
+                for (i, (arr_chunk, pivots_vec)) in (elem_chunks.zip(pivots_vecs.clone())).enumerate() {
                     let arr_vec = <$simd_type>::from_slice(arr_chunk);
                     let mask = arr_vec.simd_le(<$simd_type>::from_slice(pivots_vec));
                     let mask = mask.to_bitmask() as usize;
@@ -470,7 +480,6 @@ macro_rules! generate_non_4n_pivot_qsort {
                     }
                 }
             }
-            let r = arr_chunks.remainder();
             for &x in r {
                 if x > pivots[$n - 1] { // 5 - 1
                     thread_local_arena_push($n, x);
@@ -499,12 +508,11 @@ macro_rules! generate_non_4n_pivot_qsort {
             for i in 1..=$n {
                 $func_name(&mut arr[bucket_sizes[..i].iter().sum::<usize>()..bucket_sizes[..i + 1].iter().sum::<usize>()], pindex);
             }
-        
         }
     };
 }
 
 // params: $n, $pivot_repeat_times, $func_name, $data_type, $simd_len, $simd_type
-generate_non_4n_pivot_qsort!(5, 4, penta_pivot_quicksort, f32, 4, f32x4);
-generate_non_4n_pivot_qsort!(6, 2, hexa_pivot_quicksort, f32, 4, f32x4);
-generate_non_4n_pivot_qsort!(7, 4, hepta_pivot_quicksort, f32, 4, f32x4);
+impl_non_4n_pivot_qsort!(5, 4, penta_pivot_quicksort, f32, 4, f32x4);
+impl_non_4n_pivot_qsort!(6, 2, hexa_pivot_quicksort, f32, 4, f32x4);
+impl_non_4n_pivot_qsort!(7, 4, hepta_pivot_quicksort, f32, 4, f32x4);
