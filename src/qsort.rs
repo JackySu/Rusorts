@@ -300,17 +300,21 @@ fn thread_local_arena_clear_lane(i: usize) {
 
 #[macro_export]
 macro_rules! impl_4n_pivot_qsort {
-    ($n:expr, $func_name:ident, $simd_type:ty) => {
-        pub fn $func_name(arr: &mut [f32], pindex: &[usize]) {
+    ($n:expr, $func_name:ident, $data_type:ty, $simd_type:ty) => {
+        pub fn $func_name(arr: &mut [$data_type], pindex: [usize; $n]) {
             conditional_sort!(debug, arr);
             conditional_sort!(release, arr);
 
-            let mut pivots = pindex.iter().map(|&i| arr[i]).collect::<Vec<_>>();
+            let mut pivots = [0.0; $n];
+            for (i, &pindex) in pindex.iter().enumerate() {
+                pivots[i] = arr[pindex];
+            }
             pivots.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
             let pivot_vec = <$simd_type>::from_slice(&pivots);
             let mut bucket_sizes = [0; $n + 1];
 
+            // let mut arena: Vec<Vec<$data_type>> = vec![Vec::with_capacity(arr.len()); $n + 1];
             unsafe {
                 thread_local_arena_reset();
                 for &mut x in arr.iter_mut() {
@@ -318,14 +322,16 @@ macro_rules! impl_4n_pivot_qsort {
                     let mask = x_vec.simd_ge(pivot_vec);
                     let mask = mask.to_bitmask() as usize;
                     if mask == 0 {
+                        // arena[0].push(x);
                         thread_local_arena_push(0, x);
-                        bucket_sizes[0] += 1;
+                        // bucket_sizes[0] += 1;
                         continue;
                     }
                     for i in (0..$n).rev() {
                         if mask & (1 << i) > 0 {
+                            // arena[i + 1].push(x);
                             thread_local_arena_push(i + 1, x);
-                            bucket_sizes[i + 1] += 1;
+                            // bucket_sizes[i + 1] += 1;
                             break;
                         }
                     }
@@ -333,9 +339,11 @@ macro_rules! impl_4n_pivot_qsort {
 
                 let mut arr_ptr = arr.as_mut_ptr();
                 for bucket in 0..=$n {
-                    let bucket = ARENA.get_unchecked(bucket);
-                    let bucket_ptr = bucket.as_ptr();
-                    let bucket_len = bucket.len();
+                    let bucket_cur = ARENA.get_unchecked(bucket);
+                    let bucket_ptr = bucket_cur.as_ptr();
+                    let bucket_len = bucket_cur.len();
+                    bucket_sizes[bucket] = bucket_len;
+                    // $func_name(bucket, pindex);
                     std::ptr::copy_nonoverlapping(bucket_ptr, arr_ptr, bucket_len);
                     arr_ptr = arr_ptr.add(bucket_len);
                 };
@@ -349,8 +357,8 @@ macro_rules! impl_4n_pivot_qsort {
     }
 }
 
-impl_4n_pivot_qsort!(4, quadro_pivot_quicksort, f32x4);
-impl_4n_pivot_qsort!(8, octal_pivot_quicksort, f32x8);
+impl_4n_pivot_qsort!(4, quadro_pivot_quicksort, f32, f32x4);
+impl_4n_pivot_qsort!(8, octal_pivot_quicksort, f32, f32x8);
 
 pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
     conditional_sort!(debug, arr);
@@ -432,10 +440,13 @@ pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
 #[macro_export]
 macro_rules! impl_non_4n_pivot_qsort {
     ($n:expr, $pivot_repeat_times:expr, $func_name:ident, $data_type:ty, $simd_len:expr, $simd_type:ty) => {
-        pub fn $func_name(arr: &mut [$data_type], pindex: &[usize]) {
+        pub fn $func_name(arr: &mut [$data_type], pindex: [usize; $n]) {
             conditional_sort!(debug, arr);
             conditional_sort!(release, arr);
-            let mut pivots = pindex.iter().map(|&i| arr[i]).collect::<Vec<_>>();
+            let mut pivots = [0.0; $n];
+            for (i, &pindex) in pindex.iter().enumerate() {
+                pivots[i] = arr[pindex];
+            }
             pivots.sort_by(|a, b| a.partial_cmp(b).unwrap());
         
             let mut bucket_sizes = [0; $n + 1];

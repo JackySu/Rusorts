@@ -1,4 +1,3 @@
-from timeit import timeit
 from typing import Callable
 import copy
 import random
@@ -27,7 +26,7 @@ SORT_FUNCS = {
 
 def time_sort(sort_name: str, sort_func: Callable[[float], None], to_sort: list[float], stats: list[float]) -> None:
     copied = copy.deepcopy(to_sort)
-    time_per_call = timeit(lambda: sort_func(copied, len(copied)), number=RUNS) / RUNS * 1_000_000
+    time_per_call = sum([sort_func(copied, len(copied)) for _ in RUNS]) / RUNS * 1_000_000
     print(f"{sort_name} μs per call: {time_per_call:.2f} μs")
     stats.append(time_per_call)
 
@@ -38,7 +37,7 @@ def run_sorts_with_size(n: int):
     stats: list[float] = []
 
     copied = copy.deepcopy(to_sort)
-    python_time_per_call = timeit(lambda: copied.sort(), number=RUNS) / RUNS * 1_000_000
+    python_time_per_call = sum([sort_func(copied, len(copied)) for _ in RUNS]) / RUNS * 1_000_000
     print(f"Python μs per call: {python_time_per_call:.2f} μs")
 
     for sort_name, sort_func in SORT_FUNCS.items():
