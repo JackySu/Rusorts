@@ -1,5 +1,6 @@
 // enable portable simd feature to use simd in nightly build
 #![feature(portable_simd)]
+#![feature(slice_swap_unchecked)]
 
 extern crate rand;
 extern crate introsort;
@@ -9,7 +10,6 @@ pub mod util;
 pub mod test;
 pub mod qsort;
 pub mod ty;
-pub mod macros;
 
 use ty::FloatOrd;
 use qsort::*;

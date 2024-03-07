@@ -4,10 +4,14 @@
 use std::{fmt::Debug, mem::swap};
 use std::simd::{cmp::SimdPartialOrd, *};
 
+use crate::util::*;
+
 const DEBUG_INSERTION_SORT_THRESHOLD: usize = 9;
 const RELEASE_INSERTION_SORT_THRESHOLD: usize = 27;
 const QUICKSORT_STACK_SIZE: usize = 64;
 
+
+#[macro_export]
 macro_rules! conditional_sort {
     (debug, $arr: expr) => {
         #[cfg(debug_assertions)]
@@ -23,52 +27,31 @@ macro_rules! conditional_sort {
     };
 }
 
-#[inline(always)]
-unsafe fn rotate3<T: Copy>(arr: &mut [T], a: usize, b: usize, c: usize) {
-	let pa: *mut T = arr.get_unchecked_mut(a);
-	let pb: *mut T = arr.get_unchecked_mut(b);
-	let pc: *mut T = arr.get_unchecked_mut(c);
-	let tmp = *pa;
-	*pa = *pb;
-	*pb = *pc;
-	*pc = tmp;
-}
-
-#[inline(always)]
-unsafe fn rotate4<T: Copy>(arr: &mut [T], a: usize, b: usize, c: usize, d: usize) {
-    let pa: *mut T = arr.get_unchecked_mut(a);
-    let pb: *mut T = arr.get_unchecked_mut(b);
-    let pc: *mut T = arr.get_unchecked_mut(c);
-    let pd: *mut T = arr.get_unchecked_mut(d);
-    let tmp = *pa;
-    *pa = *pb;
-    *pb = *pc;
-    *pc = *pd;
-    *pd = tmp;
-}
-
 pub fn quick_sort_lomuto_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
 
-	let (left, right) = (0, arr.len() - 1);
-	let pivot = arr[right];
-	let mut i = left;
-	for j in left..right {
-		if arr[j] <= pivot {
-			arr.swap(i, j);
-			i += 1;
-		}
-	}
-	arr.swap(i, right);
-	// if left part has more than 1 element
-	if i > 1 {
-		quick_sort_lomuto_partition(&mut arr[..=i - 1]);
-	}
-	// if right part has more than 1 element
-	if i + 2 < arr.len() {
-		quick_sort_lomuto_partition(&mut arr[i + 1..]);
-	}
+    unsafe {
+        let (left, right) = (0, arr.len() - 1);
+        let pivot = arr[right];
+        let mut i = left;
+        for j in left..right {
+            if arr[j] <= pivot {
+                arr.swap_unchecked(i, j);
+                i += 1;
+            }
+        }
+        arr.swap_unchecked(i, right);
+
+        // if left part has more than 1 element
+        if i > 1 {
+            quick_sort_lomuto_partition(&mut arr[..=i - 1]);
+        }
+        // if right part has more than 1 element
+        if i + 2 < arr.len() {
+            quick_sort_lomuto_partition(&mut arr[i + 1..]);
+        }
+    }
 }
 
 pub fn quick_sort_hoare_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
@@ -92,11 +75,11 @@ pub fn quick_sort_hoare_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
 		if i >= j {
 			break;
 		}
-		arr.swap(i as usize, j as usize);
+		unsafe { arr.swap_unchecked(i as usize, j as usize); }
 	}
 
 	if j > 1 {
-		quick_sort_lomuto_partition(&mut arr[..=j as usize]);
+		quick_sort_hoare_partition(&mut arr[..=j as usize]);
 	}
 	if j + 2 < arr.len() as i32 {
 		quick_sort_hoare_partition(&mut arr[(j + 1) as usize..]);
@@ -118,7 +101,7 @@ pub fn double_pivot_quicksort<T: PartialOrd + Clone>(arr: &mut [T]) {
 		
 		// swap pivots if p1 > p2
 		if *pivot1 > *pivot2 {
-			arr.swap(left, right);
+			arr.swap_unchecked(left, right);
 		}
 
 		// partition indexes
@@ -129,7 +112,7 @@ pub fn double_pivot_quicksort<T: PartialOrd + Clone>(arr: &mut [T]) {
 		let mut k = less;
 		while k <= greater {
 			if arr[k] <= *pivot1 {
-					arr.swap(k, less);
+					arr.swap_unchecked(k, less);
 					less = less + 1;
 			}
 			else {
@@ -139,13 +122,13 @@ pub fn double_pivot_quicksort<T: PartialOrd + Clone>(arr: &mut [T]) {
 						greater = greater - 1;
 					}
 					// swap it with arr[k]
-					arr.swap(k, greater);
+					arr.swap_unchecked(k, greater);
 					greater = greater - 1;
 
 					// if the swapped element is less than pivot1
 					// then swap it with arr[less]
 					if arr[k] <= *pivot1 {
-						arr.swap(k, less);
+						arr.swap_unchecked(k, less);
 						less = less + 1;
 					}
 				}
@@ -153,8 +136,8 @@ pub fn double_pivot_quicksort<T: PartialOrd + Clone>(arr: &mut [T]) {
 			k = k + 1;
 		}
 		
-		arr.swap(less - 1, left);
-		arr.swap(greater + 1, right);
+		arr.swap_unchecked(less - 1, left);
+		arr.swap_unchecked(greater + 1, right);
 
 		if less > left + 2 {
 			double_pivot_quicksort(&mut arr[left..=less - 2]);
@@ -182,13 +165,13 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 		let p3: *mut T = &mut arr[right];
 	
 		if *p1 > *p2 {
-			arr.swap(left, left + 1);
+			arr.swap_unchecked(left, left + 1);
 		}
 		if *p2 > *p3 {
-			arr.swap(left + 1, right);
+			arr.swap_unchecked(left + 1, right);
 		}
 		if *p1 > *p2 {
-			arr.swap(left, left + 1);
+			arr.swap_unchecked(left, left + 1);
 		}
 
 		let (mut i, mut j, mut k, mut l) = (left + 2, left + 2, right - 1, right - 1);
@@ -198,7 +181,7 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 			while arr[j] < p2 {
 				// arr[<i] -> elements that are less than p1, arr[i] is not less than p1
 				if arr[j] < p1 {
-					arr.swap(i, j);
+					arr.swap_unchecked(i, j);
 					i += 1;
 				}
 				j += 1;
@@ -207,7 +190,7 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 			while arr[k] > p2 {
 				// arr[>l] -> elements that are greater than p3, arr[l] is not greater than p3
 				if arr[k] > p3 {
-					arr.swap(k, l);
+					arr.swap_unchecked(k, l);
 					l -= 1;
 				}
 				k -= 1;
@@ -218,24 +201,24 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 					if arr[k] < p1 {
 						// if arr[j] > p3 and arr[k] < p1, 
 						// rotate arr[j] to k and arr[k] to i because arr[<i] < p1
-						rotate3(arr, j, i, k);
+						rotate3(arr, [j, i, k]);
 						i += 1;
 					} else {
 						// if arr[j] > p3 and arr[k] >= p1,
 						// simply swap arr[j] and arr[k]
-						arr.swap(j, k);
+						arr.swap_unchecked(j, k);
 					}
 					// at this moment arr[k] must be greater than p3
 					// swap it with arr[l] to move it to the right
-					arr.swap(k, l);
+					arr.swap_unchecked(k, l);
 					l -= 1;
 				} else { 
 					// if arr[j] <= p3, we do the same logic as above
 					if arr[k] < p1 {
-						rotate3(arr, j, i, k);
+						rotate3(arr, [j, i, k]);
 						i += 1;
 					} else {
-						arr.swap(j, k);
+						arr.swap_unchecked(j, k);
 					}
 					// at this moment arr[j] must be less than or equal p1
 					// arr[k] must be less than or equal p3
@@ -251,14 +234,14 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 		l += 1;
 		// at this point arr[<=i] < p1, arr[i..=j] >= p1 and <= p2, arr[k..=l] >= p2 and <= p3, arr[>=l] > p3 (j == k)
 		// move p2 from arr[left + 1] to vacant position arr[j] (in the middle) 
-		rotate3(arr, left + 1, i, j);
-		// arr.swap(left + 1, i);
-		// arr.swap(i, j);
+		rotate3(arr, [left + 1, i, j]);
+		// arr.swap_unchecked(left + 1, i);
+		// arr.swap_unchecked(i, j);
 
 		i -= 1;
 
-		arr.swap(left, i);
-		arr.swap(right, l);
+		arr.swap_unchecked(left, i);
+		arr.swap_unchecked(right, l);
 		if left + 1 < i {
 			triple_pivot_quicksort(&mut arr[left..i]);
 		}
@@ -284,7 +267,7 @@ pub unsafe fn sort_ptrs<T: PartialOrd + Copy>(ptrs: &[*mut T]) {
 	}
 }
 
-pub fn quadro_pivot_quicksort_2<T: PartialOrd + Clone + Copy + Default + Debug>(arr: &mut [T]) {
+pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
 
@@ -296,51 +279,62 @@ pub fn quadro_pivot_quicksort_2<T: PartialOrd + Clone + Copy + Default + Debug>(
 		let p3: *mut T = &mut arr[right - 1];
         let p4: *mut T = &mut arr[right];
 
+        // TODO: Optimize sorting pivots part
         sort_ptrs(&[p1, p2, p3, p4]);
 
         let (mut i, mut j, mut k, mut l, mut m) = (left + 2, left + 2, left + 2, right - 2, right - 2);
 		let (p1, p2, p3, p4) = (*p1, *p2, *p3, *p4);
         
         while k <= l {
+            //        | i              | j              | k
+            // | < p1 | >= p1 and < p2 | >= p2 and < p3 | unknown
             while arr[k] < p3 {
                 if arr[k] < p1 {
-                    arr.swap(i, k);
+                    arr.swap_unchecked(i, k);
                     i += 1;
-                    j += 1;
-                } else if arr[k] < p2 {
-                    arr.swap(j, k);
-                    j += 1;
                 }
                 k += 1;
             }
+            j = i;
+            for idx in i..k {
+                if arr[idx] < p2 {
+                    arr.swap_unchecked(j, idx);
+                    j += 1;
+                }
+            }
+
+            //       l |              m |      |               
+            // unknown | >= p3 and < p4 | > p4 |
             while arr[l] > p3 {
                 if arr[l] > p4 {
-                    arr.swap(l, m);
+                    arr.swap_unchecked(l, m);
                     m -= 1;
                 }
                 l -= 1;
             }
+
             if k <= l {
-                // arr[k] > p3, arr[l] < p3
                 if arr[k] < p4 {
+                    // arr[k] > p3, arr[l] < p3
                     if arr[l] < p1 {
-                        rotate4(arr, k, j, i, l);
+                        rotate4(arr, [k, j, i, l]);
                         i += 1;
                         j += 1;
                     } else if arr[l] < p2 {
-                        rotate3(arr, k, j, l);
+                        rotate3(arr, [k, j, l]);
                         j += 1;
                     } else {
-                        arr.swap(k, l);
+                        arr.swap_unchecked(k, l);
                     }
                 } else {
+                    // arr[k] > p4, arr[l] < p3
                     if arr[l] > p2 { // arr[l] goes to (p2, p3), increase k
-                        rotate3(arr, k, l, m);
+                        rotate3(arr, [k, l, m]);
                     } else if arr[l] > p1 { // arr[l] goes to (p1, p2), increase j and k
-                        rotate4(arr, j, l, m, k);
+                        rotate4(arr, [k, j, l, m]);
                         j += 1;
                     } else { // arr[l] goes to leftmost side
-                        rotate5(arr, m, k, j, i, l);
+                        rotate5(arr, [k, j, i, l, m]);
                         i += 1;
                         j += 1;
                     }
@@ -350,40 +344,35 @@ pub fn quadro_pivot_quicksort_2<T: PartialOrd + Clone + Copy + Default + Debug>(
                 l -= 1;
             }
         }
-        i -= 2;
+        i -= 1;
         j -= 1;
         k -= 1;
         l += 1;
         m += 1;
 
-        #[cfg(debug_assertions)]
-        dbg!(&p1, &p2, &p3, &p4);
-
-        // the following method is buggy when pivot indexes are one of left, left + 1, right - 1, right
-        // TODO: uncomment the following method and fix
-        // put p1 and p2 in places
-        // arr.swap_unchecked(i, left);
-        // rotate3(arr, [j, left + 1, i + 1]);
-
-        // put p3 and p4 in places
-        // rotate3(arr, [m, l, right - 1]);
-        // m += 1;
-        // arr.swap_unchecked(m, right);
+        // i, j, l, m are indexes of pivot 1, 2, 3, 4
+        rotate3(arr, [left + 1, i, j]);
+        i -= 1;
+        arr.swap_unchecked(left, i);
+        
+        rotate3(arr, [right - 1, m, l]);
+        m += 1;
+        arr.swap_unchecked(right, m);
 
         if left + 1 < i {
-            quadro_pivot_quicksort_2(&mut arr[left..i]);
+            quad_pivot_quicksort(&mut arr[left..i]);
         }
         if i + 1 < j {
-            quadro_pivot_quicksort_2(&mut arr[i + 1..j]);
+            quad_pivot_quicksort(&mut arr[i + 1..j]);
         }
         if j + 1 < l {
-            quadro_pivot_quicksort_2(&mut arr[j + 1..l]);
+            quad_pivot_quicksort(&mut arr[j + 1..l]);
         }
         if l + 1 < m {
-            quadro_pivot_quicksort_2(&mut arr[l + 1..m]);
+            quad_pivot_quicksort(&mut arr[l + 1..m]);
         }
         if m + 1 < right {
-            quadro_pivot_quicksort_2(&mut arr[m + 1..right]);
+            quad_pivot_quicksort(&mut arr[m + 1..=right]);
         }
         
     }   
@@ -420,13 +409,13 @@ fn thread_local_arena_clear_lane(i: usize) {
 #[macro_export]
 macro_rules! impl_4n_pivot_qsort {
     ($n:expr, $func_name:ident, $data_type:ty, $simd_type:ty) => {
-        pub fn $func_name(arr: &mut [$data_type], pindex: [usize; $n]) {
+        pub fn $func_name(arr: &mut [$data_type]) {
             conditional_sort!(debug, arr);
             conditional_sort!(release, arr);
 
-            let mut pivots = [0.0; $n];
-            for (i, &pindex) in pindex.iter().enumerate() {
-                pivots[i] = arr[pindex];
+            let mut pivots = [0 as $data_type; $n];
+            for i in 0..$n {
+                pivots[i] = arr[i];
             }
             pivots.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
@@ -468,9 +457,9 @@ macro_rules! impl_4n_pivot_qsort {
                 };
             }
 
-            $func_name(&mut arr[0..bucket_sizes[0]], pindex);
+            $func_name(&mut arr[0..bucket_sizes[0]]);
             for i in 1..=$n {
-                $func_name(&mut arr[bucket_sizes[..i].iter().sum::<usize>()..bucket_sizes[..i + 1].iter().sum::<usize>()], pindex);
+                $func_name(&mut arr[bucket_sizes[..i].iter().sum::<usize>()..bucket_sizes[..i + 1].iter().sum::<usize>()]);
             }
         }
     }
