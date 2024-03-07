@@ -34,6 +34,19 @@ unsafe fn rotate3<T: Copy>(arr: &mut [T], a: usize, b: usize, c: usize) {
 	*pc = tmp;
 }
 
+#[inline(always)]
+unsafe fn rotate4<T: Copy>(arr: &mut [T], a: usize, b: usize, c: usize, d: usize) {
+    let pa: *mut T = arr.get_unchecked_mut(a);
+    let pb: *mut T = arr.get_unchecked_mut(b);
+    let pc: *mut T = arr.get_unchecked_mut(c);
+    let pd: *mut T = arr.get_unchecked_mut(d);
+    let tmp = *pa;
+    *pa = *pb;
+    *pb = *pc;
+    *pc = *pd;
+    *pd = tmp;
+}
+
 pub fn quick_sort_lomuto_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
@@ -270,6 +283,112 @@ pub unsafe fn sort_ptrs<T: PartialOrd + Copy>(ptrs: &[*mut T]) {
 		**i = *p;
 	}
 }
+
+pub fn quadro_pivot_quicksort_2<T: PartialOrd + Clone + Copy + Default + Debug>(arr: &mut [T]) {
+    conditional_sort!(debug, arr);
+    conditional_sort!(release, arr);
+
+	let (left, right) = (0, arr.len() - 1);
+	
+	unsafe {
+		let p1: *mut T = &mut arr[left];
+		let p2: *mut T = &mut arr[left + 1];
+		let p3: *mut T = &mut arr[right - 1];
+        let p4: *mut T = &mut arr[right];
+
+        sort_ptrs(&[p1, p2, p3, p4]);
+
+        let (mut i, mut j, mut k, mut l, mut m) = (left + 2, left + 2, left + 2, right - 2, right - 2);
+		let (p1, p2, p3, p4) = (*p1, *p2, *p3, *p4);
+        
+        while k <= l {
+            while arr[k] < p3 {
+                if arr[k] < p1 {
+                    arr.swap(i, k);
+                    i += 1;
+                    j += 1;
+                } else if arr[k] < p2 {
+                    arr.swap(j, k);
+                    j += 1;
+                }
+                k += 1;
+            }
+            while arr[l] > p3 {
+                if arr[l] > p4 {
+                    arr.swap(l, m);
+                    m -= 1;
+                }
+                l -= 1;
+            }
+            if k <= l {
+                // arr[k] > p3, arr[l] < p3
+                if arr[k] < p4 {
+                    if arr[l] < p1 {
+                        rotate4(arr, k, j, i, l);
+                        i += 1;
+                        j += 1;
+                    } else if arr[l] < p2 {
+                        rotate3(arr, k, j, l);
+                        j += 1;
+                    } else {
+                        arr.swap(k, l);
+                    }
+                } else {
+                    if arr[l] > p2 { // arr[l] goes to (p2, p3), increase k
+                        rotate3(arr, k, l, m);
+                    } else if arr[l] > p1 { // arr[l] goes to (p1, p2), increase j and k
+                        rotate4(arr, j, l, m, k);
+                        j += 1;
+                    } else { // arr[l] goes to leftmost side
+                        rotate5(arr, m, k, j, i, l);
+                        i += 1;
+                        j += 1;
+                    }
+                    m -= 1;
+                }
+                k += 1;
+                l -= 1;
+            }
+        }
+        i -= 2;
+        j -= 1;
+        k -= 1;
+        l += 1;
+        m += 1;
+
+        #[cfg(debug_assertions)]
+        dbg!(&p1, &p2, &p3, &p4);
+
+        // the following method is buggy when pivot indexes are one of left, left + 1, right - 1, right
+        // TODO: uncomment the following method and fix
+        // put p1 and p2 in places
+        // arr.swap_unchecked(i, left);
+        // rotate3(arr, [j, left + 1, i + 1]);
+
+        // put p3 and p4 in places
+        // rotate3(arr, [m, l, right - 1]);
+        // m += 1;
+        // arr.swap_unchecked(m, right);
+
+        if left + 1 < i {
+            quadro_pivot_quicksort_2(&mut arr[left..i]);
+        }
+        if i + 1 < j {
+            quadro_pivot_quicksort_2(&mut arr[i + 1..j]);
+        }
+        if j + 1 < l {
+            quadro_pivot_quicksort_2(&mut arr[j + 1..l]);
+        }
+        if l + 1 < m {
+            quadro_pivot_quicksort_2(&mut arr[l + 1..m]);
+        }
+        if m + 1 < right {
+            quadro_pivot_quicksort_2(&mut arr[m + 1..right]);
+        }
+        
+    }   
+}
+
 
 use once_cell::unsync::Lazy;
 static mut ARENA: Lazy<Vec<Vec<f32>>> = Lazy::new(||
