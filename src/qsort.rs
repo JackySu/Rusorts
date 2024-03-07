@@ -27,6 +27,16 @@ macro_rules! conditional_sort {
     };
 }
 
+#[inline]
+pub unsafe fn sort_ptrs<T: PartialOrd + Copy>(ptrs: &[*mut T]) {
+	// better not use this for pivots < 4
+	let mut data = ptrs.iter().map(|&p| *p).collect::<Vec<T>>();
+	data.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+	for (i, p) in ptrs.iter().zip(data.iter()) {
+		**i = *p;
+	}
+}
+
 pub fn quick_sort_lomuto_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
@@ -52,6 +62,50 @@ pub fn quick_sort_lomuto_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
             quick_sort_lomuto_partition(&mut arr[i + 1..]);
         }
     }
+}
+
+fn simd_quick_sort_lomuto_partition(arr: &mut [f32]) {
+    conditional_sort!(debug, arr);
+    conditional_sort!(release, arr);
+    let pivot_idx = arr.len() - 1;
+    let pivot1 = arr[pivot_idx];
+    // let arr_chunks = arr.chunks_exact(4);
+    // let r = arr_chunks.remainder().clone();
+    let pivot_vec = f32x8::splat(pivot1);
+    unsafe {
+        // let mut partition_0_indexes = Vec::with_capacity(arr.len());
+        let mut p = 0;
+        let mut i = 0;
+        while i < (pivot_idx - 1) / 8 {
+            let chunk_vec = f32x8::from_slice(&arr[i..i + 8]);
+            let mask = chunk_vec.simd_le(pivot_vec);
+            let mut mask_bits = mask.to_bitmask() as usize;
+            for j in 0..8 {
+                if mask_bits & 1 == 1 {
+                    // partition_0_indexes.push(i + j);
+                    arr.swap_unchecked(i + j, p);
+                    p += 1;
+                }
+                mask_bits >>= 1;
+            }
+            i += 8;
+        }
+        while i < pivot_idx {
+            if arr[i] <= pivot1 {
+                // partition_0_indexes.push(i);
+                arr.swap_unchecked(i, p);
+                p += 1;
+            }
+            i += 1;
+        }
+        // dbg!(&partition_0_indexes);
+        // swaps to shift partition_0_indexes to the leftmost side
+        arr.swap_unchecked(p, pivot_idx);
+        // arr[i] = pivot1;
+        simd_quick_sort_lomuto_partition(&mut arr[..p]);
+        simd_quick_sort_lomuto_partition(&mut arr[p..]);
+    }
+
 }
 
 pub fn quick_sort_hoare_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
@@ -257,16 +311,6 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 	}
 }
 
-#[inline]
-pub unsafe fn sort_ptrs<T: PartialOrd + Copy>(ptrs: &[*mut T]) {
-	// better not use this for pivots < 4
-	let mut data = ptrs.iter().map(|&p| *p).collect::<Vec<T>>();
-	data.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
-	for (i, p) in ptrs.iter().zip(data.iter()) {
-		**i = *p;
-	}
-}
-
 pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
@@ -296,6 +340,7 @@ pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
                 k += 1;
             }
             j = i;
+            // TODO: THIS PART IS SLOW ASF BRO, OPTIMIZE IT
             for idx in i..k {
                 if arr[idx] < p2 {
                     arr.swap_unchecked(j, idx);
