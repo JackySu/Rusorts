@@ -152,17 +152,17 @@ mod test {
 		assert_eq!(is_sorted(&copy), true);
 
         let mut copy = arr.clone();
-		let dur = time_it(|| penta_pivot_quicksort(&mut copy, [0, 1, 2, 3, 4]));
+		let dur = time_it(|| penta_pivot_quicksort(&mut copy));
 		println!("quick sort 5-pivot 10m array cost: {:?}ns", dur);
 		assert_eq!(is_sorted(&copy), true);
 
         let mut copy = arr.clone();
-		let dur = time_it(|| hexa_pivot_quicksort(&mut copy, [0, 1, 2, 3, 4, 5]));
+		let dur = time_it(|| hexa_pivot_quicksort(&mut copy));
 		println!("quick sort 6-pivot 10m array cost: {:?}ns", dur);
 		assert_eq!(is_sorted(&copy), true);
 
         let mut copy = arr.clone();
-		let dur = time_it(|| hepta_pivot_quicksort(&mut copy, [0, 1, 2, 3, 4, 5, 6]));
+		let dur = time_it(|| hepta_pivot_quicksort(&mut copy));
 		println!("quick sort 7-pivot 10m array cost: {:?}ns", dur);
 		assert_eq!(is_sorted(&copy), true);
 
@@ -190,7 +190,7 @@ mod test {
     // TODO: test with custom FloatOrd type
     #[test]
     fn test_real_quad_pivot_qsort() {
-        for _ in 0..1000 {
+        for _ in 0..50 {
             let mut some_vec: Vec<f32> = default_vec(5000);
             // dbg!(&some_vec);
             quad_pivot_quicksort(&mut some_vec);

@@ -315,7 +315,7 @@ pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
 
-	let (left, right) = (0, arr.len() - 1);
+    let (left, right) = (0, arr.len() - 1);
 	
 	unsafe {
 		let p1: *mut T = &mut arr[left];
@@ -394,8 +394,12 @@ pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
         k -= 1;
         l += 1;
         m += 1;
-
+        
         // i, j, l, m are indexes of pivot 1, 2, 3, 4
+        // Here is the place rotate3 can't be replaced by arr.rotate_left
+        // because the indexes (left + 1 > i ?) are not always ascending
+        // so it could lead to a panic
+        // anyway, I leave the rotate_n macro for you to try out
         rotate3(arr, [left + 1, i, j]);
         i -= 1;
         arr.swap_unchecked(left, i);
@@ -593,12 +597,12 @@ pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
 #[macro_export]
 macro_rules! impl_non_4n_pivot_qsort {
     ($n:expr, $pivot_repeat_times:expr, $func_name:ident, $data_type:ty, $simd_len:expr, $simd_type:ty) => {
-        pub fn $func_name(arr: &mut [$data_type], pindex: [usize; $n]) {
+        pub fn $func_name(arr: &mut [$data_type]) {
             conditional_sort!(debug, arr);
             conditional_sort!(release, arr);
             let mut pivots = [0.0; $n];
-            for (i, &pindex) in pindex.iter().enumerate() {
-                pivots[i] = arr[pindex];
+            for i in 0..$n {
+                pivots[i] = arr[i];
             }
             pivots.sort_by(|a, b| a.partial_cmp(b).unwrap());
         
@@ -668,9 +672,9 @@ macro_rules! impl_non_4n_pivot_qsort {
                     arr_ptr = arr_ptr.add(bucket_len);
                 };
             }
-            $func_name(&mut arr[0..bucket_sizes[0]], pindex);
+            $func_name(&mut arr[0..bucket_sizes[0]]);
             for i in 1..=$n {
-                $func_name(&mut arr[bucket_sizes[..i].iter().sum::<usize>()..bucket_sizes[..i + 1].iter().sum::<usize>()], pindex);
+                $func_name(&mut arr[bucket_sizes[..i].iter().sum::<usize>()..bucket_sizes[..i + 1].iter().sum::<usize>()]);
             }
         }
     };
