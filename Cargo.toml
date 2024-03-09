@@ -21,5 +21,8 @@ once_cell = "1.19"
 debug = true
 lto = true
 opt-level = 3
-codegen-units = 1
+# codegen-units = 1  // will potentially slow down the runtime performance
+panic = "abort"
+
+[target.'cfg(target_arch = "x86_64")'.release]
 rustflags = ["-C", "target-feature=+avx2,+fma"]

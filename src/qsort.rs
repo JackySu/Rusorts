@@ -334,18 +334,14 @@ pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
             // | < p1 | >= p1 and < p2 | >= p2 and < p3 | unknown
             while arr[k] < p3 {
                 if arr[k] < p1 {
-                    arr.swap_unchecked(i, k);
+                    rotate3(arr, [k, j, i]);
                     i += 1;
-                }
-                k += 1;
-            }
-            j = i;
-            // TODO: THIS PART IS SLOW ASF BRO, OPTIMIZE IT
-            for idx in i..k {
-                if arr[idx] < p2 {
-                    arr.swap_unchecked(j, idx);
+                    j += 1;
+                } else if arr[k] < p2 {
+                    arr.swap_unchecked(k, j);
                     j += 1;
                 }
+                k += 1;
             }
 
             //       l |              m |      |               
