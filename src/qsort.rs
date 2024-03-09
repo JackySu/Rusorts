@@ -27,15 +27,26 @@ macro_rules! conditional_sort {
     };
 }
 
-#[inline]
-pub unsafe fn sort_ptrs<T: PartialOrd + Copy>(ptrs: &[*mut T]) {
-	// better not use this for pivots < 4
-	let mut data = ptrs.iter().map(|&p| *p).collect::<Vec<T>>();
-	data.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
-	for (i, p) in ptrs.iter().zip(data.iter()) {
-		**i = *p;
-	}
+#[inline(always)]
+unsafe fn compare_idxs<T: PartialOrd>(v: &[T], a: usize, b: usize) -> bool {
+    let x = v.get_unchecked(a);
+    let y = v.get_unchecked(b);
+    x > y
 }
+
+pub fn insertion_sort<T: PartialOrd>(v: &mut [T]) {
+    let mut i = 1;
+    let n = v.len();
+    while i < n {
+        let mut j = i;
+        while j > 0 && ! unsafe { compare_idxs(v, j - 1, j) } {
+            unsafe { v.swap_unchecked(j, j - 1) };
+            j -= 1;
+        }
+        i += 1;
+    }
+}
+
 
 pub fn quick_sort_lomuto_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
@@ -311,7 +322,7 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 	}
 }
 
-pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
+pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy + Debug>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
 
@@ -323,8 +334,24 @@ pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 		let p3: *mut T = &mut arr[right - 1];
         let p4: *mut T = &mut arr[right];
 
-        // TODO: Optimize sorting pivots part
-        sort_ptrs(&[p1, p2, p3, p4]);
+        if *p1 > *p2 {
+            arr.swap_unchecked(left, left + 1);
+        }
+        if *p2 > *p3 {
+            arr.swap_unchecked(left + 1, right - 1);
+        }
+        if *p3 > *p4 {
+            arr.swap_unchecked(right - 1, right);
+        }
+        if *p1 > *p2 {
+            arr.swap_unchecked(left, left + 1);
+        }
+        if *p2 > *p3 {
+            arr.swap_unchecked(left + 1, right - 1);
+        }
+        if *p1 > *p2 {
+            arr.swap_unchecked(left, left + 1);
+        }
 
         let (mut i, mut j, mut k, mut l, mut m) = (left + 2, left + 2, left + 2, right - 2, right - 2);
 		let (p1, p2, p3, p4) = (*p1, *p2, *p3, *p4);
