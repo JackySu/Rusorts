@@ -12,8 +12,12 @@ pub mod qsort;
 pub mod ty;
 
 use ty::FloatOrd;
-use qsort::*;
-use util::*;
+use qsort::{
+	quick_sort_hoare_partition, quick_sort_lomuto_partition, double_pivot_quicksort, triple_pivot_quicksort
+};
+use util::{
+	time_it, is_sorted, default_vec
+};
 
 
 #[no_mangle]

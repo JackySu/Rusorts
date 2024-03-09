@@ -179,6 +179,20 @@ mod test {
 
     }
 
+
+    #[test]
+    fn test_hoare_partition() {
+        let mut arr: Vec<f32> = default_vec(1_000);
+        let dur = time_it(|| quick_sort_hoare_partition(&mut arr));
+        assert_eq!(is_sorted(&arr), true);
+        println!("quick sort 1-pivot (hoare partition) 1k array cost: {:?}ns", dur);
+
+        let mut arr: Vec<f32> = default_vec(1_000_000);
+        let dur = time_it(|| quick_sort_hoare_partition(&mut arr));
+        assert_eq!(is_sorted(&arr), true);
+        println!("quick sort 1-pivot (hoare partition) 1m array cost: {:?}ns", dur);
+    }
+
     // #[test]
     // fn test_sort_by_ptrs() {
     //     let v = vec![5, 7, 1, 3, 2, 4, 6];

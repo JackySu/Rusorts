@@ -35,7 +35,7 @@ macro_rules! impl_rotate_n {
             
             // Initialize the temporary array with uninitialized memory
             for i in 0..$n {
-                tmp[i] = MaybeUninit::new(arr[idx[i]]);
+                tmp[i] = MaybeUninit::new(*arr.get_unchecked(idx[i]));
             }
 
             // Copy values back to the original array

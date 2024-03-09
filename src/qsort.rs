@@ -127,12 +127,12 @@ pub fn quick_sort_hoare_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
 	let mut i = -1;
 	let mut j = arr.len() as i32;
 	loop {
-		i += 1;
+        i += 1;
 		while arr[i as usize] < pivot {
 			i += 1;
 		}
 
-		j -= 1;
+        j -= 1;
 		while arr[j as usize] > pivot {
 			j -= 1;
 		}
@@ -143,10 +143,10 @@ pub fn quick_sort_hoare_partition<T: PartialOrd + Copy>(arr: &mut [T]) {
 		unsafe { arr.swap_unchecked(i as usize, j as usize); }
 	}
 
-	if j > 1 {
+	if j > 0 {
 		quick_sort_hoare_partition(&mut arr[..=j as usize]);
 	}
-	if j + 2 < arr.len() as i32 {
+	if j < arr.len() as i32 {
 		quick_sort_hoare_partition(&mut arr[(j + 1) as usize..]);
 	}
 }
@@ -322,7 +322,7 @@ pub fn triple_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
 	}
 }
 
-pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy + Debug>(arr: &mut [T]) {
+pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
 
@@ -422,7 +422,7 @@ pub fn quad_pivot_quicksort<T: PartialOrd + Clone + Copy + Debug>(arr: &mut [T])
         // Here is the place rotate3 can't be replaced by arr.rotate_left
         // because the indexes (left + 1 > i ?) are not always ascending
         // so it could lead to a panic
-        // anyway, I leave the rotate_n macro for you to try out
+        // anyway, I leave the rotate_n macro for you to try out in `src/util.rs`
         rotate3(arr, [left + 1, i, j]);
         i -= 1;
         arr.swap_unchecked(left, i);
