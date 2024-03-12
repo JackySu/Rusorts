@@ -6,7 +6,7 @@ use rand::prelude::Distribution;
 
 #[derive(PartialEq, PartialOrd, Debug, Clone, Copy)]
 #[repr(transparent)]  // guarantees same layout as a single f32
-pub struct FloatOrd(f32);
+pub struct FloatOrd(pub f32);
 
 impl Deref for FloatOrd {
     type Target = f32;
@@ -15,6 +15,26 @@ impl Deref for FloatOrd {
         &self.0
     }
 }
+
+macro_rules! impl_float_ord {
+    ($($t:ty),*) => {
+        $(
+            impl From<$t> for FloatOrd {
+                fn from(f: $t) -> Self {
+                    FloatOrd(f as f32)
+                }
+            }
+
+            impl From<FloatOrd> for $t {
+                fn from(f: FloatOrd) -> Self {
+                    f.0 as $t
+                }
+            }
+        )*
+    };
+}
+
+impl_float_ord!(usize, u8, u16, u32, u64, isize, i8, i16, i32, i64, f32, f64);
 
 // compiler defines
 impl Eq for FloatOrd {}

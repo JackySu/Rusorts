@@ -51,23 +51,27 @@ pub unsafe extern "C" fn f32_unstable_sort(v: *mut f32, size: usize) -> u64 {
 #[no_mangle]
 pub unsafe extern "C" fn f32_quicksort_hoare(v: *mut f32, size: usize) -> u64 {
 	let v = std::slice::from_raw_parts_mut(v, size);
+	let v: &mut [FloatOrd] = std::mem::transmute(v);
 	time_it(|| quick_sort_hoare_partition(v))
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn f32_quicksort_lomuto(v: *mut f32, size: usize) -> u64 {
 	let v = std::slice::from_raw_parts_mut(v, size);
+	let v: &mut [FloatOrd] = std::mem::transmute(v);
 	time_it(|| quick_sort_lomuto_partition(v))
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn f32_double_pivot_quicksort(v: *mut f32, size: usize) -> u64 {
 	let v = std::slice::from_raw_parts_mut(v, size);
+	let v: &mut [FloatOrd] = std::mem::transmute(v);
 	time_it(|| double_pivot_quicksort(v))
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn f32_triple_pivot_quicksort(v: *mut f32, size: usize) -> u64 {
 	let v = std::slice::from_raw_parts_mut(v, size);
+	let v: &mut [FloatOrd] = std::mem::transmute(v);
 	time_it(|| triple_pivot_quicksort(v))
 }
