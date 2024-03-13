@@ -20,7 +20,6 @@ pub fn time_it(f: impl FnOnce()) -> u64 {
 }
 
 /* 
- * Use MaybeUninit to avoid the overhead of initializing the temporary array
  * the generic rotate_left function can be used in place of this macro
  * but when it comes to circumstances that the idx array isn't ascending
  * like when putting pivots back to their original positions (marked in the quicksort algorithm)
@@ -30,18 +29,13 @@ pub fn time_it(f: impl FnOnce()) -> u64 {
 macro_rules! impl_rotate_n {
     ($func: ident, $n: expr) => {
         #[inline(always)]
-        pub unsafe fn $func<T: Copy>(arr: &mut [T], idx: [usize; $n]) {
-            let mut tmp: [MaybeUninit<T>; $n] = MaybeUninit::uninit().assume_init();
-            
-            // Initialize the temporary array with uninitialized memory
-            for i in 0..$n {
-                tmp[i] = MaybeUninit::new(*arr.get_unchecked(idx[i]));
+        pub unsafe fn $func<T>(arr: &mut [T], idx: [usize; $n]) {
+            // cycle the elements in the idx array
+            let tmp = std::ptr::read(&arr[idx[0]]);
+            for i in 1..$n {
+                std::ptr::copy_nonoverlapping(&arr[idx[i]], &mut arr[idx[i - 1]], 1);
             }
-
-            // Copy values back to the original array
-            for i in 0..$n {
-                arr[idx[i]] = tmp[(i + 1) % $n].assume_init();
-            }
+            std::ptr::copy_nonoverlapping(&tmp, &mut arr[idx[$n - 1]], 1);
         }
     };
 }

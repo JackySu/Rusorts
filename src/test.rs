@@ -8,6 +8,60 @@ mod test {
     use introsort::sort_floats;
 
     #[test]
+    fn test_double_pivot_quicksort_lomuto_partition_block() {
+        let arr: Vec<FloatOrd> = default_vec(1_000);
+
+        let mut copy = arr.clone();
+        let dur = time_it(|| double_pivot_quicksort(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 2-pivot 1k array cost: {:?}ns", dur);
+
+        let mut copy = arr.clone();
+        let dur = time_it(|| double_pivot_quicksort_lomuto_partition_block(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 2-pivot (block partition) 1k array cost: {:?}ns", dur);
+
+        let arr: Vec<FloatOrd> = default_vec(1_000_000);
+        
+        let mut copy = arr.clone();
+        let dur = time_it(|| double_pivot_quicksort(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 2-pivot 1m array cost: {:?}ns", dur);
+
+        let mut copy = arr.clone();
+        let dur = time_it(|| double_pivot_quicksort_lomuto_partition_block(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 2-pivot (block partition) 1m array cost: {:?}ns", dur);
+    }
+
+    #[test]
+    fn test_lomuto_partition_and_lomuto_partition_block() {
+        let arr: Vec<FloatOrd> = default_vec(10_000_000);
+        let mut copy = arr.clone();
+        let dur = time_it(|| quick_sort_lomuto_partition(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 1-pivot (lomuto partition) 1m array cost: {:?}ns", dur);
+        let mut copy = arr.clone();
+        let dur = time_it(|| quick_sort_lomuto_partition_block(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 1-pivot (lomuto partition block) 1m array cost: {:?}ns", dur);
+    }
+
+    #[test]
+    fn test_hoare_partition_and_hoare_partition_block() {
+        let arr: Vec<FloatOrd> = default_vec(10_000_000);
+        let mut copy = arr.clone();
+        let dur = time_it(|| quick_sort_hoare_partition(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 1-pivot (hoare partition) 1m array cost: {:?}ns", dur);
+        let mut copy = arr.clone();
+        let dur = time_it(|| quick_sort_hoare_partition_block(&mut copy));
+        //dbg!(&copy);
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 1-pivot (hoare partition block) 1m array cost: {:?}ns", dur);
+    }
+
+    #[test]
     fn test_pdq_sort() {
         let mut arr: Vec<FloatOrd> = default_vec(1_000);
         let dur = time_it(|| pdqsort::sort(&mut arr));
@@ -75,8 +129,8 @@ mod test {
     }
 
     #[test]
-    fn test_1m_array() {
-        let arr: Vec<FloatOrd> = default_vec(1_000_000);
+    fn test_10m_array() {
+        let arr: Vec<FloatOrd> = default_vec(10_000_000);
 		let mut copy = arr.clone();
         let dur = time_it(|| copy.sort_unstable());
         println!("std sort 10m array cost: {:?}ns", dur);
@@ -108,6 +162,22 @@ mod test {
 		println!("<!> New impl quick sort 4-pivot 10m array cost: {:?}ns", dur);
 		assert_eq!(is_sorted(&copy), true);
 
+        let mut copy = arr.clone();
+        let dur = time_it(|| quick_sort_hoare_partition_block(&mut copy));
+        //dbg!(&copy);
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 1-pivot (hoare partition block) 10m array cost: {:?}ns", dur);
+
+        let mut copy = arr.clone();
+        let dur = time_it(|| quick_sort_lomuto_partition_block(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 1-pivot (lomuto partition block) 10m array cost: {:?}ns", dur);
+        
+        let mut copy = arr.clone();
+        let dur = time_it(|| double_pivot_quicksort_lomuto_partition_block(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 2-pivot (block partition) 10m array cost: {:?}ns", dur);
+        
         // let mut arr = default_vec(1_000_000);
         // let mut copy = arr.clone();
         // // transmute copy from Vec<FloatOrd> to Vec<f32>

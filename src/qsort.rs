@@ -1,15 +1,13 @@
 // #![allow(dead_code)]
-#![allow(unused)]
 
-use std::{fmt::Debug, mem::swap};
 use std::simd::{cmp::SimdPartialOrd, *};
 use std::cmp::Ordering;
+use std::{ptr, mem, cmp};
 
 use crate::util::*;
 
 const DEBUG_INSERTION_SORT_THRESHOLD: usize = 9;
 const RELEASE_INSERTION_SORT_THRESHOLD: usize = 27;
-const QUICKSORT_STACK_SIZE: usize = 64;
 
 
 #[inline]
@@ -34,7 +32,6 @@ fn partial_insertion_sort<T: PartialOrd>(arr: &mut [T], left: usize, right: usiz
     }
 }
 
-#[macro_export]
 macro_rules! conditional_sort {
     (debug, $arr: expr) => {
         #[cfg(debug_assertions)]
@@ -50,7 +47,6 @@ macro_rules! conditional_sort {
     };
 }
 
-#[macro_export]
 macro_rules! conditional_partial_sort {
     (debug, $arr: expr) => {
         #[cfg(debug_assertions)]
@@ -66,38 +62,144 @@ macro_rules! conditional_partial_sort {
     };
 }
 
-pub fn quick_sort_lomuto_partition<T: Ord + Copy>(arr: &mut [T]) {
-    conditional_sort!(debug, arr);
-    conditional_sort!(release, arr);
-
-    unsafe {
-        let (left, right) = (0, arr.len() - 1);
-        let pivot = arr[right];
-        let mut i = left;
-        for j in left..right {
-            if arr[j].cmp(&pivot) == Ordering::Less || arr[j].cmp(&pivot) == Ordering::Equal {
-                arr.swap_unchecked(i, j);
-                i += 1;
+pub fn quick_sort_lomuto_partition<T: Ord>(mut arr: &mut [T]) {
+    loop {
+        unsafe {
+            conditional_sort!(debug, arr);
+            conditional_sort!(release, arr);
+            let (left, right) = (0, arr.len() - 1);
+            let pivot = ptr::read(arr.get_unchecked(right));
+            let mut i = left;
+            for j in left..right {
+                if arr[j].cmp(&pivot) == Ordering::Less || arr[j].cmp(&pivot) == Ordering::Equal {
+                    arr.swap_unchecked(i, j);
+                    i += 1;
+                }
             }
-        }
-        arr.swap_unchecked(i, right);
-
-        // if left part has more than 1 element
-        if i > 1 {
-            quick_sort_lomuto_partition(&mut arr[..=i - 1]);
-        }
-        // if right part has more than 1 element
-        if i + 2 < arr.len() {
-            quick_sort_lomuto_partition(&mut arr[i + 1..]);
+            arr.swap_unchecked(i, right);
+            let (left, right) = arr.split_at_mut(i);
+            if left.len() > right.len() {
+                quick_sort_lomuto_partition(right);
+                arr = left;
+            } else {
+                quick_sort_lomuto_partition(left);
+                arr = right;
+            }
         }
     }
 }
 
-pub fn quick_sort_hoare_partition<T: Ord + Copy>(arr: &mut [T]) {
+pub fn quick_sort_lomuto_partition_block<T: Ord>(mut arr: &mut [T]) {
+    const BLOCK: usize = 128;
+    let mut block_t = BLOCK;
+    let mut offsets_t: [u8; BLOCK] = unsafe { mem::MaybeUninit::uninit().assume_init() };
+    loop {
+        unsafe {
+            conditional_sort!(debug, arr);
+            conditional_sort!(release, arr);
+            let (left, right) = (0, arr.len() - 1);
+            let pivot = ptr::read(arr.get_unchecked(right));
+            let (mut i, mut j) = (left, left);
+            let mut num = 0;
+            while j < right {
+                block_t = cmp::min(block_t, right - j);
+                for k in 0..block_t {
+                    offsets_t[num] = k as u8;
+                    num += (arr[j + k].cmp(&pivot) == Ordering::Less) as usize;
+                }
+                for k in 0..num {
+                    arr.swap_unchecked(i, j + offsets_t[k] as usize);
+                    i += 1;
+                }
+                num = 0;
+                j += block_t;
+            }
+            arr.swap_unchecked(i, right);
+            let (left, right) = arr.split_at_mut(i);
+            let (pivot, right) = right.split_at_mut(1);
+            let pivot = &pivot[0];
+            debug_assert!(left.iter().all(|x| x <= pivot) && right.iter().all(|x| x >= pivot));
+            if left.len() < right.len() {
+                quick_sort_lomuto_partition_block(left);
+                arr = right;
+            } else {
+                quick_sort_lomuto_partition_block(right);
+                arr = left;
+            }
+        }
+    }
+}
+
+pub fn double_pivot_quicksort_lomuto_partition_block<T: Ord>(mut arr: &mut [T]) {
+    const BLOCK: usize = 128;
+    let mut block_t = BLOCK;
+    let mut offsets_t: [u8; BLOCK] = unsafe { mem::MaybeUninit::uninit().assume_init() };
+    loop {
+        unsafe {
+            conditional_sort!(debug, arr);
+            conditional_sort!(release, arr);
+            let (left, right) = (0, arr.len() - 1);
+            if arr.get_unchecked(left).cmp(arr.get_unchecked(right)) == Ordering::Greater {
+                arr.swap_unchecked(left, right);
+            }
+            let (pivot1, pivot2) = (ptr::read(arr.get_unchecked(left)), ptr::read(arr.get_unchecked(right)));
+
+            let (mut i, mut j, mut k) = (left + 1, left + 1, left + 1);
+            let (mut num_p1, mut num_p2) = (0, 0);
+            while k < right {
+                block_t = cmp::min(block_t, right - k);
+                for l in 0..block_t {
+                    offsets_t[num_p2] = l as u8;
+                    num_p2 += (arr[k + l].cmp(&pivot2) == Ordering::Less) as usize;
+                }
+                for l in 0..num_p2 {
+                    arr.swap_unchecked(j + l, k + offsets_t[l] as usize);
+                }
+                k += block_t;
+                for l in 0..num_p2 {
+                    offsets_t[num_p1] = l as u8;
+                    num_p1 += (arr[j + l].cmp(&pivot1) == Ordering::Less) as usize;
+                }
+                for l in 0..num_p1 {
+                    arr.swap_unchecked(i, j + offsets_t[l] as usize);
+                    i += 1;
+                }
+                j += num_p2;
+                num_p1 = 0;
+                num_p2 = 0;
+            }
+            arr.swap_unchecked(i - 1, left);
+            arr.swap_unchecked(j, right);
+            let (left, right) = arr.split_at_mut(i - 1);
+            let (pivot1, right) = right.split_at_mut(1);
+            let _pivot1 = &pivot1[0];
+            let (mid, right) = right.split_at_mut(j - i);
+            let (pivot2, right) = right.split_at_mut(1);
+            let _pivot2 = &pivot2[0];
+
+            if left.len() < mid.len() {
+                double_pivot_quicksort_lomuto_partition_block(left);
+                double_pivot_quicksort_lomuto_partition_block(right);
+                arr = mid;
+            } else if mid.len() > right.len() {
+                double_pivot_quicksort_lomuto_partition_block(right);
+                double_pivot_quicksort_lomuto_partition_block(mid);
+                arr = left;
+            } else {
+                double_pivot_quicksort_lomuto_partition_block(left);
+                double_pivot_quicksort_lomuto_partition_block(mid);
+                arr = right;
+            }
+        }
+    }
+}
+
+
+pub fn quick_sort_hoare_partition<T: Ord>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
 
-	let pivot = arr[0];
+    let pivot = unsafe { ptr::read(arr.get_unchecked(0)) };
 	let mut i = -1;
 	let mut j = arr.len() as i32;
 	loop {
@@ -123,6 +225,182 @@ pub fn quick_sort_hoare_partition<T: Ord + Copy>(arr: &mut [T]) {
 	if j < arr.len() as i32 {
 		quick_sort_hoare_partition(&mut arr[(j + 1) as usize..]);
 	}
+}
+
+// Refer to PDQSort implementation in std::slice::unstable_sort
+fn partition_in_blocks<T, F>(v: &mut [T], pivot: &T, is_less: &mut F) -> usize
+    where F: FnMut(&T, &T) -> bool
+{
+    const BLOCK: usize = 128;
+
+    let mut l = v.as_mut_ptr();
+    let mut block_l = BLOCK;
+    let mut start_l = ptr::null_mut();
+    let mut end_l = ptr::null_mut();
+    let mut offsets_l: [u8; BLOCK] = unsafe { mem::MaybeUninit::uninit().assume_init() };
+
+    // The current block on the right side (from `r.offset(-block_r)` to `r`).
+    let mut r = unsafe { l.offset(v.len() as isize) };
+    let mut block_r = BLOCK;
+    let mut start_r = ptr::null_mut();
+    let mut end_r = ptr::null_mut();
+    let mut offsets_r: [u8; BLOCK] = unsafe { mem::MaybeUninit::uninit().assume_init() };
+
+    fn width<T>(l: *mut T, r: *mut T) -> usize {
+        (r as usize - l as usize) / mem::size_of::<T>()
+    }
+
+    loop {
+        let is_done = width(l, r) <= 2 * BLOCK;
+
+        if is_done {
+            let mut rem = width(l, r);
+            if start_l < end_l || start_r < end_r {
+                rem -= BLOCK;
+            }
+
+            if start_l < end_l {
+                block_r = rem;
+            } else if start_r < end_r {
+                block_l = rem;
+            } else {
+                block_l = rem / 2;
+                block_r = rem - block_l;
+            }
+            debug_assert!(block_l <= BLOCK && block_r <= BLOCK);
+            debug_assert!(width(l, r) == block_l + block_r);
+        }
+
+        if start_l == end_l {
+            start_l = offsets_l.as_mut_ptr();
+            end_l = offsets_l.as_mut_ptr();
+            let mut elem = l;
+
+            for i in 0..block_l {
+                unsafe {
+                    *end_l = i as u8;
+                    end_l = end_l.offset(!is_less(&*elem, pivot) as isize);
+                    elem = elem.offset(1);
+                }
+            }
+        }
+
+        if start_r == end_r {
+            start_r = offsets_r.as_mut_ptr();
+            end_r = offsets_r.as_mut_ptr();
+            let mut elem = r;
+
+            for i in 0..block_r {
+                unsafe {
+                    elem = elem.offset(-1);
+                    *end_r = i as u8;
+                    end_r = end_r.offset(is_less(&*elem, pivot) as isize);
+                }
+            }
+        }
+
+        let count = cmp::min(width(start_l, end_l), width(start_r, end_r));
+
+        if count > 0 {
+            macro_rules! left { () => { l.offset(*start_l as isize) } }
+            macro_rules! right { () => { r.offset(-(*start_r as isize) - 1) } }
+
+            // cyclic swap
+            unsafe {
+                let tmp = ptr::read(left!());
+                ptr::copy_nonoverlapping(right!(), left!(), 1);
+
+                for _ in 1..count {
+                    start_l = start_l.offset(1);
+                    ptr::copy_nonoverlapping(left!(), right!(), 1);
+                    start_r = start_r.offset(1);
+                    ptr::copy_nonoverlapping(right!(), left!(), 1);
+                }
+
+                ptr::copy_nonoverlapping(&tmp, right!(), 1);
+                mem::forget(tmp);
+                start_l = start_l.offset(1);
+                start_r = start_r.offset(1);
+            }
+        }
+
+        if start_l == end_l {
+            l = unsafe { l.offset(block_l as isize) };
+        }
+
+        if start_r == end_r {
+            r = unsafe { r.offset(-(block_r as isize)) };
+        }
+
+        if is_done {
+            break;
+        }
+    }
+
+    if start_l < end_l {
+        debug_assert_eq!(width(l, r), block_l);
+        while start_l < end_l {
+            unsafe {
+                end_l = end_l.offset(-1);
+                ptr::swap(l.offset(*end_l as isize), r.offset(-1));
+                r = r.offset(-1);
+            }
+        }
+        width(v.as_mut_ptr(), r)
+    } else if start_r < end_r {
+        debug_assert_eq!(width(l, r), block_r);
+        while start_r < end_r {
+            unsafe {
+                end_r = end_r.offset(-1);
+                ptr::swap(l, r.offset(-(*end_r as isize) - 1));
+                l = l.offset(1);
+            }
+        }
+        width(v.as_mut_ptr(), l)
+    } else {
+        width(v.as_mut_ptr(), l)
+    }
+}
+
+
+pub fn quick_sort_hoare_partition_block<T: Ord>(mut arr: &mut [T]) {
+
+    let is_less = &mut |a: &T, b: &T| a.lt(b);
+
+    unsafe {
+        loop {
+            conditional_sort!(debug, arr);
+            conditional_sort!(release, arr);
+            let (mid, _was_partitioned) = {
+                let (pivot, arr) = arr.split_at_mut(1);
+                let pivot = &mut pivot[0];
+                let mut l = 0;
+                let mut r = arr.len();
+                while l < r && is_less(arr.get_unchecked(l), pivot) {
+                    l += 1;
+                }
+        
+                while l < r && is_less(pivot, arr.get_unchecked(r - 1)) {
+                    r -= 1;
+                }
+    
+                (l + partition_in_blocks(&mut arr[l..r], pivot, is_less), l >= r)
+            };
+            arr.swap_unchecked(0, mid);
+    
+            let (left, right) = arr.split_at_mut(mid);
+            let (_pivot, right) = right.split_at_mut(1);
+    
+            if left.len() < right.len() {
+                quick_sort_hoare_partition(left);
+                arr = right;
+            } else {
+                quick_sort_hoare_partition(right);
+                arr = left;
+            }
+        }
+    }
+
 }
 
 // In respect to 
@@ -192,7 +470,7 @@ pub fn double_pivot_quicksort<T: Ord + Clone>(arr: &mut [T]) {
 	}
 }
 
-pub fn triple_pivot_quicksort<T: Ord + Clone + Copy>(arr: &mut [T]) {
+pub fn triple_pivot_quicksort<T: Ord>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
 
@@ -214,7 +492,7 @@ pub fn triple_pivot_quicksort<T: Ord + Clone + Copy>(arr: &mut [T]) {
 		}
 
 		let (mut i, mut j, mut k, mut l) = (left + 2, left + 2, right - 1, right - 1);
-		let (p1, p2, p3) = (*p1, *p2, *p3);
+		let (p1, p2, p3) = (ptr::read(p1), ptr::read(p2), ptr::read(p3));
 		while j <= k {
 			// j moves right until arr[j] >= p2
 			while arr[j].cmp(&p2) == Ordering::Less {
@@ -296,7 +574,7 @@ pub fn triple_pivot_quicksort<T: Ord + Clone + Copy>(arr: &mut [T]) {
 	}
 }
 
-pub fn quad_pivot_quicksort<T: Ord + Clone + Copy>(arr: &mut [T]) {
+pub fn quad_pivot_quicksort<T: Ord>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
 
@@ -328,7 +606,7 @@ pub fn quad_pivot_quicksort<T: Ord + Clone + Copy>(arr: &mut [T]) {
         }
 
         let (mut i, mut j, mut k, mut l, mut m) = (left + 2, left + 2, left + 2, right - 2, right - 2);
-		let (p1, p2, p3, p4) = (*p1, *p2, *p3, *p4);
+		let (p1, p2, p3, p4) = (ptr::read(p1), ptr::read(p2), ptr::read(p3), ptr::read(p4));
         
         while k <= l {
             //        | i              | j              | k
