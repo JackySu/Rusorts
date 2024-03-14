@@ -1,11 +1,37 @@
 #[cfg(test)]
 mod test {
 
-    use crate::util::*;
     use crate::qsort::*;
     use crate::ty::FloatOrd;
+    use crate::util::*;
 
     use introsort::sort_floats;
+
+    #[test]
+    fn test_double_pivot_quicksort_new_partition_block() {
+        let arr: Vec<FloatOrd> = default_vec(10_000_000);
+
+        let mut copy = arr.clone();
+        let dur = time_it(|| double_pivot_quicksort(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!("quick sort 2-pivot 10m array cost: {:?}ns", dur);
+
+        let mut copy = arr.clone();
+        let dur = time_it(|| double_pivot_quicksort_lomuto_partition_block(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!(
+            "quick sort 2-pivot (lomuto block partition) 10m array cost: {:?}ns",
+            dur
+        );
+
+        let mut copy = arr.clone();
+        let dur = time_it(|| double_pivot_quicksort_new_partition_block(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!(
+            "quick sort 2-pivot (new block partition) 10m array cost: {:?}ns",
+            dur
+        );
+    }
 
     #[test]
     fn test_double_pivot_quicksort_lomuto_partition_block() {
@@ -19,10 +45,13 @@ mod test {
         let mut copy = arr.clone();
         let dur = time_it(|| double_pivot_quicksort_lomuto_partition_block(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 2-pivot (block partition) 1k array cost: {:?}ns", dur);
+        println!(
+            "quick sort 2-pivot (block partition) 1k array cost: {:?}ns",
+            dur
+        );
 
         let arr: Vec<FloatOrd> = default_vec(1_000_000);
-        
+
         let mut copy = arr.clone();
         let dur = time_it(|| double_pivot_quicksort(&mut copy));
         assert_eq!(is_sorted(&copy), true);
@@ -31,7 +60,10 @@ mod test {
         let mut copy = arr.clone();
         let dur = time_it(|| double_pivot_quicksort_lomuto_partition_block(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 2-pivot (block partition) 1m array cost: {:?}ns", dur);
+        println!(
+            "quick sort 2-pivot (block partition) 1m array cost: {:?}ns",
+            dur
+        );
     }
 
     #[test]
@@ -40,11 +72,17 @@ mod test {
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_lomuto_partition(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 1-pivot (lomuto partition) 1m array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (lomuto partition) 1m array cost: {:?}ns",
+            dur
+        );
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_lomuto_partition_block(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 1-pivot (lomuto partition block) 1m array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (lomuto partition block) 1m array cost: {:?}ns",
+            dur
+        );
     }
 
     #[test]
@@ -53,12 +91,18 @@ mod test {
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_hoare_partition(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 1-pivot (hoare partition) 1m array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (hoare partition) 1m array cost: {:?}ns",
+            dur
+        );
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_hoare_partition_block(&mut copy));
         //dbg!(&copy);
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 1-pivot (hoare partition block) 1m array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (hoare partition block) 1m array cost: {:?}ns",
+            dur
+        );
     }
 
     #[test]
@@ -93,7 +137,7 @@ mod test {
         let dur = time_it(|| sort_floats(&mut arr));
         assert_eq!(is_sorted(&arr), true);
         println!("introsort cost: {:?}ns", dur);
-        
+
         let mut arr: Vec<f32> = default_vec(1_000_000);
         let dur = time_it(|| sort_floats(&mut arr));
         assert_eq!(is_sorted(&arr), true);
@@ -109,121 +153,148 @@ mod test {
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_hoare_partition(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 1-pivot (hoare partition) already sorted array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (hoare partition) already sorted array cost: {:?}ns",
+            dur
+        );
 
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_lomuto_partition(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 1-pivot (lomuto_partition) already sorted array cost: {:?}ns", dur);
-        
+        println!(
+            "quick sort 1-pivot (lomuto_partition) already sorted array cost: {:?}ns",
+            dur
+        );
+
         let mut copy = arr.clone();
         let dur = time_it(|| double_pivot_quicksort(&mut copy));
         assert_eq!(is_sorted(&copy), true);
         println!("quick sort 2-pivot already sorted array cost: {:?}ns", dur);
-        
+
         let mut copy = arr.clone();
         let dur = time_it(|| triple_pivot_quicksort(&mut copy));
         assert_eq!(is_sorted(&copy), true);
         println!("quick sort 3-pivot already sorted array cost: {:?}ns", dur);
-
     }
 
     #[test]
     fn test_10m_array() {
         let arr: Vec<FloatOrd> = default_vec(10_000_000);
-		let mut copy = arr.clone();
+        let mut copy = arr.clone();
         let dur = time_it(|| copy.sort_unstable());
         println!("std sort 10m array cost: {:?}ns", dur);
         assert_eq!(is_sorted(&copy), true);
 
-		let mut copy = arr.clone();
+        let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_hoare_partition(&mut copy));
-        println!("quick sort 1-pivot (hoare partition) 10m array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (hoare partition) 10m array cost: {:?}ns",
+            dur
+        );
         // assert_eq!(is_sorted(&copy), true);
 
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_lomuto_partition(&mut copy));
-        println!("quick sort 1-pivot (lomuto_partition) 10m array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (lomuto_partition) 10m array cost: {:?}ns",
+            dur
+        );
         assert_eq!(is_sorted(&copy), true);
 
-		let mut copy = arr.clone();
+        let mut copy = arr.clone();
         let dur = time_it(|| double_pivot_quicksort(&mut copy));
         println!("quick sort 2-pivot 10m array cost: {:?}ns", dur);
         assert_eq!(is_sorted(&copy), true);
 
-		let mut copy = arr.clone();
-		let dur = time_it(|| triple_pivot_quicksort(&mut copy));
-		println!("quick sort 3-pivot 10m array cost: {:?}ns", dur);
-		assert_eq!(is_sorted(&copy), true);
+        let mut copy = arr.clone();
+        let dur = time_it(|| triple_pivot_quicksort(&mut copy));
+        println!("quick sort 3-pivot 10m array cost: {:?}ns", dur);
+        assert_eq!(is_sorted(&copy), true);
 
         let mut copy = arr.clone();
         // transmute copy from Vec<FloatOrd> to Vec<f32>
-		let dur = time_it(|| quad_pivot_quicksort(&mut copy));
-		println!("<!> New impl quick sort 4-pivot 10m array cost: {:?}ns", dur);
-		assert_eq!(is_sorted(&copy), true);
+        let dur = time_it(|| quad_pivot_quicksort(&mut copy));
+        println!(
+            "<!> New impl quick sort 4-pivot 10m array cost: {:?}ns",
+            dur
+        );
+        assert_eq!(is_sorted(&copy), true);
 
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_hoare_partition_block(&mut copy));
         //dbg!(&copy);
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 1-pivot (hoare partition block) 10m array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (hoare partition block) 10m array cost: {:?}ns",
+            dur
+        );
 
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_lomuto_partition_block(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 1-pivot (lomuto partition block) 10m array cost: {:?}ns", dur);
-        
+        println!(
+            "quick sort 1-pivot (lomuto partition block) 10m array cost: {:?}ns",
+            dur
+        );
+
         let mut copy = arr.clone();
         let dur = time_it(|| double_pivot_quicksort_lomuto_partition_block(&mut copy));
         assert_eq!(is_sorted(&copy), true);
-        println!("quick sort 2-pivot (block partition) 10m array cost: {:?}ns", dur);
-        
+        println!(
+            "quick sort 2-pivot (block partition) 10m array cost: {:?}ns",
+            dur
+        );
+
         // let mut arr = default_vec(1_000_000);
         // let mut copy = arr.clone();
         // // transmute copy from Vec<FloatOrd> to Vec<f32>
-		// let dur = time_it(|| quadro_pivot_quicksort(&mut copy));
-		// println!("quick sort 4-pivot 10m array cost: {:?}ns", dur);
-		// assert_eq!(is_sorted(&copy), true);
+        // let dur = time_it(|| quadro_pivot_quicksort(&mut copy));
+        // println!("quick sort 4-pivot 10m array cost: {:?}ns", dur);
+        // assert_eq!(is_sorted(&copy), true);
 
         // let mut copy = arr.clone();
-		// let dur = time_it(|| quadro_pivot_quicksort_2(&mut copy));
-		// println!("quick sort 4-pivot (2nd) 10m array cost: {:?}ns", dur);
-		// assert_eq!(is_sorted(&copy), true);
+        // let dur = time_it(|| quadro_pivot_quicksort_2(&mut copy));
+        // println!("quick sort 4-pivot (2nd) 10m array cost: {:?}ns", dur);
+        // assert_eq!(is_sorted(&copy), true);
 
         // let mut copy = arr.clone();
-		// let dur = time_it(|| penta_pivot_quicksort(&mut copy));
-		// println!("quick sort 5-pivot 10m array cost: {:?}ns", dur);
-		// assert_eq!(is_sorted(&copy), true);
+        // let dur = time_it(|| penta_pivot_quicksort(&mut copy));
+        // println!("quick sort 5-pivot 10m array cost: {:?}ns", dur);
+        // assert_eq!(is_sorted(&copy), true);
 
         // let mut copy = arr.clone();
-		// let dur = time_it(|| hexa_pivot_quicksort(&mut copy));
-		// println!("quick sort 6-pivot 10m array cost: {:?}ns", dur);
-		// assert_eq!(is_sorted(&copy), true);
+        // let dur = time_it(|| hexa_pivot_quicksort(&mut copy));
+        // println!("quick sort 6-pivot 10m array cost: {:?}ns", dur);
+        // assert_eq!(is_sorted(&copy), true);
 
         // let mut copy = arr.clone();
-		// let dur = time_it(|| hepta_pivot_quicksort(&mut copy));
-		// println!("quick sort 7-pivot 10m array cost: {:?}ns", dur);
-		// assert_eq!(is_sorted(&copy), true);
+        // let dur = time_it(|| hepta_pivot_quicksort(&mut copy));
+        // println!("quick sort 7-pivot 10m array cost: {:?}ns", dur);
+        // assert_eq!(is_sorted(&copy), true);
 
         // let mut copy = arr.clone();
         // let dur = time_it(|| octal_pivot_quicksort(&mut copy));
         // println!("quick sort 8-pivot 10m array cost: {:?}ns", dur);
         // assert_eq!(is_sorted(&copy), true);
-
     }
-
 
     #[test]
     fn test_hoare_partition() {
         let mut arr: Vec<FloatOrd> = default_vec(1_000);
         let dur = time_it(|| quick_sort_hoare_partition(&mut arr));
         assert_eq!(is_sorted(&arr), true);
-        println!("quick sort 1-pivot (hoare partition) 1k array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (hoare partition) 1k array cost: {:?}ns",
+            dur
+        );
 
         let mut arr: Vec<FloatOrd> = default_vec(1_000_000);
         let dur = time_it(|| quick_sort_hoare_partition(&mut arr));
         assert_eq!(is_sorted(&arr), true);
-        println!("quick sort 1-pivot (hoare partition) 1m array cost: {:?}ns", dur);
+        println!(
+            "quick sort 1-pivot (hoare partition) 1m array cost: {:?}ns",
+            dur
+        );
     }
 
     // #[test]
@@ -239,7 +310,6 @@ mod test {
     //     }
     // }
 
-
     // TODO: test with custom FloatOrd type
     #[test]
     fn test_real_quad_pivot_qsort() {
@@ -254,7 +324,20 @@ mod test {
     #[test]
     fn test_4_pivots_qsort() {
         let _arr: Vec<f32> = default_vec(20);
-		let mut copy = [0.0846004486, 0.324027538, 0.247496307, 0.346324563, 0.32713002, 0.524065554, 0.0999410152, 0.448016822, 0.157732904, 0.249729276, 0.360087872, 0.937479197];
+        let mut copy = [
+            0.0846004486,
+            0.324027538,
+            0.247496307,
+            0.346324563,
+            0.32713002,
+            0.524065554,
+            0.0999410152,
+            0.448016822,
+            0.157732904,
+            0.249729276,
+            0.360087872,
+            0.937479197,
+        ];
         let dur = time_it(|| quadro_pivot_quicksort(&mut copy));
         println!("{:#?}", copy);
         println!("std sort 10m array cost: {:?}ns", dur);

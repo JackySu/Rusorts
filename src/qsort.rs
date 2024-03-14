@@ -194,6 +194,95 @@ pub fn double_pivot_quicksort_lomuto_partition_block<T: Ord>(mut arr: &mut [T]) 
     }
 }
 
+pub fn double_pivot_quicksort_new_partition_block<T: Ord + std::fmt::Debug>(mut arr: &mut [T]) {
+    const BLOCK: usize = 128;
+    let mut block_t = BLOCK;
+    // offsets of elements <P1 will be stored from left to right, and elements P1<=x<P2 will be stored from right to left
+    let mut offsets: [u8; BLOCK] = unsafe { mem::MaybeUninit::uninit().assume_init() };
+    loop {
+        unsafe {
+            conditional_sort!(debug, arr);
+            conditional_sort!(release, arr);
+            let (left, right) = (0, arr.len() - 1);
+            if arr.get_unchecked(left).cmp(arr.get_unchecked(right)) == Ordering::Greater {
+                arr.swap_unchecked(left, right);
+            }
+            let (pivot1, pivot2) = (ptr::read(arr.get_unchecked(left)), ptr::read(arr.get_unchecked(right)));
+            // dbg!(&pivot1, &pivot2);
+            let (mut i, mut j, mut k) = (left + 1, left + 1, left + 1);
+            let (mut num_p1, mut num_p2) = (0, 0);
+            while k < right {
+                block_t = cmp::min(block_t, right - k);
+                for l in 0..block_t {
+                    offsets[num_p1] = l as u8;
+                    num_p1 += (arr[k + l].cmp(&pivot1) == Ordering::Less) as usize;
+                    offsets[block_t - 1 - num_p2] = l as u8;
+                    num_p2 += (arr[k + l].cmp(&pivot2) == Ordering::Less && 
+                        (arr[k + l].cmp(&pivot1) == Ordering::Greater || arr[k + l].cmp(&pivot1) == Ordering::Equal)) as usize;
+                }
+ 
+                let (mut idx_p1, mut idx_p2) = (0, 0);
+                let mut l = 0;
+                while l < num_p1 + num_p2 {
+                    // if there is nothing to swap in either one of the blocks, break
+                    if (idx_p1 == num_p1) || (idx_p2 == num_p2) {
+                        break;
+                    }
+                    let idx_off = cmp::min(offsets[idx_p1], offsets[block_t - 1 - idx_p2]);                    
+                    if idx_off == offsets[idx_p1] {
+                        rotate4(arr, [k + idx_off as usize, k + l, j, i]);
+                        i += 1;
+                        idx_p1 += 1;
+                    } else {
+                        arr.swap_unchecked(k + idx_off as usize, j);
+                        idx_p2 += 1;
+                    }
+                    j += 1;
+                    l += 1;
+                }
+                if idx_p1 < num_p1 {
+                    for idx_off in idx_p1..num_p1 {
+                        rotate3(arr, [k + offsets[idx_off] as usize, j, i]);
+                        i += 1;
+                        j += 1;
+                    }
+                }
+                if idx_p2 < num_p2 {
+                    for idx_off in idx_p2..num_p2 {
+                        arr.swap_unchecked(k + offsets[block_t - 1 - idx_off] as usize, j);
+                        j += 1;
+                    }
+                }
+                k += block_t;
+                num_p1 = 0;
+                num_p2 = 0;
+            }
+            arr.swap_unchecked(i - 1, left);
+            arr.swap_unchecked(j, right);
+            let (left, right) = arr.split_at_mut(i - 1);
+            let (pivot1, right) = right.split_at_mut(1);
+            let _pivot1 = &pivot1[0];
+            let (mid, right) = right.split_at_mut(j - i);
+            let (pivot2, right) = right.split_at_mut(1);
+            let _pivot2 = &pivot2[0];
+            
+            if left.len() < mid.len() {
+                double_pivot_quicksort_lomuto_partition_block(left);
+                double_pivot_quicksort_lomuto_partition_block(right);
+                arr = mid;
+            } else if mid.len() > right.len() {
+                double_pivot_quicksort_lomuto_partition_block(right);
+                double_pivot_quicksort_lomuto_partition_block(mid);
+                arr = left;
+            } else {
+                double_pivot_quicksort_lomuto_partition_block(left);
+                double_pivot_quicksort_lomuto_partition_block(mid);
+                arr = right;
+            }
+        }
+    }
+}
+
 
 pub fn quick_sort_hoare_partition<T: Ord>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
@@ -365,7 +454,7 @@ fn partition_in_blocks<T, F>(v: &mut [T], pivot: &T, is_less: &mut F) -> usize
 
 pub fn quick_sort_hoare_partition_block<T: Ord>(mut arr: &mut [T]) {
 
-    let is_less = &mut |a: &T, b: &T| a.lt(b);
+    let is_less = &mut |a: &T, b: &T| a.cmp(b) == Ordering::Less;
 
     unsafe {
         loop {
@@ -547,7 +636,7 @@ pub fn triple_pivot_quicksort<T: Ord>(arr: &mut [T]) {
 		
 		i -= 1;
 		j -= 1;
-		k += 1;
+		// k += 1;  // k is never used, so it's not necessary to increment it
 		l += 1;
 		// at this point arr[<=i] < p1, arr[i..=j] >= p1 and <= p2, arr[k..=l] >= p2 and <= p3, arr[>=l] > p3 (j == k)
 		// move p2 from arr[left + 1] to vacant position arr[j] (in the middle) 
@@ -666,7 +755,7 @@ pub fn quad_pivot_quicksort<T: Ord>(arr: &mut [T]) {
         }
         i -= 1;
         j -= 1;
-        k -= 1;
+        // k -= 1;
         l += 1;
         m += 1;
         
@@ -795,7 +884,7 @@ impl_4n_pivot_qsort!(8, octal_pivot_quicksort, f32, f32x8);
 pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
     conditional_partial_sort!(debug, arr);
     conditional_partial_sort!(release, arr);
-    let n = arr.len();
+    // let n = arr.len();
     
     let n_pivots = 4;
     

@@ -1,6 +1,5 @@
 use rand::{distributions::Standard, Rng, prelude::Distribution};
 use std::time;
-use std::mem::MaybeUninit;
 
 pub fn default_vec<T>(n: usize) -> Vec<T>
 where Standard: Distribution<T> {
