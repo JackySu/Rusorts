@@ -245,6 +245,13 @@ mod test {
             dur
         );
 
+        let mut copy = arr.clone();
+        let dur = time_it(|| double_pivot_quicksort_new_partition_block(&mut copy));
+        assert_eq!(is_sorted(&copy), true);
+        println!(
+            "quick sort 2-pivot (new block partition) 10m array cost: {:?}ns",
+            dur
+        );
         // let mut arr = default_vec(1_000_000);
         // let mut copy = arr.clone();
         // // transmute copy from Vec<FloatOrd> to Vec<f32>

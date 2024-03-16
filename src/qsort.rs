@@ -267,16 +267,16 @@ pub fn double_pivot_quicksort_new_partition_block<T: Ord + std::fmt::Debug>(mut 
             let _pivot2 = &pivot2[0];
             
             if left.len() < mid.len() {
-                double_pivot_quicksort_lomuto_partition_block(left);
-                double_pivot_quicksort_lomuto_partition_block(right);
+                double_pivot_quicksort_new_partition_block(left);
+                double_pivot_quicksort_new_partition_block(right);
                 arr = mid;
             } else if mid.len() > right.len() {
-                double_pivot_quicksort_lomuto_partition_block(right);
-                double_pivot_quicksort_lomuto_partition_block(mid);
+                double_pivot_quicksort_new_partition_block(right);
+                double_pivot_quicksort_new_partition_block(mid);
                 arr = left;
             } else {
-                double_pivot_quicksort_lomuto_partition_block(left);
-                double_pivot_quicksort_lomuto_partition_block(mid);
+                double_pivot_quicksort_new_partition_block(left);
+                double_pivot_quicksort_new_partition_block(mid);
                 arr = right;
             }
         }
@@ -284,36 +284,48 @@ pub fn double_pivot_quicksort_new_partition_block<T: Ord + std::fmt::Debug>(mut 
 }
 
 
-pub fn quick_sort_hoare_partition<T: Ord>(arr: &mut [T]) {
-    conditional_sort!(debug, arr);
-    conditional_sort!(release, arr);
-
-    let pivot = unsafe { ptr::read(arr.get_unchecked(0)) };
-	let mut i = -1;
-	let mut j = arr.len() as i32;
-	loop {
-        i += 1;
-		while arr[i as usize].cmp(&pivot) == Ordering::Less {
-			i += 1;
-		}
-
-        j -= 1;
-		while arr[j as usize].cmp(&pivot) == Ordering::Greater {
-			j -= 1;
-		}
-
-		if i >= j {
-			break;
-		}
-		unsafe { arr.swap_unchecked(i as usize, j as usize); }
-	}
-
-	if j > 0 {
-		quick_sort_hoare_partition(&mut arr[..=j as usize]);
-	}
-	if j < arr.len() as i32 {
-		quick_sort_hoare_partition(&mut arr[(j + 1) as usize..]);
-	}
+pub fn quick_sort_hoare_partition<T: Ord>(mut arr: &mut [T]) {
+    loop {
+        unsafe {
+            conditional_sort!(debug, arr);
+            conditional_sort!(release, arr);
+            let mut i = -1;
+            let mut j = arr.len() as isize;
+            let pivot = ptr::read(arr.get_unchecked(0));
+            loop {
+                i += 1;
+                while arr[i as usize].cmp(&pivot) == Ordering::Less {
+                    i += 1;
+                }
+        
+                j -= 1;
+                while arr[j as usize].cmp(&pivot) == Ordering::Greater {
+                    j -= 1;
+                }
+        
+                if i >= j {
+                    break;
+                }
+                arr.swap_unchecked(i as usize, j as usize);
+            }
+        
+            arr.swap_unchecked(0, j as usize);
+            let (left, right) = arr.split_at_mut(j as usize);
+            let (_pivot, right) = right.split_at_mut(1);
+            if left.len() > right.len() {
+                if right.len() > 1 {
+                    quick_sort_hoare_partition(right);
+                }
+                arr = left;
+            } else {
+                if left.len() > 1 {
+                    quick_sort_hoare_partition(left);
+                }
+                arr = right;
+            }
+        }
+    }
+    
 }
 
 // Refer to PDQSort implementation in std::slice::unstable_sort
@@ -481,10 +493,10 @@ pub fn quick_sort_hoare_partition_block<T: Ord>(mut arr: &mut [T]) {
             let (_pivot, right) = right.split_at_mut(1);
     
             if left.len() < right.len() {
-                quick_sort_hoare_partition(left);
+                quick_sort_hoare_partition_block(left);
                 arr = right;
             } else {
-                quick_sort_hoare_partition(right);
+                quick_sort_hoare_partition_block(right);
                 arr = left;
             }
         }
