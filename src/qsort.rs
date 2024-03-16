@@ -1,5 +1,5 @@
 // #![allow(dead_code)]
-
+#![allow(clippy::uninit_assumed_init)]
 use std::simd::{cmp::SimdPartialOrd, *};
 use std::cmp::Ordering;
 use std::{ptr, mem, cmp};

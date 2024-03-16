@@ -21,6 +21,7 @@ name = "bench"
 harness = false
 
 [dependencies]
+pyo3 = { version = "0.20.3", features = ["extension-module"] }
 rand = "0.8.5"
 introsort = { version = "0.6.0", features = [ "float" ] }
 pdqsort = "1.0.3"
@@ -33,6 +34,3 @@ lto = true
 opt-level = 3
 # codegen-units = 1  // will potentially slow down the runtime performance
 panic = "abort"
-
-[target.'cfg(target_arch = "x86_64")'.release]
-rustflags = ["-C", "target-feature=+avx2,+fma"]

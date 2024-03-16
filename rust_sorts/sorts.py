@@ -1,10 +1,12 @@
 from typing import Callable
 import copy
 import random
+import os
+
 import rust_sorts
 
 
-RUNS = 1
+RUNS = 20
 TIME_STATS = []
 TIME_STATS_N = [
     1_000,
@@ -14,41 +16,33 @@ TIME_STATS_N = [
     10_000_000,
 ]
 SORT_FUNCS = {
-    "Std sort": rust_sorts.lib.f32_std_sort,
-    "Introsort": rust_sorts.lib.f32_introsort,
-    "PDQSort": rust_sorts.lib.f32_pdqsort,
-    "Quicksort hoare partition": rust_sorts.lib.f32_quicksort_hoare,
-    "Quicksort lomuto partition": rust_sorts.lib.f32_quicksort_lomuto,
-    "Double Pivot Quicksort": rust_sorts.lib.f32_double_pivot_quicksort,
-    "Triple Pivot Quicksort": rust_sorts.lib.f32_triple_pivot_quicksort,
+    "std unstable sort": rust_sorts.f32_std_unstable_sort,
+    "PDQSort": rust_sorts.f32_pdq_sort,
+    "Quicksort hoare block partition": rust_sorts.f32_1_pivot_quicksort_hoare_block_partition,
+    "Quicksort 4 Pivots": rust_sorts.f32_4_pivot_quicksort,
 }
 
 
-def time_sort(sort_name: str, sort_func: Callable[[float], None], to_sort: list[float], stats: list[float]) -> None:
+def time_sort(sort_name: str, sort_func: Callable[[float], int], to_sort: list[float], stats: list[float]) -> None:
     copied = copy.deepcopy(to_sort)
-    time_per_call = sum([sort_func(copied, len(copied)) for _ in RUNS]) / RUNS * 1_000_000
-    print(f"{sort_name} μs per call: {time_per_call:.2f} μs")
+    time_per_call = sum([sort_func(copied) for _ in range(RUNS)]) / RUNS / 1_000
+    print(f"{sort_name} per call: {time_per_call:.2f} μs")
     stats.append(time_per_call)
 
 
 def run_sorts_with_size(n: int):
+    print(f"Running sorts with n = {n}")
     to_sort: list[float] = [random.random() for _ in range(n)]
 
     stats: list[float] = []
-
-    copied = copy.deepcopy(to_sort)
-    python_time_per_call = sum([sort_func(copied, len(copied)) for _ in RUNS]) / RUNS * 1_000_000
-    print(f"Python μs per call: {python_time_per_call:.2f} μs")
-
     for sort_name, sort_func in SORT_FUNCS.items():
         time_sort(sort_name, sort_func, to_sort, stats)
 
     TIME_STATS.append(stats)
+    print('---')
 
 
 def main():
-    print("Running sorts on 1,000,000 random floats")
-
     for n in TIME_STATS_N:
         run_sorts_with_size(n)
 
@@ -59,7 +53,7 @@ def main():
     import matplotlib.pyplot as plt
     import numpy as np
 
-    fig, ax = plt.subplots()
+    _fig, ax = plt.subplots()
     ax.set_title("Sorts")
     ax.set_xlabel("n")
     ax.set_ylabel("μs per call")
@@ -89,7 +83,8 @@ def main():
 
     ax.legend()
 
-    plt.savefig("sorts.png", dpi=300, bbox_inches='tight')
+    os.chdir(os.path.dirname(__file__))
+    plt.savefig("../sorts.png", dpi=300, bbox_inches='tight')
     # plt.show()
 
     print(" --- done --- ")

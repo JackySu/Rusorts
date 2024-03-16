@@ -1,8 +1,15 @@
 use core::cmp::Ordering;
-use std::ops::Deref;
+use core::ops::Deref;
 
+use pyo3::FromPyObject;
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
+
+impl FromPyObject<'_> for FloatOrd {
+    fn extract(ob: &pyo3::PyAny) -> pyo3::PyResult<Self> {
+        Ok(FloatOrd(ob.extract()?))
+    }
+}
 
 #[derive(PartialEq, PartialOrd, Debug, Clone, Copy)]
 #[repr(transparent)]  // guarantees same layout as a single f32

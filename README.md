@@ -1,63 +1,51 @@
+- [What it does](#what-it-does)
+  - [⚠ Wrapper type `FloatOrd` is to fix IEEE-754's NaN, -INF, INF, -0 and 0 issues ordinary issues](#-wrapper-type-floatord-is-to-fix-ieee-754s-nan--inf-inf--0-and-0-issues-ordinary-issues)
+- [Run](#run)
+- [Latest results](#latest-results)
+- [Very old results](#very-old-results)
+
 # What it does
 
-export the Rust's
-- std lib stable sort function
-- what I implemented
-  * single-pivot qsort
-  * double-pivots qsort
-  * triple-pivots qsort
-- pdqsort both by std and user
+- Implemented
+  * 1-4 Pivot Quicksort
+  * 1-2 Pivot Block Partitioning Quicksort
 
-to Python using [PyO3/Maturin](https://github.com/PyO3/maturin)
-
-## ⚠ To fix IEEE-754's NaN, -INF, INF, -0 and 0 issues I implemented a wrapper type `FloatOrd`
-
-
-# Goal
-
-TODO:
-  
-  - implement 4, 5, 6 ~ 8 pivots quicksort, optimize and compare their performances
-  - add more well-optimzed sorting algorithms into comparisons
+## ⚠ Wrapper type `FloatOrd` is to fix IEEE-754's NaN, -INF, INF, -0 and 0 issues ordinary issues 
 
 # Run
 
-- install Rust🦀 and Python🐍
+1. run only the bench in rust
 
-- `cd` to the directory
+- install Rust🦀 and perf for profiling
 
-- install Maturin, enter virtual env and build release version of sorting package
+```shell
+sudo sh -c 'echo 1 >/proc/sys/kernel/perf_event_paranoid'
+cargo bench
+```
+
+- see `benches/bench.rs` for more details
+
+2. install Python🐍 if you want
 
 ```shell
 pip install maturin
 python3 -m venv .venv
 source .venv/bin/activate
 pip install .
-maturin develop --release (-b cffi if cffi is used)
+maturin develop --release
 ```
 
-- `cd rust_sorts && python3 sorts.py`
+- see example usages in `rust_sorts/sorts.py`
 
-- wait for the results to be stored as `sorts.png`
+# Latest results
 
+TODO: Update this
 
-# Result & what's worth your attention
+PDQSort >= std_unstable_sort > hoare_block_partition > 4 Pivots QSort
 
-In my personal test with C w and w/o SSE intrinsics (Modified from concurrent prog assignment, using rust ffi)
+# Very old results
 
-> c std qsort time:
-> 
->  - 1418117 microseconds, 5095654990 cycles
-> 
-> c sse qsort time:
-> 
->  - 930252 microseconds, 3342629700 cycles
-> 
-> c sse ssort time:
-> 
->  - 1169673 microseconds, 4202931888 cycles
-> 
-> rust std sort time:
+> rust std stable sort time:
 > 
 >  - 938202 microseconds, 3371196456 cycles
 > 
@@ -85,6 +73,4 @@ In my personal test with C w and w/o SSE intrinsics (Modified from concurrent pr
 > 
 >  - 909853 microseconds, 3269327112 cycles
 
-I re-exported it to python as stated above and get approximately(?) the same results.
-
-<img src="https://github.com/JackySu/Rusorts/blob/master/sorts.png"></img>
+![](sorts.png)

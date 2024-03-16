@@ -1,77 +1,56 @@
 // enable portable simd feature to use simd in nightly build
 #![feature(portable_simd)]
 #![feature(slice_swap_unchecked)]
+#![feature(maybe_uninit_uninit_array)]
 
-extern crate rand;
-extern crate introsort;
 extern crate pdqsort;
+extern crate rand;
 
-pub mod util;
-pub mod test;
 pub mod qsort;
+pub mod test;
 pub mod ty;
+pub mod util;
 
+use qsort::*;
 use ty::FloatOrd;
-use qsort::{
-	quick_sort_hoare_partition, quick_sort_lomuto_partition, double_pivot_quicksort, triple_pivot_quicksort
-};
-use util::{
-	time_it, is_sorted, default_vec
-};
+use util::*;
+
+use pyo3::prelude::*;
 
 
-#[no_mangle]
-pub unsafe extern "C" fn f32_std_sort(v: *mut f32, size: usize) -> u64 {
-	let v = std::slice::from_raw_parts_mut(v, size);
-	let v: &mut [FloatOrd] = std::mem::transmute(v);
-	time_it(|| v.sort())
+#[pyfunction]
+fn f32_std_unstable_sort(mut v: Vec<FloatOrd>) -> u64 {
+    time_it(|| v.sort_unstable())
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn f32_introsort(v: *mut f32, size: usize) -> u64 {
-	let v = std::slice::from_raw_parts_mut(v, size);
-	let v: &mut [FloatOrd] = std::mem::transmute(v);
-	time_it(|| introsort::sort(v))
+#[pyfunction]
+fn f32_pdq_sort(mut v: Vec<FloatOrd>) -> u64 {
+    time_it(|| { pdqsort::sort(&mut v) })
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn f32_pdqsort(v: *mut f32, size: usize) -> u64 {
-	let v = std::slice::from_raw_parts_mut(v, size);
-	let v: &mut [FloatOrd] = std::mem::transmute(v);
-	time_it(|| pdqsort::sort(v))
+#[pyfunction]
+fn f32_1_pivot_quicksort_hoare_block_partition(mut v: Vec<FloatOrd>) -> u64 {
+    time_it(|| quick_sort_hoare_partition_block(&mut v))
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn f32_unstable_sort(v: *mut f32, size: usize) -> u64 {
-	// std lib's unstable sort uses PDQSort under the hood, but slower than the community version
-	let v = std::slice::from_raw_parts_mut(v, size);
-	time_it(|| v.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap()))
+#[pyfunction]
+fn f32_4_pivot_quicksort(mut v: Vec<FloatOrd>) -> u64 {
+    time_it(|| quad_pivot_quicksort(&mut v))
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn f32_quicksort_hoare(v: *mut f32, size: usize) -> u64 {
-	let v = std::slice::from_raw_parts_mut(v, size);
-	let v: &mut [FloatOrd] = std::mem::transmute(v);
-	time_it(|| quick_sort_hoare_partition(v))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn f32_quicksort_lomuto(v: *mut f32, size: usize) -> u64 {
-	let v = std::slice::from_raw_parts_mut(v, size);
-	let v: &mut [FloatOrd] = std::mem::transmute(v);
-	time_it(|| quick_sort_lomuto_partition(v))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn f32_double_pivot_quicksort(v: *mut f32, size: usize) -> u64 {
-	let v = std::slice::from_raw_parts_mut(v, size);
-	let v: &mut [FloatOrd] = std::mem::transmute(v);
-	time_it(|| double_pivot_quicksort(v))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn f32_triple_pivot_quicksort(v: *mut f32, size: usize) -> u64 {
-	let v = std::slice::from_raw_parts_mut(v, size);
-	let v: &mut [FloatOrd] = std::mem::transmute(v);
-	time_it(|| triple_pivot_quicksort(v))
+#[pymodule]
+#[pyo3(name = "rust_sorts")]
+fn rust_sorts(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(f32_std_unstable_sort, m)?)?;
+    m.add_function(wrap_pyfunction!(f32_pdq_sort, m)?)?;
+	m.add_function(wrap_pyfunction!(f32_1_pivot_quicksort_hoare_block_partition, m)?)?;
+	m.add_function(wrap_pyfunction!(f32_4_pivot_quicksort, m)?)?;
+    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
+    m.add("__doc__", r#"Rust sorting algorithms:
+f32_std_unstable_sort: std::vec::Vec<f32> -> u64 (nanoseconds) - uses std::vec::Vec::sort_unstable
+f32_pdq_sort: pdqsort::sort(&mut [f32]) -> u64 (nanoseconds) - uses pdqsort::sort
+f32_1_pivot_quicksort_hoare_block_partition: quick_sort_hoare_partition_block(&mut [f32]) -> u64 (nanoseconds) - uses quick_sort_hoare_partition_block
+f32_4_pivot_quicksort: quad_pivot_quicksort(&mut [f32]) -> u64 (nanoseconds) - uses quad_pivot_quicksort
+"#)?;
+    Ok(())
 }
