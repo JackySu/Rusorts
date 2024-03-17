@@ -1,5 +1,5 @@
 #![allow(unused)]
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, Criterion, measurement::WallTime};
 use criterion_perf_events::Perf;
 use perfcnt::linux::HardwareEventType as Hardware;
 use perfcnt::linux::PerfCounterBuilderLinux as Builder;
@@ -42,324 +42,360 @@ macro_rules! gen_mostly_descending {
 gen_mostly_ascending!(mostly_ascending_f32, FloatOrd);
 gen_mostly_descending!(mostly_descending_f32, FloatOrd);
 
-pub fn normal_partition_benchmark(c: &mut Criterion<Perf>) {
-    let mut g1_hoare = c.benchmark_group("1_pivot_hoare");
+macro_rules! gen_bench_for_measurement {
+    ($func: ident, $typ: ty, $postfix: expr) => {
+        pub fn $func(c: &mut Criterion<$typ>) {
+            let mut name = String::from("1_pivot_hoare");
+            name.push_str($postfix);
+            let mut g1_hoare = c.benchmark_group(name);
+        
+            g1_hoare.bench_function("1_pivot_f32_hoare_sort_small_random", |b| 
+                b.iter(|| quick_sort_hoare_partition(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
+            );
+            // g1_hoare.bench_function("1_pivot_f32_hoare_sort_small_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_ascending_f32(SMALL_SIZE))))
+            // );
+            // g1_hoare.bench_function("1_pivot_f32_hoare_sort_small_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_descending_f32(SMALL_SIZE))))
+            // );
+        
+            g1_hoare.bench_function("1_pivot_f32_hoare_sort_medium_random", |b| 
+                b.iter(|| quick_sort_hoare_partition(black_box(&mut default_vec::<FloatOrd>(MEDIUM_SIZE))))
+            );
+            // g1_hoare.bench_function("1_pivot_f32_hoare_sort_medium_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_ascending_f32(MEDIUM_SIZE))))
+            // );
+            // g1_hoare.bench_function("1_pivot_f32_hoare_sort_medium_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_descending_f32(MEDIUM_SIZE))))
+            // );
+        
+            g1_hoare.bench_function("1_pivot_f32_hoare_sort_large_random", |b| 
+                b.iter(|| quick_sort_hoare_partition(black_box(&mut default_vec::<FloatOrd>(LARGE_SIZE))))
+            );
+            // g1_hoare.bench_function("1_pivot_f32_hoare_sort_large_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_ascending_f32(LARGE_SIZE))))
+            // );
+            // g1_hoare.bench_function("1_pivot_f32_hoare_sort_large_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
+            // );
+        
+            g1_hoare.finish();
+        
+            let mut name = String::from("1_pivot_lomuto");
+            name.push_str($postfix);
+            let mut g1_lomuto = c.benchmark_group(name);
+            
+            g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_small_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
+            );
+            // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_small_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_ascending_f32(SMALL_SIZE))))
+            // );
+            // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_small_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_descending_f32(SMALL_SIZE))))
+            // );
+        
+            g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_medium_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition(black_box(&mut default_vec::<FloatOrd>(MEDIUM_SIZE))))
+            );
+            // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_medium_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_ascending_f32(MEDIUM_SIZE))))
+            // );
+            // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_medium_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_descending_f32(MEDIUM_SIZE))))
+            // );
+        
+            g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_large_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition(black_box(&mut default_vec::<FloatOrd>(LARGE_SIZE))))
+            );
+            // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_large_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_ascending_f32(LARGE_SIZE))))
+            // );
+            // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_large_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
+            // );
+        
+            g1_lomuto.finish();
+        
+            let mut name = String::from("2_pivot");
+            name.push_str($postfix);
+            let mut g2 = c.benchmark_group(name);
+        
+            g2.bench_function("2_pivot_f32_sort_small_random", |b| 
+                b.iter(|| double_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
+            );
+            // g2.bench_function("2_pivot_f32_sort_small_mostly_ascending", |b| 
+            //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_ascending_f32(SMALL_SIZE))))
+            // );
+            // g2.bench_function("2_pivot_f32_sort_small_mostly_descending", |b| 
+            //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_descending_f32(SMALL_SIZE))))
+            // );
+        
+            g2.bench_function("2_pivot_f32_sort_medium_random", |b| 
+                b.iter(|| double_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(MEDIUM_SIZE))))
+            );
+            // g2.bench_function("2_pivot_f32_sort_medium_mostly_ascending", |b| 
+            //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_ascending_f32(MEDIUM_SIZE))))
+            // );
+            // g2.bench_function("2_pivot_f32_sort_medium_mostly_descending", |b| 
+            //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_descending_f32(MEDIUM_SIZE))))
+            // );
+        
+            g2.bench_function("2_pivot_f32_sort_large_random", |b| 
+                b.iter(|| double_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(LARGE_SIZE))))
+            );
+            // g2.bench_function("2_pivot_f32_sort_large_mostly_ascending", |b| 
+            //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_ascending_f32(LARGE_SIZE))))
+            // );
+            // g2.bench_function("2_pivot_f32_sort_large_mostly_descending", |b| 
+            //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
+            // );
+            
+            g2.finish();
+        
+            let mut name = String::from("3_pivot");
+            name.push_str($postfix);
+            let mut g3 = c.benchmark_group(name);
+        
+            g3.bench_function("3_pivot_f32_sort_small_random", |b| 
+                b.iter(|| triple_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
+            );
+            // g3.bench_function("3_pivot_f32_sort_small_mostly_ascending", |b| 
+            //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_ascending_f32(SMALL_SIZE))))
+            // );
+            // g3.bench_function("3_pivot_f32_sort_small_mostly_descending", |b| 
+            //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_descending_f32(SMALL_SIZE))))
+            // );
+        
+            g3.bench_function("3_pivot_f32_sort_medium_random", |b| 
+                b.iter(|| triple_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(MEDIUM_SIZE))))
+            );
+            // g3.bench_function("3_pivot_f32_sort_medium_mostly_ascending", |b| 
+            //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_ascending_f32(MEDIUM_SIZE))))
+            // );
+            // g3.bench_function("3_pivot_f32_sort_medium_mostly_descending", |b| 
+            //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_descending_f32(MEDIUM_SIZE))))
+            // );
+        
+            g3.bench_function("3_pivot_f32_sort_large_random", |b| 
+                b.iter(|| triple_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(LARGE_SIZE))))
+            );
+            // g3.bench_function("3_pivot_f32_sort_large_mostly_ascending", |b| 
+            //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_ascending_f32(LARGE_SIZE))))
+            // );
+            // g3.bench_function("3_pivot_f32_sort_large_mostly_descending", |b| 
+            //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
+            // );
+        
+            g3.finish();
+        
+            let mut name = String::from("4_pivot");
+            name.push_str($postfix);
+            let mut g4 = c.benchmark_group(name);
+        
+            g4.bench_function("4_pivot_f32_sort_small_random", |b| 
+                b.iter(|| quad_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
+            );
+            // g4.bench_function("4_pivot_f32_sort_small_mostly_ascending", |b| 
+            //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_ascending_f32(SMALL_SIZE))))
+            // );
+            // g4.bench_function("4_pivot_f32_sort_small_mostly_descending", |b| 
+            //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_descending_f32(SMALL_SIZE))))
+            // );
+        
+            g4.bench_function("4_pivot_f32_sort_medium_random", |b| 
+                b.iter(|| quad_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(MEDIUM_SIZE))))
+            );
+            // g4.bench_function("4_pivot_f32_sort_medium_mostly_ascending", |b| 
+            //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_ascending_f32(MEDIUM_SIZE))))
+            // );
+            // g4.bench_function("4_pivot_f32_sort_medium_mostly_descending", |b| 
+            //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_descending_f32(MEDIUM_SIZE))))
+            // );
+        
+            g4.bench_function("4_pivot_f32_sort_large_random", |b| 
+                b.iter(|| quad_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(LARGE_SIZE))))
+            );
+            // g4.bench_function("4_pivot_f32_sort_large_mostly_ascending", |b| 
+            //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_ascending_f32(LARGE_SIZE))))
+            // );
+            // g4.bench_function("4_pivot_f32_sort_large_mostly_descending", |b| 
+            //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
+            // );
+        
+            g4.finish();
 
-    g1_hoare.bench_function("1_pivot_f32_hoare_sort_small_random", |b| 
-        b.iter(|| quick_sort_hoare_partition(black_box(&mut default_vec::<FloatOrd>(1_00))))
-    );
-    // g1_hoare.bench_function("1_pivot_f32_hoare_sort_small_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_ascending_f32(1_00))))
-    // );
-    // g1_hoare.bench_function("1_pivot_f32_hoare_sort_small_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_descending_f32(1_00))))
-    // );
-
-    g1_hoare.bench_function("1_pivot_f32_hoare_sort_medium_random", |b| 
-        b.iter(|| quick_sort_hoare_partition(black_box(&mut default_vec::<FloatOrd>(10_000))))
-    );
-    // g1_hoare.bench_function("1_pivot_f32_hoare_sort_medium_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_ascending_f32(10_000))))
-    // );
-    // g1_hoare.bench_function("1_pivot_f32_hoare_sort_medium_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_descending_f32(10_000))))
-    // );
-
-    g1_hoare.bench_function("1_pivot_f32_hoare_sort_large_random", |b| 
-        b.iter(|| quick_sort_hoare_partition(black_box(&mut default_vec::<FloatOrd>(10_000_000))))
-    );
-    // g1_hoare.bench_function("1_pivot_f32_hoare_sort_large_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_ascending_f32(10_000_000))))
-    // );
-    // g1_hoare.bench_function("1_pivot_f32_hoare_sort_large_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_descending_f32(10_000_000))))
-    // );
-
-    g1_hoare.finish();
-
-    let mut g1_lomuto = c.benchmark_group("1_pivot_lomuto");
-    
-    g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_small_random", |b| 
-        b.iter(|| quick_sort_lomuto_partition(black_box(&mut default_vec::<FloatOrd>(1_00))))
-    );
-    // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_small_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_ascending_f32(1_00))))
-    // );
-    // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_small_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_descending_f32(1_00))))
-    // );
-
-    g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_medium_random", |b| 
-        b.iter(|| quick_sort_lomuto_partition(black_box(&mut default_vec::<FloatOrd>(10_000))))
-    );
-    // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_medium_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_ascending_f32(10_000))))
-    // );
-    // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_medium_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_descending_f32(10_000))))
-    // );
-
-    g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_large_random", |b| 
-        b.iter(|| quick_sort_lomuto_partition(black_box(&mut default_vec::<FloatOrd>(10_000_000))))
-    );
-    // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_large_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_ascending_f32(10_000_000))))
-    // );
-    // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_large_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_descending_f32(10_000_000))))
-    // );
-
-    g1_lomuto.finish();
-
-    let mut g2 = c.benchmark_group("2_pivot");
-
-    g2.bench_function("2_pivot_f32_sort_small_random", |b| 
-        b.iter(|| double_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(1_00))))
-    );
-    // g2.bench_function("2_pivot_f32_sort_small_mostly_ascending", |b| 
-    //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_ascending_f32(1_00))))
-    // );
-    // g2.bench_function("2_pivot_f32_sort_small_mostly_descending", |b| 
-    //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_descending_f32(1_00))))
-    // );
-
-    g2.bench_function("2_pivot_f32_sort_medium_random", |b| 
-        b.iter(|| double_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(10_000))))
-    );
-    // g2.bench_function("2_pivot_f32_sort_medium_mostly_ascending", |b| 
-    //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_ascending_f32(10_000))))
-    // );
-    // g2.bench_function("2_pivot_f32_sort_medium_mostly_descending", |b| 
-    //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_descending_f32(10_000))))
-    // );
-
-    g2.bench_function("2_pivot_f32_sort_large_random", |b| 
-        b.iter(|| double_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(10_000_000))))
-    );
-    // g2.bench_function("2_pivot_f32_sort_large_mostly_ascending", |b| 
-    //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_ascending_f32(10_000_000))))
-    // );
-    // g2.bench_function("2_pivot_f32_sort_large_mostly_descending", |b| 
-    //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_descending_f32(10_000_000))))
-    // );
-    
-    g2.finish();
-
-    let mut g3 = c.benchmark_group("3_pivot");
-
-    g3.bench_function("3_pivot_f32_sort_small_random", |b| 
-        b.iter(|| triple_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(1_00))))
-    );
-    // g3.bench_function("3_pivot_f32_sort_small_mostly_ascending", |b| 
-    //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_ascending_f32(1_00))))
-    // );
-    // g3.bench_function("3_pivot_f32_sort_small_mostly_descending", |b| 
-    //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_descending_f32(1_00))))
-    // );
-
-    g3.bench_function("3_pivot_f32_sort_medium_random", |b| 
-        b.iter(|| triple_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(10_000))))
-    );
-    // g3.bench_function("3_pivot_f32_sort_medium_mostly_ascending", |b| 
-    //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_ascending_f32(10_000))))
-    // );
-    // g3.bench_function("3_pivot_f32_sort_medium_mostly_descending", |b| 
-    //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_descending_f32(10_000))))
-    // );
-
-    g3.bench_function("3_pivot_f32_sort_large_random", |b| 
-        b.iter(|| triple_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(10_000_000))))
-    );
-    // g3.bench_function("3_pivot_f32_sort_large_mostly_ascending", |b| 
-    //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_ascending_f32(10_000_000))))
-    // );
-    // g3.bench_function("3_pivot_f32_sort_large_mostly_descending", |b| 
-    //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_descending_f32(10_000_000))))
-    // );
-
-    g3.finish();
-
-    let mut g4 = c.benchmark_group("4_pivot");
-
-    g4.bench_function("4_pivot_f32_sort_small_random", |b| 
-        b.iter(|| quad_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(1_00))))
-    );
-    // g4.bench_function("4_pivot_f32_sort_small_mostly_ascending", |b| 
-    //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_ascending_f32(1_00))))
-    // );
-    // g4.bench_function("4_pivot_f32_sort_small_mostly_descending", |b| 
-    //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_descending_f32(1_00))))
-    // );
-
-    g4.bench_function("4_pivot_f32_sort_medium_random", |b| 
-        b.iter(|| quad_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(10_000))))
-    );
-    // g4.bench_function("4_pivot_f32_sort_medium_mostly_ascending", |b| 
-    //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_ascending_f32(10_000))))
-    // );
-    // g4.bench_function("4_pivot_f32_sort_medium_mostly_descending", |b| 
-    //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_descending_f32(10_000))))
-    // );
-
-    g4.bench_function("4_pivot_f32_sort_large_random", |b| 
-        b.iter(|| quad_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(10_000_000))))
-    );
-    // g4.bench_function("4_pivot_f32_sort_large_mostly_ascending", |b| 
-    //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_ascending_f32(10_000_000))))
-    // );
-    // g4.bench_function("4_pivot_f32_sort_large_mostly_descending", |b| 
-    //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_descending_f32(10_000_000))))
-    // );
-
-    g4.finish();
+            let mut name = String::from("block_partition_hoare");
+            name.push_str($postfix);
+            let mut h = c.benchmark_group(name);
+        
+            h.bench_function("1_pivot_f32_hoare_small_random", |b| 
+                b.iter(|| quick_sort_hoare_partition_block(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
+            );
+            // h.bench_function("1_pivot_f32_hoare_small_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_ascending_f32(SMALL_SIZE))))
+            // );
+            // h.bench_function("1_pivot_f32_hoare_small_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_descending_f32(SMALL_SIZE))))
+            // );
+        
+            h.bench_function("1_pivot_f32_hoare_medium_random", |b| 
+                b.iter(|| quick_sort_hoare_partition_block(black_box(&mut default_vec::<FloatOrd>(MEDIUM_SIZE))))
+            );
+            // h.bench_function("1_pivot_f32_hoare_medium_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_ascending_f32(MEDIUM_SIZE))))
+            // );
+            // h.bench_function("1_pivot_f32_hoare_medium_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_descending_f32(MEDIUM_SIZE))))
+            // );
+        
+            h.bench_function("1_pivot_f32_hoare_large_random", |b| 
+                b.iter(|| quick_sort_hoare_partition_block(black_box(&mut default_vec::<FloatOrd>(LARGE_SIZE))))
+            );
+            // h.bench_function("1_pivot_f32_hoare_large_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_ascending_f32(LARGE_SIZE))))
+            // );
+            // h.bench_function("1_pivot_f32_hoare_large_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
+            // );
+        
+            h.finish();
+        
+            let mut name = String::from("block_partition_lomuto");
+            name.push_str($postfix);
+            let mut l = c.benchmark_group(name);
+        
+            l.bench_function("1_pivot_f32_lomuto_small_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
+            );
+            // l.bench_function("1_pivot_f32_lomuto_small_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(SMALL_SIZE))))
+            // );
+            // l.bench_function("1_pivot_f32_lomuto_small_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_descending_f32(SMALL_SIZE))))
+            // );
+        
+            l.bench_function("1_pivot_f32_lomuto_medium_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(MEDIUM_SIZE))))
+            );
+            // l.bench_function("1_pivot_f32_lomuto_medium_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(MEDIUM_SIZE))))
+            // );
+            // l.bench_function("1_pivot_f32_lomuto_medium_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_descending_f32(MEDIUM_SIZE))))
+            // );
+        
+            l.bench_function("1_pivot_f32_lomuto_large_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(LARGE_SIZE))))
+            );
+            // l.bench_function("1_pivot_f32_lomuto_large_mostly_ascending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(LARGE_SIZE))))
+            // );
+            // l.bench_function("1_pivot_f32_lomuto_large_mostly_descending", |b| 
+            //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
+            // );
+        
+            l.bench_function("2_pivot_f32_lomuto_small_random", |b| 
+                b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
+            );
+            // l.bench_function("2_pivot_f32_lomuto_small_mostly_ascending", |b| 
+            //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(SMALL_SIZE))))
+            // );
+            // l.bench_function("2_pivot_f32_lomuto_small_mostly_descending", |b| 
+            //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_descending_f32(SMALL_SIZE))))
+            // );
+        
+            l.bench_function("2_pivot_f32_lomuto_medium_random", |b| 
+                b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(MEDIUM_SIZE))))
+            );
+            // l.bench_function("2_pivot_f32_lomuto_medium_mostly_ascending", |b| 
+            //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(MEDIUM_SIZE))))
+            // );
+            // l.bench_function("2_pivot_f32_lomuto_medium_mostly_descending", |b| 
+            //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_descending_f32(MEDIUM_SIZE))))
+            // );
+        
+            l.bench_function("2_pivot_f32_lomuto_large_random", |b| 
+                b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(LARGE_SIZE))))
+            );
+            // l.bench_function("2_pivot_f32_lomuto_large_mostly_ascending", |b| 
+            //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(LARGE_SIZE))))
+            // );
+            // l.bench_function("2_pivot_f32_lomuto_large_mostly_descending", |b| 
+            //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
+            // );
+        
+            l.finish();
+        
+            let mut name = String::from("block_partition_new");
+            name.push_str($postfix);
+            let mut n = c.benchmark_group(name);
+        
+            n.bench_function("2_pivot_f32_new_small_random", |b| 
+                b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
+            );
+            // n.bench_function("2_pivot_f32_new_small_mostly_ascending", |b| 
+            //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_ascending_f32(SMALL_SIZE))))
+            // );
+            // n.bench_function("2_pivot_f32_new_small_mostly_descending", |b| 
+            //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_descending_f32(SMALL_SIZE))))
+            // );
+        
+            n.bench_function("2_pivot_f32_new_medium_random", |b| 
+                b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut default_vec::<FloatOrd>(MEDIUM_SIZE))))
+            );
+        
+            n.bench_function("2_pivot_f32_new_large_random", |b| 
+                b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut default_vec::<FloatOrd>(LARGE_SIZE))))
+            );
+            // n.bench_function("2_pivot_f32_new_large_mostly_ascending", |b| 
+            //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_ascending_f32(LARGE_SIZE))))
+            // );
+            // n.bench_function("2_pivot_f32_new_large_mostly_descending", |b| 
+            //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
+            // );
+        
+            n.finish();
+        
+        }
+    };
 }
 
-pub fn block_partition_benchmark(c: &mut Criterion<Perf>) {
-    let mut h = c.benchmark_group("block_partition_hoare");
+gen_bench_for_measurement!(time_bench, WallTime, "_time");
+gen_bench_for_measurement!(cpu_cycle_bench, Perf, "_cpu_cycle");
+gen_bench_for_measurement!(cache_miss_bench, Perf, "_cache_miss");
+gen_bench_for_measurement!(branch_miss_bench, Perf, "_branch_miss");
 
-    h.bench_function("1_pivot_f32_hoare_small_random", |b| 
-        b.iter(|| quick_sort_hoare_partition_block(black_box(&mut default_vec::<FloatOrd>(1_00))))
-    );
-    // h.bench_function("1_pivot_f32_hoare_small_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_ascending_f32(1_00))))
-    // );
-    // h.bench_function("1_pivot_f32_hoare_small_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_descending_f32(1_00))))
-    // );
 
-    h.bench_function("1_pivot_f32_hoare_medium_random", |b| 
-        b.iter(|| quick_sort_hoare_partition_block(black_box(&mut default_vec::<FloatOrd>(10_000))))
-    );
-    // h.bench_function("1_pivot_f32_hoare_medium_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_ascending_f32(10_000))))
-    // );
-    // h.bench_function("1_pivot_f32_hoare_medium_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_descending_f32(10_000))))
-    // );
+const SMALL_SIZE: usize = 100;
+const MEDIUM_SIZE: usize = 1000;
+const LARGE_SIZE: usize = 10000;
 
-    h.bench_function("1_pivot_f32_hoare_large_random", |b| 
-        b.iter(|| quick_sort_hoare_partition_block(black_box(&mut default_vec::<FloatOrd>(10_000_000))))
-    );
-    // h.bench_function("1_pivot_f32_hoare_large_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_ascending_f32(10_000_000))))
-    // );
-    // h.bench_function("1_pivot_f32_hoare_large_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_descending_f32(10_000_000))))
-    // );
-
-    h.finish();
-
-    let mut l = c.benchmark_group("block_partition_lomuto");
-
-    l.bench_function("1_pivot_f32_lomuto_small_random", |b| 
-        b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(1_00))))
-    );
-    // l.bench_function("1_pivot_f32_lomuto_small_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(1_00))))
-    // );
-    // l.bench_function("1_pivot_f32_lomuto_small_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_descending_f32(1_00))))
-    // );
-
-    l.bench_function("1_pivot_f32_lomuto_medium_random", |b| 
-        b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(10_000))))
-    );
-    // l.bench_function("1_pivot_f32_lomuto_medium_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(10_000))))
-    // );
-    // l.bench_function("1_pivot_f32_lomuto_medium_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_descending_f32(10_000))))
-    // );
-
-    l.bench_function("1_pivot_f32_lomuto_large_random", |b| 
-        b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(10_000_000))))
-    );
-    // l.bench_function("1_pivot_f32_lomuto_large_mostly_ascending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(10_000_000))))
-    // );
-    // l.bench_function("1_pivot_f32_lomuto_large_mostly_descending", |b| 
-    //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_descending_f32(10_000_000))))
-    // );
-
-    l.bench_function("2_pivot_f32_lomuto_small_random", |b| 
-        b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(1_00))))
-    );
-    // l.bench_function("2_pivot_f32_lomuto_small_mostly_ascending", |b| 
-    //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(1_00))))
-    // );
-    // l.bench_function("2_pivot_f32_lomuto_small_mostly_descending", |b| 
-    //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_descending_f32(1_00))))
-    // );
-
-    l.bench_function("2_pivot_f32_lomuto_medium_random", |b| 
-        b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(10_000))))
-    );
-    // l.bench_function("2_pivot_f32_lomuto_medium_mostly_ascending", |b| 
-    //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(10_000))))
-    // );
-    // l.bench_function("2_pivot_f32_lomuto_medium_mostly_descending", |b| 
-    //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_descending_f32(10_000))))
-    // );
-
-    l.bench_function("2_pivot_f32_lomuto_large_random", |b| 
-        b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(10_000_000))))
-    );
-    // l.bench_function("2_pivot_f32_lomuto_large_mostly_ascending", |b| 
-    //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_ascending_f32(10_000_000))))
-    // );
-    // l.bench_function("2_pivot_f32_lomuto_large_mostly_descending", |b| 
-    //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_descending_f32(10_000_000))))
-    // );
-
-    l.finish();
-
-    let mut n = c.benchmark_group("block_partition_new");
-
-    n.bench_function("2_pivot_f32_new_small_random", |b| 
-        b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut default_vec::<FloatOrd>(1_00))))
-    );
-    // n.bench_function("2_pivot_f32_new_small_mostly_ascending", |b| 
-    //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_ascending_f32(1_00))))
-    // );
-    // n.bench_function("2_pivot_f32_new_small_mostly_descending", |b| 
-    //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_descending_f32(1_00))))
-    // );
-
-    n.bench_function("2_pivot_f32_new_medium_random", |b| 
-        b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut default_vec::<FloatOrd>(10_000))))
-    );
-    // n.bench_function("2_pivot_f32_new_medium_mostly_ascending", |b| 
-    //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_ascending_f32(10_000))))
-    // );
-    // n.bench_function("2_pivot_f32_new_medium_mostly_descending", |b| 
-    //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_descending_f32(10_000))))
-    // );
-
-    n.bench_function("2_pivot_f32_new_large_random", |b| 
-        b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut default_vec::<FloatOrd>(10_000_000))))
-    );
-    // n.bench_function("2_pivot_f32_new_large_mostly_ascending", |b| 
-    //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_ascending_f32(10_000_000))))
-    // );
-    // n.bench_function("2_pivot_f32_new_large_mostly_descending", |b| 
-    //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_descending_f32(10_000_000))))
-    // );
-
-    n.finish();
-
-}
+const SAMPLE_SIZE: usize = 20;
 
 
 criterion_group!(
-    name = benches;
-    // uncomment the line below to run the benchmarks with the default criterion configuration
-    // config = Criterion::default().sample_size(10).with_measurement(Perf::new(Builder::from_hardware_event(Hardware::Instructions)));
-    // config = Criterion::default().sample_size(10).with_measurement(Perf::new(Builder::from_hardware_event(Hardware::CacheMisses)));
-    // config = Criterion::default().sample_size(10).with_measurement(Perf::new(Builder::from_hardware_event(Hardware::BranchMisses)));
-    config = Criterion::default().sample_size(10).with_measurement(Perf::new(Builder::from_hardware_event(Hardware::CPUCycles)));
-    targets = normal_partition_benchmark, block_partition_benchmark
+    name = time;
+    config = Criterion::default().sample_size(SAMPLE_SIZE);
+    targets = time_bench
 );
-// criterion_group!(name = benches;
-//     config = Criterion::default().sample_size(10);
-//     targets = normal_partition_benchmark, block_partition_benchmark);
-criterion_main!(benches);
+
+criterion_group!(
+    name = cpu_cycles;
+    config = Criterion::default().sample_size(SAMPLE_SIZE).with_measurement(Perf::new(Builder::from_hardware_event(Hardware::CPUCycles)));
+    targets = cpu_cycle_bench
+);
+
+criterion_group!(
+    name = branch_misses;
+    config = Criterion::default().sample_size(SAMPLE_SIZE).with_measurement(Perf::new(Builder::from_hardware_event(Hardware::BranchMisses)));
+    targets = branch_miss_bench
+);
+
+criterion_group!(
+    name = cache_misses;
+    config = Criterion::default().sample_size(SAMPLE_SIZE).with_measurement(Perf::new(Builder::from_hardware_event(Hardware::CacheMisses)));
+    targets = cache_miss_bench
+);
+
+criterion_main!(time, cpu_cycles, branch_misses, cache_misses);
