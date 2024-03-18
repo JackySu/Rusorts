@@ -6,7 +6,9 @@ use std::{ptr, mem, cmp};
 
 use crate::util::*;
 
+#[cfg(debug_assertions)]
 const DEBUG_INSERTION_SORT_THRESHOLD: usize = 9;
+#[cfg(not(debug_assertions))]
 const RELEASE_INSERTION_SORT_THRESHOLD: usize = 27;
 
 
@@ -143,7 +145,7 @@ pub fn double_pivot_quicksort_lomuto_partition_block<T: Ord>(mut arr: &mut [T]) 
                 arr.swap_unchecked(left, right);
             }
             let (pivot1, pivot2) = (ptr::read(arr.get_unchecked(left)), ptr::read(arr.get_unchecked(right)));
-
+        
             let (mut i, mut j, mut k) = (left + 1, left + 1, left + 1);
             let (mut num_p1, mut num_p2) = (0, 0);
             while k < right {
@@ -194,7 +196,7 @@ pub fn double_pivot_quicksort_lomuto_partition_block<T: Ord>(mut arr: &mut [T]) 
     }
 }
 
-pub fn double_pivot_quicksort_new_partition_block<T: Ord + std::fmt::Debug>(mut arr: &mut [T]) {
+pub fn double_pivot_quicksort_new_partition_block<T: Ord>(mut arr: &mut [T]) {
     const BLOCK: usize = 128;
     let mut block_t = BLOCK;
     // offsets of elements <P1 will be stored from left to right, and elements P1<=x<P2 will be stored from right to left
@@ -308,10 +310,9 @@ pub fn quick_sort_hoare_partition<T: Ord>(mut arr: &mut [T]) {
                 }
                 arr.swap_unchecked(i as usize, j as usize);
             }
-        
-            arr.swap_unchecked(0, j as usize);
-            let (left, right) = arr.split_at_mut(j as usize);
-            let (_pivot, right) = right.split_at_mut(1);
+
+            // arr.swap_unchecked(0, j as usize);
+            let (left, right) = arr.split_at_mut((j + 1) as usize);
             if left.len() > right.len() {
                 if right.len() > 1 {
                     quick_sort_hoare_partition(right);
@@ -507,7 +508,7 @@ pub fn quick_sort_hoare_partition_block<T: Ord>(mut arr: &mut [T]) {
 // In respect to 
 // - https://github.com/veddan/rust-introsort/blob/master/src/sort.rs
 // - https://github.com/rosacris/rust-doublepivot-quicksort/blob/master/src/lib.rs
-pub fn double_pivot_quicksort<T: Ord + Clone>(arr: &mut [T]) {
+pub fn double_pivot_quicksort<T: Ord>(arr: &mut [T]) {
     conditional_sort!(debug, arr);
     conditional_sort!(release, arr);
 	let (left, right) = (0, arr.len() - 1);
@@ -558,7 +559,7 @@ pub fn double_pivot_quicksort<T: Ord + Clone>(arr: &mut [T]) {
 		arr.swap_unchecked(greater + 1, right);
 
 		if less > left + 2 {
-			double_pivot_quicksort(&mut arr[left..=less - 2]);
+			double_pivot_quicksort(&mut arr[left..less - 1]);
 		}
 
 		if greater + 2 < right {

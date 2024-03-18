@@ -70,3 +70,10 @@ docs/_build/
 
 # Pyenv
 .python-version
+
+# algorithm plugin for latex
+algorithms.*
+
+# ignore everything named FYPReport.* but FYPReport.tex and FYPReport.pdf
+FYPReport.*
+!FYPReport.pdf

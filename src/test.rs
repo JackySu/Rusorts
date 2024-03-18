@@ -90,7 +90,7 @@ mod test {
         let arr: Vec<FloatOrd> = default_vec(10_000_000);
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_hoare_partition(&mut copy));
-        assert_eq!(is_sorted(&copy), true);
+        // assert_eq!(is_sorted(&copy), true);
         println!(
             "quick sort 1-pivot (hoare partition) 1m array cost: {:?}ns",
             dur
@@ -191,7 +191,7 @@ mod test {
             "quick sort 1-pivot (hoare partition) 10m array cost: {:?}ns",
             dur
         );
-        // assert_eq!(is_sorted(&copy), true);
+        assert_eq!(is_sorted(&copy), true);
 
         let mut copy = arr.clone();
         let dur = time_it(|| quick_sort_lomuto_partition(&mut copy));

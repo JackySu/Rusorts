@@ -28,9 +28,18 @@ pdqsort = "1.0.3"
 rustc-serialize = "0.3.25"
 once_cell = "1.19"
 
-[profile.release]
-debug = true
-lto = true
+[profile.dev]
+codegen-units = 1
+debug = 2
+incremental = false
+lto ="off"
 opt-level = 3
-# codegen-units = 1  // will potentially slow down the runtime performance
+debug-assertions = true
+
+[profile.release]
+codegen-units = 1  # this will potentially slow down the SIMD benchmarks
+debug = false
+incremental = false  # disable incremental compilation
+lto = "thin"
+opt-level = 3
 panic = "abort"
