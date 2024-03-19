@@ -183,6 +183,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "248e3bacc7dc6baa3b21e405ee045c3047101a49145e7e9eca583ab4c2ca5345"
 
 [[package]]
+name = "crumsort"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c67b358f202b5b2260672290e0b392e5fa1209fe6f85d303d5e1a2aa02064b8a"
+dependencies = [
+ "rayon",
+]
+
+[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -490,12 +499,6 @@ dependencies = [
  "smallvec",
  "winapi",
 ]
-
-[[package]]
-name = "pdqsort"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92d11770083078fa188bb64ff3b1b5af04c374bf429be2c77480823c1fc5c5e5"
 
 [[package]]
 name = "perfcnt"
@@ -818,12 +821,13 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "criterion-perf-events",
+ "crumsort",
  "introsort",
  "once_cell",
- "pdqsort",
  "perfcnt",
  "pyo3",
  "rand 0.8.5",
+ "rayon",
  "rustc-serialize",
 ]
 

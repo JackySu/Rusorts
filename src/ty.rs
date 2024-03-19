@@ -11,7 +11,7 @@ impl FromPyObject<'_> for FloatOrd {
     }
 }
 
-#[derive(PartialEq, PartialOrd, Debug, Clone, Copy)]
+#[derive(PartialEq, PartialOrd, Debug, Clone, Copy, Default)]
 #[repr(transparent)]  // guarantees same layout as a single f32
 pub struct FloatOrd(pub f32);
 

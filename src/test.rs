@@ -1,11 +1,59 @@
 #[cfg(test)]
 mod test {
 
+    use std::simd::u32x1;
+
     use crate::qsort::*;
     use crate::ty::FloatOrd;
     use crate::util::*;
 
     use introsort::sort_floats;
+    use crumsort::ParCrumSort;
+
+    use rayon::prelude::*;
+
+    #[test]
+    fn test_crum_sort_vs_pdq_sort() {
+        let mut arr: Vec<FloatOrd> = default_vec(1_000);
+        let dur = time_it(|| arr.par_crumsort());
+        assert_eq!(is_sorted(&arr), true);
+        println!("crum sort on 1k floats cost: {:?}ns", dur);
+
+        let mut arr: Vec<FloatOrd> = default_vec(1_000_000);
+        let dur = time_it(|| arr.par_crumsort());
+        assert_eq!(is_sorted(&arr), true);
+        println!("crum sort on 1m floats cost: {:?}ns", dur);
+
+        let mut arr: Vec<FloatOrd> = default_vec(1_000);
+        let dur = time_it(|| arr.par_sort_unstable());
+        assert_eq!(is_sorted(&arr), true);
+        println!("pdq sort on 1k floats cost: {:?}ns", dur);
+
+        let mut arr: Vec<FloatOrd> = default_vec(1_000_000);
+        let dur = time_it(|| arr.par_sort_unstable());
+        assert_eq!(is_sorted(&arr), true);
+        println!("pdq sort on 1m floats cost: {:?}ns", dur);
+
+        let mut arr: Vec<u32> = default_vec(1_000);
+        let dur = time_it(|| arr.par_sort_unstable());
+        assert_eq!(is_sorted(&arr), true);
+        println!("pdq sort on 1k u32 cost: {:?}ns", dur);
+
+        let mut arr: Vec<u32> = default_vec(1_000_000);
+        let dur = time_it(|| arr.par_sort_unstable());
+        assert_eq!(is_sorted(&arr), true);
+        println!("pdq sort on 1m u32 cost: {:?}ns", dur);
+
+        let mut arr: Vec<u32> = default_vec(1_000);
+        let dur = time_it(|| arr.par_crumsort());
+        assert_eq!(is_sorted(&arr), true);
+        println!("crumsort on 1k u32 cost: {:?}ns", dur);
+
+        let mut arr: Vec<u32> = default_vec(1_000_000);
+        let dur = time_it(|| arr.par_crumsort());
+        assert_eq!(is_sorted(&arr), true);
+        println!("crumsort on 1m u32 cost: {:?}ns", dur);
+    }
 
     #[test]
     fn test_double_pivot_quicksort_new_partition_block() {
@@ -103,19 +151,6 @@ mod test {
             "quick sort 1-pivot (hoare partition block) 1m array cost: {:?}ns",
             dur
         );
-    }
-
-    #[test]
-    fn test_pdq_sort() {
-        let mut arr: Vec<FloatOrd> = default_vec(1_000);
-        let dur = time_it(|| pdqsort::sort(&mut arr));
-        assert_eq!(is_sorted(&arr), true);
-        println!("pdq sort on 1k floats cost: {:?}ns", dur);
-
-        let mut arr: Vec<FloatOrd> = default_vec(1_000_000);
-        let dur = time_it(|| pdqsort::sort(&mut arr));
-        assert_eq!(is_sorted(&arr), true);
-        println!("pdq sort on 1k floats cost: {:?}ns", dur);
     }
 
     #[test]

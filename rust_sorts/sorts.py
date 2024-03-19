@@ -6,7 +6,7 @@ import os
 import rust_sorts
 
 
-RUNS = 20
+RUNS = 10
 TIME_STATS = []
 TIME_STATS_N = [
     1_000,
@@ -16,8 +16,8 @@ TIME_STATS_N = [
     10_000_000,
 ]
 SORT_FUNCS = {
-    "std unstable sort": rust_sorts.f32_std_unstable_sort,
-    "PDQSort": rust_sorts.f32_pdq_sort,
+    "Parallel Crumsort": rust_sorts.f32_par_crumsort,
+    "Parellel PDQSort": rust_sorts.f32_par_pdqsort,
     "Quicksort hoare block partition": rust_sorts.f32_1_pivot_quicksort_hoare_block_partition,
     "Quicksort 4 Pivots": rust_sorts.f32_4_pivot_quicksort,
 }
@@ -73,7 +73,7 @@ def main():
     plt.xscale("log")
     plt.xticks(x, [f'$10^{{{i}}}$' for i in range(1, len(TIME_STATS_N) + 1)])
     plt.yscale("log")
-    plt.yticks(y[0], [f'$10^{{{i}}}$' for i in range(1, int(np.log10(max(y[0])) + 1))])
+    plt.yticks(y[0], [f'$10^{{{i}}}$' for i in range(1, int(np.log10(max(y[0])) + 1) + 1)][:len(y[0])])
 
     plt.gcf().set_dpi(300)  # Adjust DPI as needed
     plt.gcf().set_size_inches(10, 6)  # Adjust figure size as needed (width, height)
