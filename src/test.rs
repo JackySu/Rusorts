@@ -13,6 +13,21 @@ mod test {
     use rayon::prelude::*;
 
     #[test]
+    fn test_u32_and_f32_performance_on_10m_array() {
+        let arr: Vec<u32> = default_vec(10_000_000);
+        let mut copy = arr.clone();
+        let dur = time_it(|| copy.par_sort_unstable());
+        println!("pdq sort 10m u32 array cost: {:?}ns", dur);
+        assert_eq!(is_sorted(&copy), true);
+
+        let arr: Vec<FloatOrd> = default_vec(10_000_000);
+        let mut copy = arr.clone();
+        let dur = time_it(|| copy.par_sort_unstable());
+        println!("pdq sort 10m f32 array cost: {:?}ns", dur);
+        assert_eq!(is_sorted(&copy), true);
+    }
+
+    #[test]
     fn test_crum_sort_vs_pdq_sort() {
         let mut arr: Vec<FloatOrd> = default_vec(1_000);
         let dur = time_it(|| arr.par_crumsort());

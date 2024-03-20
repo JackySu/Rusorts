@@ -76,4 +76,6 @@ algorithms.*
 
 # ignore everything named FYPReport.* but FYPReport.tex and FYPReport.pdf
 FYPReport.*
+!FYPReport.tex
 !FYPReport.pdf
+pivot.drawio.pdf

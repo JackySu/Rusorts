@@ -78,7 +78,19 @@ macro_rules! gen_bench_for_measurement {
             // g1_hoare.bench_function("1_pivot_f32_hoare_sort_large_mostly_descending", |b| 
             //     b.iter(|| quick_sort_hoare_partition(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
             // );
-        
+
+            g1_hoare.bench_function("1_pivot_f32_hoare_sort_huge_random", |b| 
+                b.iter(|| quick_sort_hoare_partition(black_box(&mut default_vec::<FloatOrd>(HUGE_SIZE))))
+            );
+
+            g1_hoare.bench_function("1_pivot_f32_hoare_sort_gigantic_random", |b| 
+                b.iter(|| quick_sort_hoare_partition(black_box(&mut default_vec::<FloatOrd>(GIGANTIC_SIZE))))
+            );
+
+            g1_hoare.bench_function("1_pivot_f32_hoare_sort_enormous_random", |b| 
+                b.iter(|| quick_sort_hoare_partition(black_box(&mut default_vec::<FloatOrd>(ENORMOUS_SIZE))))
+            );
+
             g1_hoare.finish();
         
             let mut name = String::from("1_pivot_lomuto");
@@ -114,6 +126,18 @@ macro_rules! gen_bench_for_measurement {
             // g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_large_mostly_descending", |b| 
             //     b.iter(|| quick_sort_lomuto_partition(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
             // );
+
+            g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_huge_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition(black_box(&mut default_vec::<FloatOrd>(HUGE_SIZE))))
+            );
+
+            g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_gigantic_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition(black_box(&mut default_vec::<FloatOrd>(GIGANTIC_SIZE))))
+            );
+
+            g1_lomuto.bench_function("1_pivot_f32_lomuto_sort_enormous_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition(black_box(&mut default_vec::<FloatOrd>(ENORMOUS_SIZE))))
+            );
         
             g1_lomuto.finish();
         
@@ -150,6 +174,18 @@ macro_rules! gen_bench_for_measurement {
             // g2.bench_function("2_pivot_f32_sort_large_mostly_descending", |b| 
             //     b.iter(|| double_pivot_quicksort(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
             // );
+
+            g2.bench_function("2_pivot_f32_sort_huge_random", |b| 
+                b.iter(|| double_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(HUGE_SIZE))))
+            );
+
+            g2.bench_function("2_pivot_f32_sort_gigantic_random", |b| 
+                b.iter(|| double_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(GIGANTIC_SIZE))))
+            );
+
+            g2.bench_function("2_pivot_f32_sort_enormous_random", |b| 
+                b.iter(|| double_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(ENORMOUS_SIZE))))
+            );
             
             g2.finish();
         
@@ -186,6 +222,18 @@ macro_rules! gen_bench_for_measurement {
             // g3.bench_function("3_pivot_f32_sort_large_mostly_descending", |b| 
             //     b.iter(|| triple_pivot_quicksort(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
             // );
+
+            g3.bench_function("3_pivot_f32_sort_huge_random", |b| 
+                b.iter(|| triple_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(HUGE_SIZE))))
+            );
+
+            g3.bench_function("3_pivot_f32_sort_gigantic_random", |b| 
+                b.iter(|| triple_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(GIGANTIC_SIZE))))
+            );
+
+            g3.bench_function("3_pivot_f32_sort_enormous_random", |b| 
+                b.iter(|| triple_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(ENORMOUS_SIZE))))
+            );
         
             g3.finish();
         
@@ -222,6 +270,18 @@ macro_rules! gen_bench_for_measurement {
             // g4.bench_function("4_pivot_f32_sort_large_mostly_descending", |b| 
             //     b.iter(|| quad_pivot_quicksort(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
             // );
+
+            g4.bench_function("4_pivot_f32_sort_huge_random", |b| 
+                b.iter(|| quad_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(HUGE_SIZE))))
+            );
+
+            g4.bench_function("4_pivot_f32_sort_gigantic_random", |b| 
+                b.iter(|| quad_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(GIGANTIC_SIZE))))
+            );
+
+            g4.bench_function("4_pivot_f32_sort_enormous_random", |b| 
+                b.iter(|| quad_pivot_quicksort(black_box(&mut default_vec::<FloatOrd>(ENORMOUS_SIZE))))
+            );
         
             g4.finish();
 
@@ -258,6 +318,18 @@ macro_rules! gen_bench_for_measurement {
             // h.bench_function("1_pivot_f32_hoare_large_mostly_descending", |b| 
             //     b.iter(|| quick_sort_hoare_partition_block(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
             // );
+
+            h.bench_function("1_pivot_f32_hoare_huge_random", |b| 
+                b.iter(|| quick_sort_hoare_partition_block(black_box(&mut default_vec::<FloatOrd>(HUGE_SIZE))))
+            );
+
+            h.bench_function("1_pivot_f32_hoare_gigantic_random", |b| 
+                b.iter(|| quick_sort_hoare_partition_block(black_box(&mut default_vec::<FloatOrd>(GIGANTIC_SIZE))))
+            );
+
+            h.bench_function("1_pivot_f32_hoare_enormous_random", |b| 
+                b.iter(|| quick_sort_hoare_partition_block(black_box(&mut default_vec::<FloatOrd>(ENORMOUS_SIZE))))
+            );
         
             h.finish();
         
@@ -294,6 +366,18 @@ macro_rules! gen_bench_for_measurement {
             // l.bench_function("1_pivot_f32_lomuto_large_mostly_descending", |b| 
             //     b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
             // );
+
+            l.bench_function("1_pivot_f32_lomuto_huge_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(HUGE_SIZE))))
+            );
+
+            l.bench_function("1_pivot_f32_lomuto_gigantic_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(GIGANTIC_SIZE))))
+            );
+
+            l.bench_function("1_pivot_f32_lomuto_enormous_random", |b| 
+                b.iter(|| quick_sort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(ENORMOUS_SIZE))))
+            );
         
             l.bench_function("2_pivot_f32_lomuto_small_random", |b| 
                 b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(SMALL_SIZE))))
@@ -324,6 +408,19 @@ macro_rules! gen_bench_for_measurement {
             // l.bench_function("2_pivot_f32_lomuto_large_mostly_descending", |b| 
             //     b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
             // );
+
+            l.bench_function("2_pivot_f32_lomuto_huge_random", |b| 
+                b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(HUGE_SIZE))))
+            );
+
+            l.bench_function("2_pivot_f32_lomuto_gigantic_random", |b| 
+                b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(GIGANTIC_SIZE))))
+            );
+
+            l.bench_function("2_pivot_f32_lomuto_enormous_random", |b| 
+                b.iter(|| double_pivot_quicksort_lomuto_partition_block(black_box(&mut default_vec::<FloatOrd>(ENORMOUS_SIZE))))
+            );
+
         
             l.finish();
         
@@ -354,6 +451,18 @@ macro_rules! gen_bench_for_measurement {
             // n.bench_function("2_pivot_f32_new_large_mostly_descending", |b| 
             //     b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut mostly_descending_f32(LARGE_SIZE))))
             // );
+
+            n.bench_function("2_pivot_f32_new_huge_random", |b| 
+                b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut default_vec::<FloatOrd>(HUGE_SIZE))))
+            );
+
+            n.bench_function("2_pivot_f32_new_gigantic_random", |b| 
+                b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut default_vec::<FloatOrd>(GIGANTIC_SIZE))))
+            );
+
+            n.bench_function("2_pivot_f32_new_enormous_random", |b| 
+                b.iter(|| double_pivot_quicksort_new_partition_block(black_box(&mut default_vec::<FloatOrd>(ENORMOUS_SIZE))))
+            );
         
             n.finish();
         
@@ -368,8 +477,11 @@ gen_bench_for_measurement!(branch_miss_bench, Perf, "_branch_miss");
 
 
 const SMALL_SIZE: usize = 100;
-const MEDIUM_SIZE: usize = 1000;
-const LARGE_SIZE: usize = 10000;
+const MEDIUM_SIZE: usize = 1_000;
+const LARGE_SIZE: usize = 10_000;
+const HUGE_SIZE: usize = 100_000;
+const GIGANTIC_SIZE: usize = 1_000_000;
+const ENORMOUS_SIZE: usize = 10_000_000;
 
 const SAMPLE_SIZE: usize = 20;
 
