@@ -571,6 +571,15 @@ The details regarding to the testing machine, environment and compiler settings
         \hline
     \end{tabular}
 \end{center}
+
+All the tests above are benchmarked using the criterion library, inspired by the Haskell criterion library, which is a powerful and easy-to-use benchmarking tool for Rust.
+Tests are put into groups and each group is a collection of benchmarks that are run together, with the exact same environment and the same settings.
+Each test runs in a black box, which blocks the compiler from doing optimizations that are way too aggressive, such as removing instructions it thinks are redundant.
+The criterion-perf-events plugin is also adapted to capture the hardware events of the CPU, with the help of the well-known profiling tool $perf$ on Linux. Why not cachegrind? Because cachegrind is a simulation tool on the cache misses and introduces a huge overhead on the runtime,
+in previous tests with perf, the overall runtime appeared to have at least 200\% difference with the real-world performance, so it was rejected in the end.
+Comparably, perf is a more lightweight tool that suits our needs and the given results are more reliable. Previous tests with cachegrind are given in the appendix.
+% TODO: Add the appendix of cachegrind results
+
 The compiler flags passed in are the same for all the tests, and the tests are conducted on the same machine with the same environment,
 with 3 seconds of warm-up time and 5 seconds of measurement time for each test. The results are then calculated over regression tests with 100, 1000, 10000, 100000, 1000000 and 10000000 elements,
 filtering out the outliers and the each item is collected with the mean, standard deviation and median. The results are shown in the tables below.
@@ -678,7 +687,8 @@ Apart from the branch misses, the cache misses could also play a significant fac
 
 The global trend shows the outburst of cache misses when scaling from 10k to 100k, possibly due to the drain of the L1 cache.
 In fact, the CPU has already run out of L1 cache for size 10k, while the spatial locality of the elements is still good enough to keep the L2 cache misses at a low level.
-Changes in rapid growth of standard deviation is also noteworthy, indicating the instability of the cache misses when the size of the array exceeds 10k.
+Since L2 misses have a much larger latency than L1 misses, the performance of the algorithm is seriously affected by having to wait for the memory, this amplifies the differences between these algorithms.
+Changes in rapid growth of standard deviation is also noteworthy, indicating the dramatic influences caused by the cache misses when the size of the array exceeds 10k.
 
 In 1-Pivot tests, Lomuto shows much higher cache misses than Hoare, could be due to the fact that Lomuto's partition method has more overlapping swaps than Hoare's,
 where most swaps take on the elements that are already in the right place. As the number of pivots grow, the cache misses seem to decrease, appeared in the 4-Pivot version,
@@ -692,7 +702,9 @@ For 3-Pivots, the cache behavior didn't seem to fully comply with the theoretica
 the cache misses are higher than the 2-Pivot Yaroslavskiy's partition method when the array size is larger than 1 million. The bound between cache misses and the number of pivots is not yet clear.
 Contrary to the conclusion reported on experiments carried out by Kushagra's team, which supports the improvements on Multi-Pivots QuickSort are due to better cache behaviors
 \cite{Kushagra}, the results of the tests conducted in this thesis show that the cache misses are not always decreasing with more pivots. For instance, the 3-Pivot Kush's has more observed cache misses than the 2-Pivot Yaroslavskiy's,
-shows better performance than 2-Pivots during runtime tests. They also reported that their 7-Pivot QuickSort has worse performance than the 3-Pivot QuickSort as a result of poor cache behaviors, which is not yet tested in this thesis.
+shows better performance than 2-Pivots during runtime tests. These effects are not yet fully understood and need further discussions, as I'm using Rust to implement the Multi-Pivot QuickSorts,
+whose compiler is based on top of LLVM (Native LLVM as the Rust's bootstrapped backend codegen component Cranelift is far from being mature by cross-platform), that might have optimized the code in a different way that the cache behaviors are not well reflected in the results, although I enabled the most aggressive optimizations flags in the compiler settings
+and they are similar as GCC and Clang's. They also reported that their 7-Pivot QuickSort has worse performance than the 3-Pivot QuickSort as a result of poor cache behaviors, which is not yet tested in this thesis.
 But with the counter examples we have, we need to be more cautious about leveraging how much propotions of the performance improvements are due to better cache behaviors. It is still a topic for further research.
 We will discuss about the complicated relationships further when we finish up the analysis on the instructions and time.
 
@@ -789,6 +801,10 @@ The 4-Pivot shows the least amount of cycles and least deviations. Combining all
     \end{tabular}
 \end{center}
 
+% A former analysis concerning the details of the overall costs and partitioning costs has been brought by Hennequin's thesis \cite{Hennequin} in terms of Multi-Pivot QuickSorts,
+% where the author proved that if the average partitioning cost for $n$ elements is $a\cdot n + O(1)$ with a constant $a$, the overall cost then will be $\frac{6}{5}a\cdot n \ln n + \bigO{n}$.
+% TODO: WTF does this mean? I need to understand this first before I can write it down.
+
 Contrary to our expectations, 2-Pivot Yaroslavskiy's method was defeated by the 1-Pivot Lomuto's method in terms of time, even though it outperformed in the cache misses.
 The running time does show the correlation with the branch misses, but the cache misses don't seem to have a significant impact, where Yaroslavskiy's method has the lower cache misses but higher time than Lomuto's method.
 It also has lower cache misses than Kushagra's 3-Pivot method, but the time is still much higher for larger array sizes than the 3-Pivot method.
@@ -796,9 +812,10 @@ It also has lower cache misses than Kushagra's 3-Pivot method, but the time is s
 The final running time also supports the exceptional cases above, where cache misses don't necessarily have a direct impact on the final performance of the algorithm.
 The hoare partition, with 2 while loops scanning for the out-of-order elements on both sides, introduced extra overheads on branch misses and didn't manage to compete with other algorithms.
 This could be the actual pain point that the 1-Pivot Hoare's method has to face, the branch misses appear to be the bottleneck, but we will soon find out the way to overcome it in the following sections.
-
 What's enligntening is that the 4-Pivot method has the least amount of time along with less branch misses and cache misses, the improvements are made in small steps but the overall performance is promising,
-although how more predicted branches but less actual branch misses still requires further researches.
+although how the 4-Pivot method has more predicted branches but less actual branch misses still requires further researches.
+
+
 
 \begin{center}
     \begin{tabular}{ |c c | c c c| }
@@ -1055,6 +1072,7 @@ although how more predicted branches but less actual branch misses still require
 \bibitem{BlockQuickSort} \label{BlockQuickSort} BlockQuicksort: How Branch Mispredictions don't affect Quicksort. \textit{Stefan Edelkamp and Armin Weiß.} 2016.
 \bibitem{OptimalPartitioningForDualPivotQuicksort} \label{OptimalPartitioningForDualPivotQuicksort} Martin Aumüller and Martin Dietzfelbinger. 2013. \textit{Optimal Partitioning for Dual Pivot Quicksort}. In Proc.
 of the 40th International Colloquium on Automata, Languages and Programming (ICALP'13). Springer, 33-44.
+\bibitem{Hennequin} \label{Hennequin} Hennequin, P. (1991) \textit{Analyse en moyenne d'algorithmes: Tri rapide et arbres de recherche.} Ph.D. Thesis, Ecole Politechnique, Palaiseau.
 \end{thebibliography}
 
 \end{document}
