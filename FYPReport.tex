@@ -31,12 +31,12 @@ the quest of further optimizations and the endless pursuit of efficiency has led
 This thesis is my shallow attempt to unveil the benefits of Multi-Pivot Quicksort, exploring the effects more pivots can bring,
 followed by some potential implementations and the analysis on the benefits that arise from leveraging multiple pivots in the Quicksort process.
 
-\subsection{History and Related work} 
+\subsection{History and Related work}
 
 When Quicksort was first invented a great number of variations and modifications were put into research over the years, 
 such as sorting with a better partition method and a more optimal strategy to select the arbitrary pivot element.
 But the innovative approach of Multi-pivot Quicksort, exemplified by Vladimir Yaroslavskiy \cite{Yaroslavskiy} in 2009,
-Bentley and Bloch's algorithm, which was also highlighted by Wild and Nebel, adopted in Sun's Java 7 runtime library, 
+Bentley and Bloch's algorithm (YBB Alogorithm), which was also highlighted by Wild and Nebel, adopted in Sun's Java 7 runtime library, 
 introduces the use of two pivots. Contrary to initial expectations, studies have revealed that employing multiple pivots can enhance the performance,
 challenging prior assumptions derived from the dual-pivot proposal by Sedgewick \cite{Sedgewick} in 1978 where he analyzed a potential dual-pivot approach, 
 which was deemed inferior to the classical Quicksort in his research. Furthermore, Kushagra presented a 3-pivot Quicksort \cite{Kushagra} algorithm at ALENEX,
@@ -45,7 +45,7 @@ has attracted significant attention, further pushing the researches of multi-piv
 One common pitfall in the performance downgrade of the conventional Quicksort is the degenerated cases,
 which could often arise when the input array is already mostly sorted or when certain patterns in the data cause the algorithm to consistently choose poor pivots
 that fail to split the data into evenly sized partitions. 
-In such cases, the partitioning process may result in highly unbalanced partitions, leading to suboptimal performance and
+In such cases, the partitioning process may result in highly imbalanced partitions where the size of one partition is significantly larger than the other, leading to suboptimal performance and
 potentially degrading the time complexity to $\bigO(n^2)$ instead of the expected $\bigO(n\log n)$ for Quicksort.
 Wiser choices of pivot selections could decrease the possiblities of such events from happening, such as the median-of-3 method and its variations of median-of-5 and median-of-7.
 But on mostly ascending or descending arrays, the median-of-3 method still has a chance of choosing the smallest or largest element as the pivot,
@@ -242,7 +242,7 @@ However, the Yaroslavskiy's Dual-Pivot Quicksort has proven to be a success, wit
 approximately $0.6n\ln n + \bigO{n}$ which is much greater than the $0.33n\ln n + \bigO{n}$ of the original one, is faster than the original Quicksort in most cases.
 It is surprising that even with asymptotically only 5\% of less comparisons and nearly 80\% more swaps, the Dual-Pivot Quicksort still outperforms the original Quicksort in practice.
 What makes this more mysterious, is the variation of Yaroslavskiy's partition method that always compares to the larger pivot, by Martin Aumüller and Martin Dietzfelbinger 2013 in their thesis of 'Optimal Partitioning for Dual Pivot Quicksort' \cite{OptimalPartitioningForDualPivotQuicksort}.
-The method shows no difference in terms of both comparison and swaps with the original Dual-Pivot Quicksort, but it turned out that it is as fast as the Yaroslavskiy's partition, and even faster than another method along, named 'Countering Strategy C', who claimed to have the least 
+The method shows no difference in terms of both comparison and swaps with the original Dual-Pivot Quicksort, but it turned out that it is as fast as the Yaroslavskiy's partition, and even faster than another method along with it, named 'Countering Strategy C', who claimed to have the least 
 estimations of $1.8n \ln n + \bigO(n)$ comparisons and $1.6n \ln n + \bigO{n}$ swaps. This is a great example of how the real-world performance could be different from the theoretical analysis. In fact, in their following tests, the 'Countering Strategy C' method was proven to be the slowest among all the 3 methods.
 
 It is noteworthy the there still lies a huge gap between the theoretical analysis and the real-world performance. It is time we broaden our horizon and look for more factors that could contribute more to the change of the performance of the Quicksort algorithm.
@@ -366,9 +366,10 @@ or do nothing otherwise, since the middle-left part is for elements greater than
 Same logic applies to the rightmost part, where elements are greater than Pivot 2 and less than or equal to Pivot 3.
 These two pre-conditions are checked before the main body of the swapping and rotating procedure, which corresponds to the 2 while loops applied at the top of the main scanning loop.
 Afterwards, the real swapping and rotating procedure is applied to the elements at index j and k, which are on the left and right boundaries of the unknown region, need to go to the other side of the array and moved to the right places.
+
 We can simplify this part into a 2 if-else nested block, where the outter if-else block is for the case at index j and the inner one is for the case at index k (vice versa, but we will not go into details here).
 Both of them have 2 branches, one for the case where the current element belongs to the leftmost or the rightmost part, and the other for the case where it belongs to the middle-left or the middle-right part.
-It is not hard to tell there are $2 \times 2 = 4$ branches in total, and the swapping and rotating procedure is applied to each of them. The following chart \hyperlink{fig:3pivot}{*} illustrates the 4 branches and the corresponding actions.
+It is not hard to tell there are $2 \times 2 = 4$ branches in total, and the swapping and rotating procedure is applied to each of them. The following chart \hyperlink{fig:3pivot}{`} illustrates the 4 branches and the corresponding actions.
 
 % \listoffigures
 \begin{figure}[H]
@@ -533,9 +534,9 @@ It is not hard to tell there are $2 \times 2 = 4$ branches in total, and the swa
 \end{algorithm}
 
 As long as the number of pivots increases, the number of branches will grow linearly, and the complexity of the partitioning method will also increase.
-Thankfully, for 4-Pivot QuickSort \hyperlink{fig:4pivot}{*}, we are just adding two more branches (As showed in the blue-red and purple-red branches in the chart below)
-into considerations and the branching logic is still under control.
-When we are using a balanced partition method, where each side of the array is filled with $\frac{N + 1}{2}$ partitions for odd number $N$ of pivots, or one side with $\frac{N}{2}$ partitions and $\frac{N}{2} + 1$ on the other, we are going to have 9 branches for 5-Pivot QuickSort (3 partitions on each side, $3 \times 3 = 9$) and 12 branches for 6-Pivot QuickSort (3 partitions on one side and 4 on the other, $3 \times 4 = 12$).
+Thankfully, for 4-Pivot QuickSort \hyperlink{fig:4pivot}{`}, \hypertarget{2MoreBranches}we are just adding two more branches (As showed in the blue-red and purple-red branches in the chart below)
+compared with the $2 \times 2 = 4$ branches for 3-Pivots into considerations and the branching logic is still under control.
+We declare this as the balanced partition\hypertarget{BalancedPartition} layout we are using, where each side of the array is filled with $\frac{N + 1}{2}$ partitions for odd number $N$ of pivots, or one side with $\frac{N}{2}$ partitions and $\frac{N}{2} + 1$ on the other, we are going to have 9 branches for 5-Pivot QuickSort (3 partitions on each side, $3 \times 3 = 9$) and 12 branches for 6-Pivot QuickSort (3 partitions on one side and 4 on the other, $3 \times 4 = 12$).
 The complexity of the partitioning method is growing way too far and thus only 4-Pivot QuickSort will be discussed in this thesis.
 
 \begin{figure}[H]
@@ -571,7 +572,7 @@ The details regarding to the testing machine, environment and compiler settings
     \end{tabular}
 \end{center}
 The compiler flags passed in are the same for all the tests, and the tests are conducted on the same machine with the same environment,
-with 3 seconds of warm-up time and 5 seconds of measurement time for each test. The results are calculated over regression tests with 100, 1000, 10000, 100000, 1000000 and 10000000 elements,
+with 3 seconds of warm-up time and 5 seconds of measurement time for each test. The results are then calculated over regression tests with 100, 1000, 10000, 100000, 1000000 and 10000000 elements,
 filtering out the outliers and the each item is collected with the mean, standard deviation and median. The results are shown in the tables below.
 % The next part of the thesis will be the implementation of the Multi-Pivot Quicksort and the BlockQuickSort,
 % followed by the analysis of the results and the comparisons on the performance of the above algorithms using traditional partition methods.
@@ -624,11 +625,13 @@ when Hoare's partition method seeks 2 out-of-order elements to swap, while only 
 But the 2-Pivot Yaro's partition method has a slightly higher mean of branch misses. The introduction of the 2nd pivot has brought more branches into concerns,
 the complexities grow linearly with the number of pivots but the standard deviation grows rapidly as the size of array exceeds 10k, and explodes after 1 million.
 Down follows the 3-Pivot Kush's partition method has a slightly higher mean of branch misses than the 2-Pivot Yaroslavskiy's partition method.
-But things go beyond our expectations, the 4-Pivot partition shows better statistics of branch misses than the 3-Pivot partition method, which is a surprise to us,
-even though it has slightly higher means of branch misses than the 2-Pivot Yaroslavskiy's partition method, the standard deviation remains at a high level indicating
-the possible instabilities of the 4-Pivot partition method. It is still worth our notice that it happens when more pivots could reduce the branch misses.
 
-Apart from the branch misses, the cache misses are also a significant factor that could affect a lot, which is what we are going to shift our focus to.
+While things go beyond our expectations, the 4-Pivot partition shows better statistics of branch misses than the 3-Pivot partition method, which is a surprise to us,
+even though it has slightly higher means of branch misses than the 2-Pivot Yaroslavskiy's partition method, the standard deviation remains at a high level indicating
+the possible instabilities of the 4-Pivot partition method brought by 2 more branches \hypertarget{2MoreBranches}{`} that 1 more pivot introduced. It is still worth our notice, that it can happen when more pivots could reduce the branch misses instead of adding more burdon to the CPU.
+It might be that the layout of 'balanced partition' we are using is more friendly to the CPU's branch predictor, but yet to explain why 2 more branches could bring better effects. This could be a topic in future works, further expand the research on the Multi-Pivot Quicksort algorithm. 
+
+Apart from the branch misses, the cache misses could also play a significant factor that could affect a lot, which is what we are going to shift our focus to.
 
 \begin{center}
     \begin{tabular}{ |c c | c c c| }
@@ -673,6 +676,129 @@ Apart from the branch misses, the cache misses are also a significant factor tha
     \end{tabular}
 \end{center}
 
+The global trend shows the outburst of cache misses when scaling from 10k to 100k, possibly due to the drain of the L1 cache.
+In fact, the CPU has already run out of L1 cache for size 10k, while the spatial locality of the elements is still good enough to keep the L2 cache misses at a low level.
+Changes in rapid growth of standard deviation is also noteworthy, indicating the instability of the cache misses when the size of the array exceeds 10k.
+
+In 1-Pivot tests, Lomuto shows much higher cache misses than Hoare, could be due to the fact that Lomuto's partition method has more overlapping swaps than Hoare's,
+where most swaps take on the elements that are already in the right place. As the number of pivots grow, the cache misses seem to decrease, appeared in the 4-Pivot version,
+might help to support the claim that 'less memory access and fewer cache misses' given the declaration above 'choosing more pivots will significantly reduce the chance we access the same elements again',
+but the high level of standard deviation still remains a concern.
+
+Among all variations the 2-Pivot Yaroslavskiy's partition method seems to have the lowest mean of both cache misses and branch misses in most of the tests, with stability in standard deviation,
+it shows decent deterministic behavior, a potential good sign for the performance of the algorithm. 
+
+For 3-Pivots, the cache behavior didn't seem to fully comply with the theoretical analysis that it is cache friendlier than classical and Yaroslavskiy's 2-Pivot QuickSorts, 
+the cache misses are higher than the 2-Pivot Yaroslavskiy's partition method when the array size is larger than 1 million. The bound between cache misses and the number of pivots is not yet clear.
+Contrary to the conclusion reported on experiments carried out by Kushagra's team, which supports the improvements on Multi-Pivots QuickSort are due to better cache behaviors
+\cite{Kushagra}, the results of the tests conducted in this thesis show that the cache misses are not always decreasing with more pivots. For instance, the 3-Pivot Kush's has more observed cache misses than the 2-Pivot Yaroslavskiy's,
+shows better performance than 2-Pivots during runtime tests. They also reported that their 7-Pivot QuickSort has worse performance than the 3-Pivot QuickSort as a result of poor cache behaviors, which is not yet tested in this thesis.
+But with the counter examples we have, we need to be more cautious about leveraging how much propotions of the performance improvements are due to better cache behaviors. It is still a topic for further research.
+We will discuss about the complicated relationships further when we finish up the analysis on the instructions and time.
+
+In the parts below, we will continue to seek more exceptions that could shift our opinions on the connections between cache and algorithm efficiency.
+
+\begin{center}
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        CPU Cycles      & Size     & Mean           & SD            & Median \\
+        \hline
+        1-Pivot Hoare   & 100      & 9327.4759      & 18.6229       & 9321.5095 \\
+                        & 1000     & 141738.7953    & 210.1901      & 141718.3450 \\
+                        & 10000    & 1896946.0648   & 20737.2369    & 1891616.5700 \\
+                        & 100000   & 23894324.6266  & 136138.2225   & 23938976.7268 \\
+                        & 1000000  & 283465722.4250 & 4456168.7125  & 282439687.8750 \\
+                        & 10000000 & 3341781994.300 & 21642481.3347 & 3341179100.5000 \\
+        \hline
+        1-Pivot Lomuto  & 100      & 8753.9251      & 19.1779       & 8747.1730 \\
+                        & 1000     & 133820.5575    & 121.5330      & 133786.0877 \\
+                        & 10000    & 1797257.9908   & 1206.3404     & 1797317.9663 \\
+                        & 100000   & 22592563.3050  & 184018.1868   & 22560236.2500 \\
+                        & 1000000  & 266780288.5625 & 1370978.1629  & 266496379.5000 \\
+                        & 10000000 & 3176006233.550 & 31963176.2929 & 3178944155.5000 \\
+        \hline
+        2-Pivot Yaro    & 100      & 8731.0535      & 13.1483       & 8733.6726 \\
+                        & 1000     & 134846.2398    & 206.7811      & 134824.3757 \\
+                        & 10000    & 1813160.2271   & 4167.9340     & 1812861.3252 \\
+                        & 100000   & 22590180.7687  & 50252.7800    & 22586713.9725 \\
+                        & 1000000  & 271262015.0750 & 2037510.3443  & 271168330.2500 \\
+                        & 10000000 & 3222076486.750 & 22825580.2990 & 3228776030.0000 \\
+        \hline
+        3-Pivot Kush    & 100      & 8612.3759      & 35.5221       & 8603.2238 \\
+                        & 1000     & 130997.1678    & 1591.6522     & 130493.5023 \\
+                        & 10000    & 1736859.7051   & 1691.3828     & 1736487.8719 \\
+                        & 100000   & 21593228.2474  & 199876.9076   & 21493032.9813 \\
+                        & 1000000  & 257443837.9800 & 1733684.7359  & 256993526.2000 \\
+                        & 10000000 & 3026119949.450 & 23471563.5615 & 3025067078.5000 \\
+        \hline
+        4-Pivot         & 100      & 8563.8790      & 9.0442        & 8562.7883 \\
+                        & 1000     & 129414.4258    & 60.9929       & 129430.0027 \\
+                        & 10000    & 1712788.0590   & 1490.2721     & 1712866.7067 \\
+                        & 100000   & 21148019.6577  & 123063.0849   & 21104913.9275 \\
+                        & 1000000  & 249836540.5700 & 1201917.2970  & 249647638.0000 \\
+                        & 10000000 & 2961500698.750 & 21436898.4187 & 2957871275.5000 \\
+        \hline
+    \end{tabular}
+\end{center}
+
+Now it is time to deal with the total CPU cycles, the global trend is as the pivots increase, the number of CPU cycles falls.
+But the 2-Pivot Yaroslavskiy's method exposed its weakness with respect to the 1-Pivot Lomuto's method. 
+
+The 4-Pivot shows the least amount of cycles and least deviations. Combining all the factors together, the final runtime performance is reveiled as follows.
+
+\begin{center}
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        Time            & Size     & Mean         & SD          & Median \\
+        \hline
+        1-Pivot Hoare   & 100      & 2.1751 μs    & 7.3394 μs   & 2.1724 μs \\
+                        & 1000     & 33.659 μs    & 203.14 μs   & 33.553 μs \\
+                        & 10000    & 442.01 μs    & 2.1185 μs   & 441.58 μs \\
+                        & 100000   & 5.5583 ms    & 79.072 μs   & 5.5294 ms \\
+                        & 1000000  & 66.392 ms    & 1.0688 ms   & 66.594 ms \\
+                        & 10000000 & 776.49 ms    & 3.7364 ms   & 776.07 ms \\
+        \hline
+        1-Pivot Lomuto  & 100      & 2.0334 µs    & 5.281 ns    & 2.0322 μs \\
+                        & 1000     & 31.105 µs    & 123.19 ns   & 31.062 µs \\
+                        & 10000    & 419.93 µs    & 3.2284 µs   & 418.01 µs \\
+                        & 100000   & 5.2008 ms    & 19.270 µs   & 5.1963 ms \\
+                        & 1000000  & 62.292 ms    & 452.07 µs   & 62.217 ms \\
+                        & 10000000 & 745.10 ms    & 6.7564 ms   & 743.02 ms \\
+        \hline
+        2-Pivot Yaro    & 100      & 2.0848 µs    & 6.1677 ns   & 2.0827 µs \\
+                        & 1000     & 31.372 µs    & 95.770 ns   & 31.347 µs \\
+                        & 10000    & 429.91 µs    & 5.6708 µs   & 428.28 µs \\
+                        & 100000   & 5.3164 ms    & 15.375 µs   & 5.3128 ms \\
+                        & 1000000  & 63.092 ms    & 500.09 µs   & 62.958 ms \\
+                        & 10000000 & 748.26 ms    & 4.8510 ms   & 749.60 ms \\
+        \hline
+        3-Pivot Kush    & 100      & 1.9985 µs    & 9.7010 ns   & 1.9943 µs \\
+                        & 1000     & 30.422 µs    & 80.286 ns   & 30.392 µs \\
+                        & 10000    & 411.09 µs    & 798.13 ns   & 410.84 µs \\
+                        & 100000   & 5.0570 ms    & 28.975 µs   & 5.0482 ms \\
+                        & 1000000  & 60.328 ms    & 906.06 µs   & 60.771 ms \\
+                        & 10000000 & 717.27 ms    & 6.5670 ms   & 716.72 ms \\
+        \hline
+        4-Pivot         & 100      & 1.9923 µs    &	6.2348 ns   & 1.9901 µs \\
+                        & 1000     & 30.422 µs    &	94.982 ns   & 30.400 µs \\
+                        & 10000    & 403.15 µs    & 1.7442 µs   & 402.50 µs \\
+                        & 100000   & 4.9661 ms    & 23.757 µs   & 4.9566 ms \\
+                        & 1000000  & 58.758 ms    & 365.07 µs 	& 58.683 ms \\
+                        & 10000000 & 696.42 ms    & 5.1556 ms   & 696.82 ms \\
+        \hline
+    \end{tabular}
+\end{center}
+
+Contrary to our expectations, 2-Pivot Yaroslavskiy's method was defeated by the 1-Pivot Lomuto's method in terms of time, even though it outperformed in the cache misses.
+The running time does show the correlation with the branch misses, but the cache misses don't seem to have a significant impact, where Yaroslavskiy's method has the lower cache misses but higher time than Lomuto's method.
+It also has lower cache misses than Kushagra's 3-Pivot method, but the time is still much higher for larger array sizes than the 3-Pivot method.
+
+The final running time also supports the exceptional cases above, where cache misses don't necessarily have a direct impact on the final performance of the algorithm.
+The hoare partition, with 2 while loops scanning for the out-of-order elements on both sides, introduced extra overheads on branch misses and didn't manage to compete with other algorithms.
+This could be the actual pain point that the 1-Pivot Hoare's method has to face, the branch misses appear to be the bottleneck, but we will soon find out the way to overcome it in the following sections.
+
+What's enligntening is that the 4-Pivot method has the least amount of time along with less branch misses and cache misses, the improvements are made in small steps but the overall performance is promising,
+although how more predicted branches but less actual branch misses still requires further researches.
 
 \begin{center}
     \begin{tabular}{ |c c | c c c| }
