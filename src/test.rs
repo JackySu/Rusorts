@@ -1,8 +1,6 @@
 #[cfg(test)]
 mod test {
 
-    use std::simd::u32x1;
-
     use crate::qsort::*;
     use crate::ty::FloatOrd;
     use crate::util::*;
