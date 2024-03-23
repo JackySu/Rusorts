@@ -75,6 +75,7 @@ docs/_build/
 algorithms.*
 
 # ignore everything named FYPReport.* but FYPReport.tex and FYPReport.pdf
+*.drawio
 FYPReport.*
 !FYPReport.tex
 !FYPReport.pdf
