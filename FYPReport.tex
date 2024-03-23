@@ -185,6 +185,7 @@ When the CPU needs to access data or instructions, it will first check the cache
 Closer it is to the CPU, the more expensive the manufacturing cost is, and the smaller the size is. The cache is usually divided into several levels, L1, L2, L3, etc.
 L1 and L2 caches are usually private to each core, while L3 cache is shared among all the cores in the same CPU.
 When the CPU needs to access data, it will first check the L1 cache, if the data is not found, it will check the L2 cache, and then the L3 cache, and finally the main memory, accelerating the memory access.
+With the context of sorting algorithms, it is a convention to switch to insertion sort when it comes to arrays with sizes less than a cache line size, the exact threshold could be around 9 to 30 elements, varying on the architecture.
 
 \subsection{Block Partitioning}
 The following code is directly taken from the BlockQuickSort paper by Stefan Edelkamp and Armin Weiß \cite{BlockQuickSort} who hold the copyrights of the code.
@@ -205,7 +206,7 @@ Additionally, they are placed on stack to get rid of the extra memory allocation
 		\If{$\mathrm{num}_L = 0$}\Comment{if left buffer is empty, refill it}
 		\State $\mathrm{start}_L \gets 0$
 		\For{$i = 0,\dots, \bs - 1$} 
-		\State $\mathrm{offsets}_L[\mathrm{num}_L ] \gets i$\Comment{Will this regardless write slows it down?}
+		\State $\mathrm{offsets}_L[\mathrm{num}_L ] \gets i$\Comment{Will this regardless write slows it down?}\hypertarget{RegardlessWrite}
 		\State $\mathrm{num}_L \pluseq (\mathrm{pivot} \geq A[\ell + i] )$\Comment{scanning phase for left side} 
 		\EndFor
 		\EndIf
@@ -248,6 +249,12 @@ The block partitioning method is a novel approach that not only reduces the numb
 I replaced the original swap function in the rearrangement phase with a cyclic permutation method also given in the referred thesis, which is a more efficient way to rearrange the elements in the buffer blocks.
 For better understanding, we can compare this cyclic permutation to a rotate-2n operation where n is the minium number of elements that need to be swapped to the right places.
 As a result of this, mostly there will be elements left in one of the buffer blocks, but we will just shift the other side of block and rearrange the elements not swapped yet in the next iteration.
+
+% TODO: 29th page of 'how good is multi-pivot quicksort' discusses that the write-back is supported by modern cpus that has much less cost than write-through,
+% which explains why keep writing to the same cache line is not a big deal for blockquicksort when dealing with storing offsets into the 128 size blocks.
+Another thing we might concern is the \hyperlink{RegardlessWrite}{regardless write} of the offsets in the buffer blocks, which will overwrite the previous value unless the offset index is incremented by 1 in the last step of scan.
+This doesn't add much overhead as the write-back policy of the cache line is supported by modern CPUs, replacing the old value with the new one in the cache line to get rid of the excessive and expensive 
+direct main memory manipulation. This action is penalty-free and the cost is much less than write-through operations that updates the memory every time a write happens.
 To give you a better visual comprehension of the cyclic permutation, I will provide a simple figure \hyperlink{fig:cyclicpermu}{`} of how it works.
 
 \begin{center}
@@ -355,8 +362,11 @@ and swaps all the elements less than the pivot to the left side regardless,
 thus duplicated swaps are introduced due to not checking if the elements are already in the right places. Both of these 2 partition methods are straightforward, 
 and their main structures are similar: scan, find mis-placed elements, swap and recursively repeat the same procedure until the whole array is sorted.
 
-It is often believed that Hoare's partition method is more efficient than the Lomuto's, with the support of fewer swaps, partitioning efficiency and memory efficiency.
-% TODO: finish
+It is generally believed that Hoare's partition method is more efficient than the Lomuto's, with the support of fewer swaps, partitioning efficiency and memory efficiency.
+Hoare's partition scheme typically involves fewer swaps compared to Lomuto's method, which will perform rebundant swaps for arrays with many duplicated elements or in-order elements.
+But Lomuto's scheme uses less auxiliary variables and is easier to implement, partially contribute to wide adoption in many programming languages and libraries.
+However, these theoretical analysis must be brought into practice to see if the assumptions hold true, and the performance of the two partition methods could vary depending on the actual data and the size of the array.
+Contexts and conduct empirical experiments are needed to verify the assumptions and to determine which one to use.
 
 \begin{algorithm}[H]
     \caption{Dual-Pivot QuickSort}\label{DualPivotQuickSort}
@@ -728,8 +738,11 @@ The following figure tags elements belonging to the leftmost, the middle-left, t
 As long as the number of pivots increases, the number of branches will grow linearly, and the complexity of the partitioning method will also increase.
 Thankfully, for \hyperlink{fig:4pivot}{4-Pivot QuickSort}, \hypertarget{2MoreBranches}we are just adding two more branches (As showed in the blue-red and purple-red branches in the chart below)
 compared with the $2 \times 2 = 4$ branches for 3-Pivots into considerations and the branching logic is still under control.
-We declare this as the balanced partition\hypertarget{BalancedPartition} layout we are using, where each side of the array is filled with $\frac{N + 1}{2}$ partitions for odd number $N$ of pivots, or one side with $\frac{N}{2}$ partitions and $\frac{N}{2} + 1$ on the other, we are going to have 9 branches for 5-Pivot QuickSort (3 partitions on each side, $3 \times 3 = 9$) and 12 branches for 6-Pivot QuickSort (3 partitions on one side and 4 on the other, $3 \times 4 = 12$).
-The complexity of the partitioning method is growing way too far and thus only 4-Pivot QuickSort will be discussed in this thesis.
+We declare this as the balanced partition\hypertarget{BalancedPartition} layout that we are using, where each side of the array is filled with $\frac{N + 1}{2}$ partitions for odd number $N$ pivots,
+or one side with $\frac{N}{2}$ partitions and $\frac{N}{2} + 1$ on the other. The comparisons take place like looking for a value in a binary search tree (BST), for instance when there are 3 pivots in total, comparing with the Pivot 2 first, then the Pivot 1 or Pivot 3.
+This search tree is of depth 2 and if we using a unbalanced BST that puts Pivot 1 or Pivot 3 on top, we would have a tree with depth 3, which is not efficient. Bearing this premise in mind, it is not hard to tell that we are going to have 9 branches for 5-Pivot QuickSort (3 partitions on each side, $3 \times 3 = 9$) and 12 branches for 6-Pivot QuickSort (3 partitions on one side and 4 on the other, $3 \times 4 = 12$).
+The complexity of the partitioning method is growing way too far and thus only 4-Pivot QuickSort will be discussed in this thesis. In the \cite{HowGoodIsMultiPivotQuicksort}{'how good is multi-pivot quicksort'} paper, the author sketched an extremal tree for seven pivots in fig 10. It seems to differ from the balanced BST I was expecting and due to the packed time I was given,
+this question should be given to the future work to analyze whether it is the optimal scheme for 7-Pivots or not.
 
 % TODO: talk about the similar layout that has been illustrated on page 23 of 'how good is multi-pivot quicksort' paper,
 % but it only analyzed the odd number pivots and the even number pivots need to be further discussed.
@@ -788,6 +801,7 @@ filtering out the outliers and the each item is collected with the mean, standar
 % The next part of the thesis will be the implementation of the Multi-Pivot Quicksort and the BlockQuickSort,
 % followed by the analysis of the results and the comparisons on the performance of the above algorithms using traditional partition methods.
 \begin{center}
+    \small
     \begin{tabular}{ |c c | c c c| }
         \hline
         Branch Misses   & Size     & Mean           & SD            & Median \\
@@ -845,6 +859,7 @@ It might be that the layout of 'balanced partition' we are using is more friendl
 Apart from the branch misses, the cache misses could also play a significant factor that could affect a lot, which is what we are going to shift our focus to.
 
 \begin{center}
+    \small
     \begin{tabular}{ |c c | c c c| }
         \hline
         Cache Misses    & Size     & Mean           & SD            & Median \\
@@ -913,6 +928,7 @@ We will discuss about the complicated relationships further when we finish up th
 In the parts below, we will continue to seek more exceptions that could shift our opinions on the connections between cache and algorithm efficiency.
 
 \begin{center}
+    \small
     \begin{tabular}{ |c c | c c c| }
         \hline
         CPU Cycles      & Size     & Mean           & SD            & Median \\
@@ -961,6 +977,7 @@ But the 2-Pivot Yaroslavskiy's method exposed its weakness with respect to the 1
 The 4-Pivot shows the least amount of cycles and least deviations. Combining all the factors together, the final runtime performance is reveiled as follows.
 
 \begin{center}
+    \small
     \begin{tabular}{ |c c | c c c| }
         \hline
         Time            & Size     & Mean         & SD          & Median \\
@@ -1012,7 +1029,7 @@ The running time does show the correlation with the branch misses, but the cache
 It also has lower cache misses than Kushagra's 3-Pivot method, but its time cost is still much higher for arrays with over 1 million elements than the 3-Pivot method.
 It seems the past analysis on the cache misses are more or less limited to the size of the array, and perhaps the old CPU architecture's deficiency on large chunk of data.
 What should be noted that the testing CPU, R7 3700x, has a $2 \times 8MB = 16MB$ L3 cache, which has 8MB of cache per CCD, that is, 4 cores share 8MB L3 cache, but L3 caches are not shared between the 2 CCDs.
-This issue was later solved in the Zen 3 architecture, where all the L3 cache is shared thanks to the high-performance Ring Buffer buses that connect the CCDs and significantly reduce the latency of cross-CCD communication.
+This issue was later solved in the Zen 3 architecture, where all the L3 cache is shared thanks to the high-performance ring buses that connect the CCDs and significantly reduce the latency of cross-CCD communication.
 
 The final running time also supports the exceptional cases above, where cache misses don't necessarily have a direct impact on the final performance of the algorithm.
 Hoare partition, with 2 while loops scanning for the out-of-order elements on both sides, introduced extra overheads on branch misses and didn't manage to compete with other algorithms.
@@ -1021,17 +1038,196 @@ What's enligntening is that the 4-Pivot method has the least amount of time alon
 although how the 4-Pivot method has more predicted branches but less actual branch misses still requires further researches.
 
 In conclusion, there exist few things that go out of what we have expected, the 2-Pivot Yaroslavskiy's method has the lowest cache misses but deficient performance, the 4-Pivot method has the least amount of time,
-somewhat partially due to its decent cache behavior, but more importantly, it has more predicted branches but less actual branch misses. This phenomenon could bring us to a new direction for explorations.
+somewhat partially due to its decent cache behavior, but more importantly, it has more predicted branches but less branch misses in field experiments. This phenomenon could bring us to a new direction for explorations.
 
 % TODO: maybe talk about SSSSort as it uses 127 pivots, technically it is another variation of Multi-Pivot QuickSort, but it is not yet tested in this thesis.
 % and it is really slow on many duplicates, but it is still worth mentioning.
 
-While searching for the solutions to the branch misses, I have found that BlockQuickSort could refresh us with a new vision of partitioning, it's easily adaptable to most of the partition methods and its direct impact on the performance is beyond amazing.
+% TODO: talk about some failed layouts that is way too complicated to implement, like with 2 unknown segments and 2 pivot hoare block partition.
 
-% TODO: 29th page of 'how good is multi-pivot quicksort' discusses that the write-back is supported by modern cpus that has much less cost than write-through,
-% which explains why keep writing to the same cache line is not a big deal for blockquicksort when dealing with storing offsets into the 128 size blocks.
+While searching for the solutions to the branch misses, I have found that BlockQuickSort could refresh us with a new vision of partitioning, it's easily adaptable to most of the partition methods and its direct impact on the performance is beyond amazing
+according to what has been observed in the tests below.
 
+\begin{center}
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        Branch Misses   & Size     & Mean           & SD            & Median \\
+        \hline
+        1-Pivot Hoare   & 100      & 224.4847       & 0.0588        & 224.4906 \\
+                        & 1000     & 3612.1521      & 2.2119        & 3612.3146 \\
+                        & 10000    & 49451.5958     & 72.9468       & 49464.5783 \\
+                        & 100000   & 622681.4604    & 1879.7192     & 622662.0813 \\
+                        & 1000000  & 7514512.0625   & 57015.6085    & 7528135.1250 \\
+                        & 10000000 & 88601386.6500  & 1316610.4428  & 88910896.5000 \\
+        Block Partition & 100      & 140.5428       & 0.0876        & 140.5400 \\
+                        & 1000     & 1570.7223      & 0.3938        & 1570.6199 \\
+                        & 10000    & 16756.4235     & 7.9552        & 16757.5304 \\
+                        & 100000   & 174650.0671    & 156.4744      & 174665.2439 \\
+                        & 1000000  & 1813011.9915   & 5043.7407     & 1811789.7762 \\
+                        & 10000000 & 20131908.6500  & 59866.7898    & 20134795.0000 \\
+        \hline
+        1-Pivot Lomuto  & 100      & 208.5500       & 0.2674        & 208.4572 \\
+                        & 1000     & 3431.9977      & 4.9888        & 3432.6774 \\
+                        & 10000    & 47510.1674     & 62.4065       & 47492.9219 \\
+                        & 100000   & 599369.5910    & 3094.0668     & 599127.2778 \\
+                        & 1000000  & 7188431.3250   & 77244.2181    & 7204133.7500 \\
+                        & 10000000 & 85572728.6000  & 1273266.3095  & 85589444.5000 \\
+        Block Partition & 100      & 112.3253       & 1.7694        & 112.7843 \\
+                        & 1000     & 1847.2526      & 6.8858        & 1570.6199 \\
+                        & 10000    & 25410.1772     & 123.7813      & 25350.7255 \\
+                        & 100000   & 294244.7788    & 3465.6995     & 294878.4121 \\
+                        & 1000000  & 3309146.6000   & 66124.1202    & 3313478.8000 \\
+                        & 10000000 & 38173447.6500  & 1498913.4243  & 37931268.5000 \\
+  2-Pivot Lomuto Block  & 100      & 108.9624       & 0.0537        & 108.9703 \\
+                        & 1000     & 1423.2516      & 3.1800        & 1422.2247 \\
+                        & 10000    & 17959.2518     & 49.0859       & 17951.8464 \\
+                        & 100000   & 196951.7141    & 1583.5204     & 197172.6696 \\
+                        & 1000000  & 2134863.0700   & 33965.1267    & 2119311.9000 \\
+                        & 10000000 & 24700025.8000  & 856684.2381   & 24551996.5000 \\
+        \hline
+    \end{tabular}
+\end{center}
 
+With the help of Block Partition together with branchless comparisons and branchless additions on counters, we reduced about 70\% of the branch misses in the 1-Pivot Hoare's method, and 40\% in the 1-Pivot Lomuto's method. These results will only increase as the size of the array grows.
+On gigantic arrays of size 10 million, we achieved 77\% and 55\% branch miss reductions respectively. That's a huge success so far.
+
+\begin{center}
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        Cache Misses    & Size     & Mean           & SD            & Median \\
+        \hline
+        1-Pivot Hoare   & 100      & 0.0205         & 0.0120        & 0.0188 \\
+                        & 1000     & 0.6087         & 1.4656        & 0.2268 \\
+                        & 10000    & 3.4867         & 2.7533        & 2.7844 \\
+                        & 100000   & 1079.6629      & 230.8850      & 996.8944 \\
+                        & 1000000  & 25764.5000     & 1166.9931     & 25475.1250 \\
+                        & 10000000 & 634608.9000    & 13770.3278    & 633085.5000 \\
+        Block Partition & 100      & 0.0308         & 0.0710        & 0.0115 \\
+                        & 1000     & 0.6074         & 1.3152        & 0.1710 \\
+                        & 10000    & 2.1814         & 1.5526        & 1.6280 \\
+                        & 100000   & 962.7563       & 36.5304       & 957.6906 \\
+                        & 1000000  & 22939.3449     & 772.0659      & 22956.2750 \\
+                        & 10000000 & 618067.7500    & 15870.0637    & 615660.5000 \\
+        \hline
+        1-Pivot Lomuto  & 100      & 0.0309         & 0.0585        & 0.0114 \\
+                        & 1000     & 1.5477         & 2.5235        & 0.7386 \\
+                        & 10000    & 16.8345        & 33.0704       & 6.4018 \\
+                        & 100000   & 1033.2760      & 46.1483       & 1016.9857 \\
+                        & 1000000  & 25119.6125     & 1033.3887     & 24916.1250 \\
+                        & 10000000 & 653495.7500    & 17064.0432    & 653582.5000 \\
+        Block Partition & 100      & 0.0382         & 0.0290        & 0.0314 \\
+                        & 1000     & 0.3182         & 0.2477        & 0.2104 \\
+                        & 10000    & 3.3952         & 3.7817        & 2.3033 \\
+                        & 100000   & 1170.8087      & 38.3259       & 1170.6985 \\
+                        & 1000000  & 25346.0800     & 820.9205      & 25164.7000 \\
+                        & 10000000 & 664360.6000    & 21405.0063    & 659137.5000 \\
+  2-Pivot Lomuto Block  & 100      & 0.0882         & 0.2168        & 0.0370 \\
+                        & 1000     & 1.6396         & 5.9674        & 0.2243 \\
+                        & 10000    & 5.6262         & 2.8924        & 5.2277 \\
+                        & 100000   & 1160.9140      & 51.9771       & 1143.0456 \\
+                        & 1000000  & 24010.0300     & 790.7382      & 24020.7000 \\
+                        & 10000000 & 635062.3500    & 14272.0662    & 634228.5000 \\
+        \hline
+    \end{tabular}
+\end{center}
+
+Again to our surprise, the changes in cache miss isn't as obvious as the branch misses, the tiny improvements on Hoare's Block Partition and 2-Pivot Lomuto's Block Partition seem to be only exceptions.
+Considering the traditional partition schemes only require very small number of constant size, comparing to the large chunk of memory required by the Block Partition, the Block Partition's revision on Lomuto's method adds more cache misses instead.
+But as we observe the CPU instructions count and the time cost, we will find out that the Block Partition's method is still the best choice for the 1-Pivot Hoare's method, and the 2-Pivot Lomuto's method.
+
+\begin{center}
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        CPU Cycles      & Size     & Mean           & SD            & Median \\
+        \hline
+        1-Pivot Hoare   & 100      & 9327.4759      & 18.6229       & 9321.5095 \\
+                        & 1000     & 141738.7953    & 210.1901      & 141718.3450 \\
+                        & 10000    & 1896946.0648   & 20737.2369    & 1891616.5700 \\
+                        & 100000   & 23894324.6266  & 136138.2225   & 23938976.7268 \\
+                        & 1000000  & 283465722.4250 & 4456168.7125  & 282439687.8750 \\
+                        & 10000000 & 3341781994.300 & 21642481.3347 & 3341179100.5000 \\
+        Block Partition & 100      & 7261.6214      & 3.9023        & 7261.0766 \\
+                        & 1000     & 91497.6734     & 44.2229       & 91503.7709 \\
+                        & 10000    & 1093098.0648   & 28276.9430    & 1087067.0555 \\
+                        & 100000   & 12615251.1810  & 408397.6682   & 12525100.7167 \\
+                        & 1000000  & 142142979.8257 & 1816742.9514  & 141750443.9091 \\
+                        & 10000000 & 1651547110.850 & 15522352.0233 & 1651945749.0000 \\
+        \hline
+        1-Pivot Lomuto  & 100      & 8753.9251      & 19.1779       & 8747.1730 \\
+                        & 1000     & 133820.5575    & 121.5330      & 133786.0877 \\
+                        & 10000    & 1797257.9908   & 1206.3404     & 1797317.9663 \\
+                        & 100000   & 22592563.3050  & 184018.1868   & 22560236.2500 \\
+                        & 1000000  & 266780288.5625 & 1370978.1629  & 266496379.5000 \\
+                        & 10000000 & 3176006233.550 & 31963176.2929 & 3178944155.5000 \\
+        Block Partition & 100      & 7008.9387      & 28.2391       & 7005.8331 \\
+                        & 1000     & 119936.7616    & 332.2665      & 120045.5206 \\
+                        & 10000    & 1635196.2005   & 3174.6739     & 1635068.8220 \\
+                        & 100000   & 19944485.2959  & 165665.3166   & 19999479.0516 \\
+                        & 1000000  & 234756806.7100 & 3512955.3454  & 233878365.1000 \\
+                        & 10000000 & 2779056745.450 & 88165361.1430 & 2783135055.5000 \\
+   2-Pivot Lomuto Block & 100      & 6921.2645      & 7.4863        & 6920.0053 \\
+                        & 1000     & 115531.6098    & 1531.6089     & 115046.6171 \\
+                        & 10000    & 1567567.6369   & 5508.4648     & 1567416.7897 \\
+                        & 100000   & 18897769.3384  & 175912.1206   & 18848614.8083 \\
+                        & 1000000  & 216844641.5500 & 2817917.2648  & 216536644.3000 \\
+                        & 10000000 & 2548418986.850 & 48249924.4893 & 2559985148.0000 \\
+        \hline
+    \end{tabular}
+\end{center}
+
+It seems the Hoare's Block Partition has the most significant improvements on the CPU cycles, with about half of the reductions on total cycles.
+The block partition doesn't seem to improve much with the Lomuto's scheme, which is still a mystery to me together with its dramatic standard deviation, but the 2-Pivot Lomuto's Block Partition has a decent amount of improvements.
+
+\begin{center}
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        Time            & Size     & Mean         & SD          & Median \\
+        \hline
+        1-Pivot Hoare   & 100      & 2.1751 μs    & 7.3394 μs   & 2.1724 μs \\
+                        & 1000     & 33.659 μs    & 203.14 μs   & 33.553 μs \\
+                        & 10000    & 442.01 μs    & 2.1185 μs   & 441.58 μs \\
+                        & 100000   & 5.5583 ms    & 79.072 μs   & 5.5294 ms \\
+                        & 1000000  & 66.392 ms    & 1.0688 ms   & 66.594 ms \\
+                        & 10000000 & 776.49 ms    & 3.7364 ms   & 776.07 ms \\
+        Block Partition & 100      & 1.6938 µs    & 4.7546 ns   & 1.6926 µs \\
+                        & 1000     & 21.782 µs    & 107.85 ns   & 21.743 µs \\
+                        & 10000    & 259.09 µs    & 490.99 ns   & 258.97 µs \\
+                        & 100000   & 2.9872 ms    & 9.5993 µs   & 2.9855 ms \\
+                        & 1000000  & 33.808 ms 	  & 159.14 µs   & 33.788 ms \\
+                        & 10000000 & 394.79 ms    & 2.9162 ms   & 395.56 ms \\
+        \hline
+        1-Pivot Lomuto  & 100      & 2.0334 µs    & 5.281 ns    & 2.0322 μs \\
+                        & 1000     & 31.105 µs    & 123.19 ns   & 31.062 µs \\
+                        & 10000    & 419.93 µs    & 3.2284 µs   & 418.01 µs \\
+                        & 100000   & 5.2008 ms    & 19.270 µs   & 5.1963 ms \\
+                        & 1000000  & 62.292 ms    & 452.07 µs   & 62.217 ms \\
+                        & 10000000 & 745.10 ms    & 6.7564 ms   & 743.02 ms \\
+        Block Partition & 100      & 1.6698 µs    & 4.2852 ns   & 1.6689 µs \\
+                        & 1000     & 28.453 µs    & 87.002 ns   & 28.424 µs \\
+                        & 10000    & 392.02 µs    & 1.3621 µs   & 391.81 µs \\
+                        & 100000   & 4.7857 ms    & 42.338 µs   & 4.7824 ms \\
+                        & 1000000  & 56.288 ms    & 884.73 µs   & 56.358 ms \\
+                        & 10000000 & 668.14 ms    & 21.283 ms   & 662.61 ms \\
+   2-Pivot Lomuto Block & 100      & 1.6387 µs    & 4.3470 ns   & 1.6373 µs \\
+                        & 1000     & 27.249 µs    & 52.407 ns   & 27.249 µs \\
+                        & 10000    & 374.62 µs    & 3.3842 µs   & 373.88 µs \\
+                        & 100000   & 4.5048 ms    & 31.057 µs   & 4.5022 ms \\
+                        & 1000000  & 52.149 ms    & 802.78 µs   & 52.234 ms \\
+                        & 10000000 & 605.61 ms    & 13.676 ms   & 602.31 ms \\
+        \hline
+    \end{tabular}
+\end{center}
+
+The most intriguing result has been given by the 1-Pivot Hoare' BlockQuickSort variation with least amount of time cost, nearly the half as the original, as a result of less than 3\% improvement on cache misses and approximately 70\% improvement on branch misses.
+It is already of much progress I would have to say, but the 2-Pivot Lomuto's BlockQuickSort variation also has a decent amount of improvements, with up to 18\% less time cost than the original.
+The former example has proven a success, but future works will also be carried out to improve the cache misses, even though there exists very limited things we could do,
+the modern CPU architecture has already done a great job on the overall cache hit rate, which can be supported by the cachegrind tests that all the tested algorithms have around less than 10\% cache misses.
+Although this won't be the deterministic evidence to say that the cache misses are not the bottleneck, but it is still a good sign that the cache misses are not the main issue that we have to deal with.
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 \section{Full Charts}
 \begin{center}
