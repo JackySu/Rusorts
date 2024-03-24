@@ -356,27 +356,4 @@ mod test {
             assert_eq!(is_sorted(&some_vec), true);
         }
     }
-
-    #[test]
-    fn test_4_pivots_qsort() {
-        let _arr: Vec<f32> = default_vec(20);
-        let mut copy = [
-            0.0846004486,
-            0.324027538,
-            0.247496307,
-            0.346324563,
-            0.32713002,
-            0.524065554,
-            0.0999410152,
-            0.448016822,
-            0.157732904,
-            0.249729276,
-            0.360087872,
-            0.937479197,
-        ];
-        let dur = time_it(|| quadro_pivot_quicksort(&mut copy));
-        println!("{:#?}", copy);
-        println!("std sort 10m array cost: {:?}ns", dur);
-        assert_eq!(is_sorted(&copy), true);
-    }
 }

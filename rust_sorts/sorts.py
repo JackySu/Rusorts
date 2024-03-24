@@ -16,16 +16,16 @@ TIME_STATS_N = [
     10_000_000,
 ]
 SORT_FUNCS = {
-    "Parallel Crumsort": rust_sorts.f32_par_crumsort,
-    "Parellel PDQSort": rust_sorts.f32_par_pdqsort,
-    "Quicksort hoare block partition": rust_sorts.f32_1_pivot_quicksort_hoare_block_partition,
-    "Quicksort 4 Pivots": rust_sorts.f32_4_pivot_quicksort,
+    "Parallel Crumsort": rust_sorts.par_crumsort,
+    "Parellel PDQSort": rust_sorts.par_pdqsort,
+    "Quicksort hoare block partition": rust_sorts.single_pivot_quicksort_hoare_block_partition,
+    "Quicksort 4 Pivots": rust_sorts.quadro_pivot_quicksort,
 }
 
 
 def time_sort(sort_name: str, sort_func: Callable[[float], int], to_sort: list[float], stats: list[float]) -> None:
     copied = copy.deepcopy(to_sort)
-    time_per_call = sum([sort_func(copied) for _ in range(RUNS)]) / RUNS / 1_000
+    time_per_call = sum([sort_func(copied)[1] for _ in range(RUNS)]) / RUNS / 1_000
     print(f"{sort_name} per call: {time_per_call:.2f} μs")
     stats.append(time_per_call)
 

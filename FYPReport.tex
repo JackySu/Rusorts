@@ -1227,10 +1227,15 @@ It is already of much progress I would have to say, but the 2-Pivot Lomuto's Blo
 The former example has proven a success, but future works will also be carried out to improve the cache misses, even though there exists very limited things we could do,
 the modern CPU architecture has already done a great job on the overall cache hit rate, which can be supported by the cachegrind tests that all the tested algorithms have around less than 10\% cache misses.
 Although this won't be the deterministic evidence to say that the cache misses are not the bottleneck, but it is still a good sign that the cache misses are not the main issue that we have to deal with.
+
+
+% TODO: talk about pivot selection and skewed pivot selection like page 11 of block quick sort paper.
+% TODO: 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 \section{Full Charts}
 \begin{center}
+    \small
     \begin{tabular}{ |c c | c c c| }
         \hline
         Branch Misses   & Size     & Mean           & SD            & Median \\
@@ -1289,9 +1294,8 @@ Although this won't be the deterministic evidence to say that the cache misses a
                         & 10000000 & 92702517.3500  & 1393247.4531  & 93065712.5000 \\
         \hline
     \end{tabular}
-\end{center}
 
-\begin{center}
+    \small
     \begin{tabular}{ |c c | c c c| }
         \hline
         Cache Misses    & Size     & Mean           & SD            & Median \\
@@ -1350,9 +1354,8 @@ Although this won't be the deterministic evidence to say that the cache misses a
                         & 10000000 & 587479.3000    & 11805.1672    & 582773.5000 \\
         \hline
     \end{tabular}
-\end{center}
 
-\begin{center}
+    \small
     \begin{tabular}{ |c c | c c c| }
         \hline
         CPU Cycles      & Size     & Mean           & SD            & Median \\
@@ -1411,8 +1414,8 @@ Although this won't be the deterministic evidence to say that the cache misses a
                         & 10000000 & 2961500698.750 & 21436898.4187 & 2957871275.5000 \\
         \hline
     \end{tabular}
-\end{center}
-\begin{center}
+
+    \small
     \begin{tabular}{ |c c | c c c| }
         \hline
         Time            & Size     & Mean         & SD          & Median \\
@@ -1472,8 +1475,6 @@ Although this won't be the deterministic evidence to say that the cache misses a
         \hline
     \end{tabular}
 \end{center}
-
-
 
 \begin{thebibliography}{99}
 

@@ -1,16 +1,11 @@
 use core::cmp::Ordering;
 use core::ops::Deref;
 
-use pyo3::FromPyObject;
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 
-impl FromPyObject<'_> for FloatOrd {
-    fn extract(ob: &pyo3::PyAny) -> pyo3::PyResult<Self> {
-        Ok(FloatOrd(ob.extract()?))
-    }
-}
-
+// This type is for internal use only within the crate
+// not meant to be exposed to the pyo3 bindings
 #[derive(PartialEq, PartialOrd, Debug, Clone, Copy, Default)]
 #[repr(transparent)]  // guarantees same layout as a single f32
 pub struct FloatOrd(pub f32);

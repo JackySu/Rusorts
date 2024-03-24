@@ -891,7 +891,7 @@ macro_rules! impl_4n_pivot_qsort {
     }
 }
 
-impl_4n_pivot_qsort!(4, quadro_pivot_quicksort, f32, f32x4);
+// impl_4n_pivot_qsort!(4, quadro_pivot_quicksort, f32, f32x4);
 impl_4n_pivot_qsort!(8, octal_pivot_quicksort, f32, f32x8);
 
 pub fn quadro_pivot_quicksort_2(arr: &mut [f32]) {
