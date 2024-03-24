@@ -1,11 +1,6 @@
 use rand::{distributions::Standard, Rng, prelude::Distribution};
 use std::time;
 
-use pyo3::{prelude::*, types::PyList};
-use core::ffi::c_char;
-
-use crate::ty::FloatOrd;
-
 pub fn default_vec<T>(n: usize) -> Vec<T>
 where Standard: Distribution<T> {
     rand::thread_rng().sample_iter(Standard).take(n).collect()
@@ -23,32 +18,36 @@ pub fn time_it(f: impl FnOnce()) -> u64 {
     nanos
 }
 
-pub unsafe fn get_type_str(v: &PyAny) -> &str {
-    let typ = (*(*v.as_ptr()).ob_type).tp_name as *const c_char;
-    core::ffi::CStr::from_ptr(typ).to_str().unwrap()
-}
-
-pub fn pylist_to_ord_vec(v: &PyList) -> PyResult<Vec<i32>> {
-    // get object from first element or return an empty Vec<i32>
-    let item = v.get_item(0);
-    let obj = match item {
-        Ok(obj) => obj,
-        Err(_) => return Ok(Vec::new())
+#[macro_export]
+macro_rules! sort_ordnum_f {
+    (trait, $v: expr, $func: ident, $py: ident) => {
+        match $v {
+            OrdNum::Int(mut v) => {
+                let t = time_it(|| (&mut v).$func());
+                let v = PyList::new($py, v);
+                Ok((v, t))
+            }
+            OrdNum::Float(mut v) => {
+                let t = time_it(|| (&mut v).$func());
+                let v = PyList::new($py, v);
+                Ok((v, t))
+            }
+        }
     };
-    let typ = unsafe { get_type_str(obj) };
-    match typ {
-        "int" => v.extract::<Vec<i32>>(),
-        "float" => v.extract::<Vec<f32>>()
-            .map(|v| v
-                .iter()
-                .map(|x| {
-                    let f = unsafe { core::mem::transmute::<f32, i32>(*x) };
-                    if f < 0 { f ^ 0x7fffffff } else { f }
-                })
-                .collect()
-            ),
-        _ => Err(pyo3::exceptions::PyTypeError::new_err("unsupported type"))
-    }
+    (slice, $v: expr, $func: ident, $py: ident) => {
+        match $v {
+            OrdNum::Int(mut v) => {
+                let t = time_it(|| $func(&mut v));
+                let v = PyList::new($py, v);
+                Ok((v, t))
+            }
+            OrdNum::Float(mut v) => {
+                let t = time_it(|| $func(&mut v));
+                let v = PyList::new($py, v);
+                Ok((v, t))
+            }
+        }
+    };
 }
 
 /* 

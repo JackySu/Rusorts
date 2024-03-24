@@ -1,11 +1,31 @@
 use core::cmp::Ordering;
 use core::ops::Deref;
 
+use pyo3::prelude::*;
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 
-// This type is for internal use only within the crate
-// not meant to be exposed to the pyo3 bindings
+
+#[derive(FromPyObject)]
+pub(crate) enum OrdNum {
+    #[pyo3(transparent, annotation = "list[int]")]
+    Int(Vec<i32>),
+    #[pyo3(transparent, annotation = "list[float]")]
+    Float(Vec<FloatOrd>),
+}
+
+impl FromPyObject<'_> for FloatOrd {
+    fn extract(ob: &PyAny) -> PyResult<Self> {
+        Ok(FloatOrd(ob.extract()?))
+    }
+}
+
+impl ToPyObject for FloatOrd {
+    fn to_object(&self, py: Python) -> PyObject {
+        self.0.to_object(py)
+    }
+}
+
 #[derive(PartialEq, PartialOrd, Debug, Clone, Copy, Default)]
 #[repr(transparent)]  // guarantees same layout as a single f32
 pub struct FloatOrd(pub f32);
