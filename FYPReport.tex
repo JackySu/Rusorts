@@ -801,47 +801,14 @@ filtering out the outliers and the each item is collected with the mean, standar
 % The next part of the thesis will be the implementation of the Multi-Pivot Quicksort and the BlockQuickSort,
 % followed by the analysis of the results and the comparisons on the performance of the above algorithms using traditional partition methods.
 \begin{center}
-    \small
-    \begin{tabular}{ |c c | c c c| }
-        \hline
-        Branch Misses   & Size     & Mean           & SD            & Median \\
-        \hline
-        1-Pivot Hoare   & 100      & 224.4847       & 0.0588        & 224.4906 \\
-                        & 1000     & 3612.1521      & 2.2119        & 3612.3146 \\
-                        & 10000    & 49451.5958     & 72.9468       & 49464.5783 \\
-                        & 100000   & 622681.4604    & 1879.7192     & 622662.0813 \\
-                        & 1000000  & 7514512.0625   & 57015.6085    & 7528135.1250 \\
-                        & 10000000 & 88601386.6500  & 1316610.4428  & 88910896.5000 \\
-        \hline
-        1-Pivot Lomuto  & 100      & 208.5500       & 0.2674        & 208.4572 \\
-                        & 1000     & 3431.9977      & 4.9888        & 3432.6774 \\
-                        & 10000    & 47510.1674     & 62.4065       & 47492.9219 \\
-                        & 100000   & 599369.5910    & 3094.0668     & 599127.2778 \\
-                        & 1000000  & 7188431.3250   & 77244.2181    & 7204133.7500 \\
-                        & 10000000 & 85572728.6000  & 1273266.3095  & 85589444.5000 \\
-        \hline
-        2-Pivot Yaro    & 100      & 218.6639       & 0.0935        & 218.6437 \\
-                        & 1000     & 3629.7245      & 1.7137        & 3630.2813 \\
-                        & 10000    & 50301.2096     & 38.3586       & 50300.6213 \\
-                        & 100000   & 635045.2987    & 2126.8544     & 634416.1873 \\
-                        & 1000000  & 7624533.4500   & 45160.5385    & 7614424.8750 \\
-                        & 10000000 & 90144952.0000  & 955908.5187   & 90243746.5000 \\
-        \hline
-        3-Pivot Kush    & 100      & 231.0457       & 0.0996        & 231.0266 \\
-                        & 1000     & 3828.0046      & 1.7692        & 3827.5547 \\
-                        & 10000    & 52692.9469     & 57.0170       & 52699.8674 \\
-                        & 100000   & 660656.7803    & 2410.3154     & 660486.3048 \\
-                        & 1000000  & 7881473.7500   & 55041.5020    & 7885420.7000 \\
-                        & 10000000 & 93039500.9000  & 1138513.6270  & 93254088.5000 \\
-        \hline
-        4-Pivot         & 100      & 233.3581       & 0.1961        & 233.3429 \\
-                        & 1000     & 3847.1970      & 1.7934        & 3847.1812 \\
-                        & 10000    & 52466.7069     & 69.7884       & 52466.1749 \\
-                        & 100000   & 655540.9742    & 2248.3174     & 655697.4468 \\
-                        & 1000000  & 7831009.1900   & 49027.0168    & 7835433.7000 \\
-                        & 10000000 & 92702517.3500  & 1393247.4531  & 93065712.5000 \\
-        \hline
-    \end{tabular}
+\begin{figure}[H]
+    \hypertarget{fig:classicalbranchmiss}{}
+    \caption{Classical QuickSort Branch Misses}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{Classical QuickSort Branch Misses.pdf}
+\end{figure}
 \end{center}
 
 The traditional means don't show much difference between the 1-Pivot Hoare and Lomuto partition methods,
@@ -858,49 +825,14 @@ It might be that the layout of 'balanced partition' we are using is more friendl
 
 Apart from the branch misses, the cache misses could also play a significant factor that could affect a lot, which is what we are going to shift our focus to.
 
-\begin{center}
-    \small
-    \begin{tabular}{ |c c | c c c| }
-        \hline
-        Cache Misses    & Size     & Mean           & SD            & Median \\
-        \hline
-        1-Pivot Hoare   & 100      & 0.0205         & 0.0120        & 0.0188 \\
-                        & 1000     & 0.6087         & 1.4656        & 0.2268 \\
-                        & 10000    & 3.4867         & 2.7533        & 2.7844 \\
-                        & 100000   & 1079.6629      & 230.8850      & 996.8944 \\
-                        & 1000000  & 25764.5000     & 1166.9931     & 25475.1250 \\
-                        & 10000000 & 634608.9000    & 13770.3278    & 633085.5000 \\
-        \hline
-        1-Pivot Lomuto  & 100      & 0.0309         & 0.0585        & 0.0114 \\
-                        & 1000     & 1.5477         & 2.5235        & 0.7386 \\
-                        & 10000    & 16.8345        & 33.0704       & 6.4018 \\
-                        & 100000   & 1033.2760      & 46.1483       & 1016.9857 \\
-                        & 1000000  & 25119.6125     & 1033.3887     & 24916.1250 \\
-                        & 10000000 & 653495.7500    & 17064.0432    & 653582.5000 \\
-        \hline
-        2-Pivot Yaro    & 100      & 0.0470         & 0.1104        & 0.0155 \\
-                        & 1000     & 1.3900         & 4.3104        & 0.3234 \\
-                        & 10000    & 14.0858        & 30.1847       & 6.7674 \\
-                        & 100000   & 1200.8078      & 284.2979      & 1131.0076 \\
-                        & 1000000  & 22058.5875     & 528.7325      & 21870.3750 \\
-                        & 10000000 & 598454.2000    & 6634.4607     & 597553.5000 \\
-        \hline
-        3-Pivot Kush    & 100      & 0.0118         & 0.0093        & 0.0095 \\
-                        & 1000     & 1.0156         & 1.9968        & 0.5050 \\
-                        & 10000    & 9.3897         & 19.5556       & 4.8184 \\
-                        & 100000   & 1071.0240      & 157.6619      & 1032.5982 \\
-                        & 1000000  & 22472.1100     & 1444.4493     & 22098.3000 \\
-                        & 10000000 & 608203.3000    & 7020.9750     & 607993.0000 \\
-        \hline
-        4-Pivot         & 100      & 0.0343         & 0.0814        & 0.0120 \\
-                        & 1000     & 1.3838         & 2.5992        & 0.5333 \\
-                        & 10000    & 4.1651         & 4.0935        & 3.1953 \\
-                        & 100000   & 1158.2534      & 209.3988      & 1090.7000 \\
-                        & 1000000  & 22077.3200     & 600.9565      & 22069.7000 \\
-                        & 10000000 & 587479.3000    & 11805.1672    & 582773.5000 \\
-        \hline
-    \end{tabular}
-\end{center}
+\begin{figure}[H]
+    \hypertarget{fig:classicalcachemiss}{}
+    \caption{Classical QuickSort Cache Misses}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{Classical QuickSort Cache Misses.pdf}
+\end{figure}
 
 The global trend shows the outburst of cache misses when scaling from 10k to 100k, possibly due to the drain of the L1 cache.
 In fact, the CPU has already run out of L1 cache for size 10k, while the spatial locality of the elements is still good enough to keep the L2 cache misses at a low level.
@@ -927,98 +859,28 @@ We will discuss about the complicated relationships further when we finish up th
 
 In the parts below, we will continue to seek more exceptions that could shift our opinions on the connections between cache and algorithm efficiency.
 
-\begin{center}
-    \small
-    \begin{tabular}{ |c c | c c c| }
-        \hline
-        CPU Cycles      & Size     & Mean           & SD            & Median \\
-        \hline
-        1-Pivot Hoare   & 100      & 9327.4759      & 18.6229       & 9321.5095 \\
-                        & 1000     & 141738.7953    & 210.1901      & 141718.3450 \\
-                        & 10000    & 1896946.0648   & 20737.2369    & 1891616.5700 \\
-                        & 100000   & 23894324.6266  & 136138.2225   & 23938976.7268 \\
-                        & 1000000  & 283465722.4250 & 4456168.7125  & 282439687.8750 \\
-                        & 10000000 & 3341781994.300 & 21642481.3347 & 3341179100.5000 \\
-        \hline
-        1-Pivot Lomuto  & 100      & 8753.9251      & 19.1779       & 8747.1730 \\
-                        & 1000     & 133820.5575    & 121.5330      & 133786.0877 \\
-                        & 10000    & 1797257.9908   & 1206.3404     & 1797317.9663 \\
-                        & 100000   & 22592563.3050  & 184018.1868   & 22560236.2500 \\
-                        & 1000000  & 266780288.5625 & 1370978.1629  & 266496379.5000 \\
-                        & 10000000 & 3176006233.550 & 31963176.2929 & 3178944155.5000 \\
-        \hline
-        2-Pivot Yaro    & 100      & 8731.0535      & 13.1483       & 8733.6726 \\
-                        & 1000     & 134846.2398    & 206.7811      & 134824.3757 \\
-                        & 10000    & 1813160.2271   & 4167.9340     & 1812861.3252 \\
-                        & 100000   & 22590180.7687  & 50252.7800    & 22586713.9725 \\
-                        & 1000000  & 271262015.0750 & 2037510.3443  & 271168330.2500 \\
-                        & 10000000 & 3222076486.750 & 22825580.2990 & 3228776030.0000 \\
-        \hline
-        3-Pivot Kush    & 100      & 8612.3759      & 35.5221       & 8603.2238 \\
-                        & 1000     & 130997.1678    & 1591.6522     & 130493.5023 \\
-                        & 10000    & 1736859.7051   & 1691.3828     & 1736487.8719 \\
-                        & 100000   & 21593228.2474  & 199876.9076   & 21493032.9813 \\
-                        & 1000000  & 257443837.9800 & 1733684.7359  & 256993526.2000 \\
-                        & 10000000 & 3026119949.450 & 23471563.5615 & 3025067078.5000 \\
-        \hline
-        4-Pivot         & 100      & 8563.8790      & 9.0442        & 8562.7883 \\
-                        & 1000     & 129414.4258    & 60.9929       & 129430.0027 \\
-                        & 10000    & 1712788.0590   & 1490.2721     & 1712866.7067 \\
-                        & 100000   & 21148019.6577  & 123063.0849   & 21104913.9275 \\
-                        & 1000000  & 249836540.5700 & 1201917.2970  & 249647638.0000 \\
-                        & 10000000 & 2961500698.750 & 21436898.4187 & 2957871275.5000 \\
-        \hline
-    \end{tabular}
-\end{center}
+\begin{figure}[H]
+    \hypertarget{fig:classicalcpucycles}{}
+    \caption{Classical QuickSort CPU Cycles}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{Classical QuickSort CPU Cycles.pdf}
+\end{figure}
 
 Now it is time to deal with the total CPU cycles, the global trend is as the pivots increase, the number of CPU cycles falls.
 But the 2-Pivot Yaroslavskiy's method exposed its weakness with respect to the 1-Pivot Lomuto's method. 
 
 The 4-Pivot shows the least amount of cycles and least deviations. Combining all the factors together, the final runtime performance is reveiled as follows.
 
-\begin{center}
-    \small
-    \begin{tabular}{ |c c | c c c| }
-        \hline
-        Time            & Size     & Mean         & SD          & Median \\
-        \hline
-        1-Pivot Hoare   & 100      & 2.1751 μs    & 7.3394 μs   & 2.1724 μs \\
-                        & 1000     & 33.659 μs    & 203.14 μs   & 33.553 μs \\
-                        & 10000    & 442.01 μs    & 2.1185 μs   & 441.58 μs \\
-                        & 100000   & 5.5583 ms    & 79.072 μs   & 5.5294 ms \\
-                        & 1000000  & 66.392 ms    & 1.0688 ms   & 66.594 ms \\
-                        & 10000000 & 776.49 ms    & 3.7364 ms   & 776.07 ms \\
-        \hline
-        1-Pivot Lomuto  & 100      & 2.0334 µs    & 5.281 ns    & 2.0322 μs \\
-                        & 1000     & 31.105 µs    & 123.19 ns   & 31.062 µs \\
-                        & 10000    & 419.93 µs    & 3.2284 µs   & 418.01 µs \\
-                        & 100000   & 5.2008 ms    & 19.270 µs   & 5.1963 ms \\
-                        & 1000000  & 62.292 ms    & 452.07 µs   & 62.217 ms \\
-                        & 10000000 & 745.10 ms    & 6.7564 ms   & 743.02 ms \\
-        \hline
-        2-Pivot Yaro    & 100      & 2.0848 µs    & 6.1677 ns   & 2.0827 µs \\
-                        & 1000     & 31.372 µs    & 95.770 ns   & 31.347 µs \\
-                        & 10000    & 429.91 µs    & 5.6708 µs   & 428.28 µs \\
-                        & 100000   & 5.3164 ms    & 15.375 µs   & 5.3128 ms \\
-                        & 1000000  & 63.092 ms    & 500.09 µs   & 62.958 ms \\
-                        & 10000000 & 748.26 ms    & 4.8510 ms   & 749.60 ms \\
-        \hline
-        3-Pivot Kush    & 100      & 1.9985 µs    & 9.7010 ns   & 1.9943 µs \\
-                        & 1000     & 30.422 µs    & 80.286 ns   & 30.392 µs \\
-                        & 10000    & 411.09 µs    & 798.13 ns   & 410.84 µs \\
-                        & 100000   & 5.0570 ms    & 28.975 µs   & 5.0482 ms \\
-                        & 1000000  & 60.328 ms    & 906.06 µs   & 60.771 ms \\
-                        & 10000000 & 717.27 ms    & 6.5670 ms   & 716.72 ms \\
-        \hline
-        4-Pivot         & 100      & 1.9923 µs    &	6.2348 ns   & 1.9901 µs \\
-                        & 1000     & 30.422 µs    &	94.982 ns   & 30.400 µs \\
-                        & 10000    & 403.15 µs    & 1.7442 µs   & 402.50 µs \\
-                        & 100000   & 4.9661 ms    & 23.757 µs   & 4.9566 ms \\
-                        & 1000000  & 58.758 ms    & 365.07 µs 	& 58.683 ms \\
-                        & 10000000 & 696.42 ms    & 5.1556 ms   & 696.82 ms \\
-        \hline
-    \end{tabular}
-\end{center}
+\begin{figure}[H]
+    \hypertarget{fig:classicaltime}{}
+    \caption{Classical QuickSort Time}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{Classical QuickSort Time.pdf}
+\end{figure}
 
 % A former analysis concerning the details of the overall costs and partitioning costs has been brought by Hennequin's thesis \cite{Hennequin} in terms of Multi-Pivot QuickSorts,
 % where the author proved that if the average partitioning cost for $n$ elements is $a\cdot n + O(1)$ with a constant $a$, the overall cost then will be $\frac{6}{5}a\cdot n \ln n + \bigO{n}$.
@@ -1048,179 +910,51 @@ somewhat partially due to its decent cache behavior, but more importantly, it ha
 While searching for the solutions to the branch misses, I have found that BlockQuickSort could refresh us with a new vision of partitioning, it's easily adaptable to most of the partition methods and its direct impact on the performance is beyond amazing
 according to what has been observed in the tests below.
 
-\begin{center}
-    \small
-    \begin{tabular}{ |c c | c c c| }
-        \hline
-        Branch Misses   & Size     & Mean           & SD            & Median \\
-        \hline
-        1-Pivot Hoare   & 100      & 224.4847       & 0.0588        & 224.4906 \\
-                        & 1000     & 3612.1521      & 2.2119        & 3612.3146 \\
-                        & 10000    & 49451.5958     & 72.9468       & 49464.5783 \\
-                        & 100000   & 622681.4604    & 1879.7192     & 622662.0813 \\
-                        & 1000000  & 7514512.0625   & 57015.6085    & 7528135.1250 \\
-                        & 10000000 & 88601386.6500  & 1316610.4428  & 88910896.5000 \\
-        Block Partition & 100      & 140.5428       & 0.0876        & 140.5400 \\
-                        & 1000     & 1570.7223      & 0.3938        & 1570.6199 \\
-                        & 10000    & 16756.4235     & 7.9552        & 16757.5304 \\
-                        & 100000   & 174650.0671    & 156.4744      & 174665.2439 \\
-                        & 1000000  & 1813011.9915   & 5043.7407     & 1811789.7762 \\
-                        & 10000000 & 20131908.6500  & 59866.7898    & 20134795.0000 \\
-        \hline
-        1-Pivot Lomuto  & 100      & 208.5500       & 0.2674        & 208.4572 \\
-                        & 1000     & 3431.9977      & 4.9888        & 3432.6774 \\
-                        & 10000    & 47510.1674     & 62.4065       & 47492.9219 \\
-                        & 100000   & 599369.5910    & 3094.0668     & 599127.2778 \\
-                        & 1000000  & 7188431.3250   & 77244.2181    & 7204133.7500 \\
-                        & 10000000 & 85572728.6000  & 1273266.3095  & 85589444.5000 \\
-        Block Partition & 100      & 112.3253       & 1.7694        & 112.7843 \\
-                        & 1000     & 1847.2526      & 6.8858        & 1570.6199 \\
-                        & 10000    & 25410.1772     & 123.7813      & 25350.7255 \\
-                        & 100000   & 294244.7788    & 3465.6995     & 294878.4121 \\
-                        & 1000000  & 3309146.6000   & 66124.1202    & 3313478.8000 \\
-                        & 10000000 & 38173447.6500  & 1498913.4243  & 37931268.5000 \\
-  2-Pivot Lomuto Block  & 100      & 108.9624       & 0.0537        & 108.9703 \\
-                        & 1000     & 1423.2516      & 3.1800        & 1422.2247 \\
-                        & 10000    & 17959.2518     & 49.0859       & 17951.8464 \\
-                        & 100000   & 196951.7141    & 1583.5204     & 197172.6696 \\
-                        & 1000000  & 2134863.0700   & 33965.1267    & 2119311.9000 \\
-                        & 10000000 & 24700025.8000  & 856684.2381   & 24551996.5000 \\
-        \hline
-    \end{tabular}
-\end{center}
+\begin{figure}[H]
+    \hypertarget{fig:blockbranchmiss}{}
+    \caption{Block QuickSort Branch Misses}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{Classical vs Block Partition Branch Misses.pdf}
+\end{figure}
 
 With the help of Block Partition together with branchless comparisons and branchless additions on counters, we reduced about 70\% of the branch misses in the 1-Pivot Hoare's method, and 40\% in the 1-Pivot Lomuto's method. These results will only increase as the size of the array grows.
 On gigantic arrays of size 10 million, we achieved 77\% and 55\% branch miss reductions respectively. That's a huge success so far.
 
-\begin{center}
-    \small
-    \begin{tabular}{ |c c | c c c| }
-        \hline
-        Cache Misses    & Size     & Mean           & SD            & Median \\
-        \hline
-        1-Pivot Hoare   & 100      & 0.0205         & 0.0120        & 0.0188 \\
-                        & 1000     & 0.6087         & 1.4656        & 0.2268 \\
-                        & 10000    & 3.4867         & 2.7533        & 2.7844 \\
-                        & 100000   & 1079.6629      & 230.8850      & 996.8944 \\
-                        & 1000000  & 25764.5000     & 1166.9931     & 25475.1250 \\
-                        & 10000000 & 634608.9000    & 13770.3278    & 633085.5000 \\
-        Block Partition & 100      & 0.0308         & 0.0710        & 0.0115 \\
-                        & 1000     & 0.6074         & 1.3152        & 0.1710 \\
-                        & 10000    & 2.1814         & 1.5526        & 1.6280 \\
-                        & 100000   & 962.7563       & 36.5304       & 957.6906 \\
-                        & 1000000  & 22939.3449     & 772.0659      & 22956.2750 \\
-                        & 10000000 & 618067.7500    & 15870.0637    & 615660.5000 \\
-        \hline
-        1-Pivot Lomuto  & 100      & 0.0309         & 0.0585        & 0.0114 \\
-                        & 1000     & 1.5477         & 2.5235        & 0.7386 \\
-                        & 10000    & 16.8345        & 33.0704       & 6.4018 \\
-                        & 100000   & 1033.2760      & 46.1483       & 1016.9857 \\
-                        & 1000000  & 25119.6125     & 1033.3887     & 24916.1250 \\
-                        & 10000000 & 653495.7500    & 17064.0432    & 653582.5000 \\
-        Block Partition & 100      & 0.0382         & 0.0290        & 0.0314 \\
-                        & 1000     & 0.3182         & 0.2477        & 0.2104 \\
-                        & 10000    & 3.3952         & 3.7817        & 2.3033 \\
-                        & 100000   & 1170.8087      & 38.3259       & 1170.6985 \\
-                        & 1000000  & 25346.0800     & 820.9205      & 25164.7000 \\
-                        & 10000000 & 664360.6000    & 21405.0063    & 659137.5000 \\
-  2-Pivot Lomuto Block  & 100      & 0.0882         & 0.2168        & 0.0370 \\
-                        & 1000     & 1.6396         & 5.9674        & 0.2243 \\
-                        & 10000    & 5.6262         & 2.8924        & 5.2277 \\
-                        & 100000   & 1160.9140      & 51.9771       & 1143.0456 \\
-                        & 1000000  & 24010.0300     & 790.7382      & 24020.7000 \\
-                        & 10000000 & 635062.3500    & 14272.0662    & 634228.5000 \\
-        \hline
-    \end{tabular}
-\end{center}
+\begin{figure}[H]
+    \hypertarget{fig:blockcachemiss}{}
+    \caption{Block QuickSort Cache Misses}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{Classical vs Block Partition Cache Misses.pdf}
+\end{figure}
 
 Again to our surprise, the changes in cache miss isn't as obvious as the branch misses, the tiny improvements on Hoare's Block Partition and 2-Pivot Lomuto's Block Partition seem to be only exceptions.
 Considering the traditional partition schemes only require very small number of constant size, comparing to the large chunk of memory required by the Block Partition, the Block Partition's revision on Lomuto's method adds more cache misses instead.
 But as we observe the CPU instructions count and the time cost, we will find out that the Block Partition's method is still the best choice for the 1-Pivot Hoare's method, and the 2-Pivot Lomuto's method.
 
-\begin{center}
-    \small
-    \begin{tabular}{ |c c | c c c| }
-        \hline
-        CPU Cycles      & Size     & Mean           & SD            & Median \\
-        \hline
-        1-Pivot Hoare   & 100      & 9327.4759      & 18.6229       & 9321.5095 \\
-                        & 1000     & 141738.7953    & 210.1901      & 141718.3450 \\
-                        & 10000    & 1896946.0648   & 20737.2369    & 1891616.5700 \\
-                        & 100000   & 23894324.6266  & 136138.2225   & 23938976.7268 \\
-                        & 1000000  & 283465722.4250 & 4456168.7125  & 282439687.8750 \\
-                        & 10000000 & 3341781994.300 & 21642481.3347 & 3341179100.5000 \\
-        Block Partition & 100      & 7261.6214      & 3.9023        & 7261.0766 \\
-                        & 1000     & 91497.6734     & 44.2229       & 91503.7709 \\
-                        & 10000    & 1093098.0648   & 28276.9430    & 1087067.0555 \\
-                        & 100000   & 12615251.1810  & 408397.6682   & 12525100.7167 \\
-                        & 1000000  & 142142979.8257 & 1816742.9514  & 141750443.9091 \\
-                        & 10000000 & 1651547110.850 & 15522352.0233 & 1651945749.0000 \\
-        \hline
-        1-Pivot Lomuto  & 100      & 8753.9251      & 19.1779       & 8747.1730 \\
-                        & 1000     & 133820.5575    & 121.5330      & 133786.0877 \\
-                        & 10000    & 1797257.9908   & 1206.3404     & 1797317.9663 \\
-                        & 100000   & 22592563.3050  & 184018.1868   & 22560236.2500 \\
-                        & 1000000  & 266780288.5625 & 1370978.1629  & 266496379.5000 \\
-                        & 10000000 & 3176006233.550 & 31963176.2929 & 3178944155.5000 \\
-        Block Partition & 100      & 7008.9387      & 28.2391       & 7005.8331 \\
-                        & 1000     & 119936.7616    & 332.2665      & 120045.5206 \\
-                        & 10000    & 1635196.2005   & 3174.6739     & 1635068.8220 \\
-                        & 100000   & 19944485.2959  & 165665.3166   & 19999479.0516 \\
-                        & 1000000  & 234756806.7100 & 3512955.3454  & 233878365.1000 \\
-                        & 10000000 & 2779056745.450 & 88165361.1430 & 2783135055.5000 \\
-   2-Pivot Lomuto Block & 100      & 6921.2645      & 7.4863        & 6920.0053 \\
-                        & 1000     & 115531.6098    & 1531.6089     & 115046.6171 \\
-                        & 10000    & 1567567.6369   & 5508.4648     & 1567416.7897 \\
-                        & 100000   & 18897769.3384  & 175912.1206   & 18848614.8083 \\
-                        & 1000000  & 216844641.5500 & 2817917.2648  & 216536644.3000 \\
-                        & 10000000 & 2548418986.850 & 48249924.4893 & 2559985148.0000 \\
-        \hline
-    \end{tabular}
-\end{center}
+\begin{figure}[H]
+    \hypertarget{fig:blockcpucycles}{}
+    \caption{Block QuickSort CPU Cycles}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{Classical vs Block Partition CPU Cycles.pdf}
+\end{figure}
 
 It seems the Hoare's Block Partition has the most significant improvements on the CPU cycles, with about half of the reductions on total cycles.
 The block partition doesn't seem to improve much with the Lomuto's scheme, which is still a mystery to me together with its dramatic standard deviation, but the 2-Pivot Lomuto's Block Partition has a decent amount of improvements.
 
-\begin{center}
-    \small
-    \begin{tabular}{ |c c | c c c| }
-        \hline
-        Time            & Size     & Mean         & SD          & Median \\
-        \hline
-        1-Pivot Hoare   & 100      & 2.1751 μs    & 7.3394 μs   & 2.1724 μs \\
-                        & 1000     & 33.659 μs    & 203.14 μs   & 33.553 μs \\
-                        & 10000    & 442.01 μs    & 2.1185 μs   & 441.58 μs \\
-                        & 100000   & 5.5583 ms    & 79.072 μs   & 5.5294 ms \\
-                        & 1000000  & 66.392 ms    & 1.0688 ms   & 66.594 ms \\
-                        & 10000000 & 776.49 ms    & 3.7364 ms   & 776.07 ms \\
-        Block Partition & 100      & 1.6938 µs    & 4.7546 ns   & 1.6926 µs \\
-                        & 1000     & 21.782 µs    & 107.85 ns   & 21.743 µs \\
-                        & 10000    & 259.09 µs    & 490.99 ns   & 258.97 µs \\
-                        & 100000   & 2.9872 ms    & 9.5993 µs   & 2.9855 ms \\
-                        & 1000000  & 33.808 ms 	  & 159.14 µs   & 33.788 ms \\
-                        & 10000000 & 394.79 ms    & 2.9162 ms   & 395.56 ms \\
-        \hline
-        1-Pivot Lomuto  & 100      & 2.0334 µs    & 5.281 ns    & 2.0322 μs \\
-                        & 1000     & 31.105 µs    & 123.19 ns   & 31.062 µs \\
-                        & 10000    & 419.93 µs    & 3.2284 µs   & 418.01 µs \\
-                        & 100000   & 5.2008 ms    & 19.270 µs   & 5.1963 ms \\
-                        & 1000000  & 62.292 ms    & 452.07 µs   & 62.217 ms \\
-                        & 10000000 & 745.10 ms    & 6.7564 ms   & 743.02 ms \\
-        Block Partition & 100      & 1.6698 µs    & 4.2852 ns   & 1.6689 µs \\
-                        & 1000     & 28.453 µs    & 87.002 ns   & 28.424 µs \\
-                        & 10000    & 392.02 µs    & 1.3621 µs   & 391.81 µs \\
-                        & 100000   & 4.7857 ms    & 42.338 µs   & 4.7824 ms \\
-                        & 1000000  & 56.288 ms    & 884.73 µs   & 56.358 ms \\
-                        & 10000000 & 668.14 ms    & 21.283 ms   & 662.61 ms \\
-   2-Pivot Lomuto Block & 100      & 1.6387 µs    & 4.3470 ns   & 1.6373 µs \\
-                        & 1000     & 27.249 µs    & 52.407 ns   & 27.249 µs \\
-                        & 10000    & 374.62 µs    & 3.3842 µs   & 373.88 µs \\
-                        & 100000   & 4.5048 ms    & 31.057 µs   & 4.5022 ms \\
-                        & 1000000  & 52.149 ms    & 802.78 µs   & 52.234 ms \\
-                        & 10000000 & 605.61 ms    & 13.676 ms   & 602.31 ms \\
-        \hline
-    \end{tabular}
-\end{center}
+\begin{figure}[H]
+    \hypertarget{fig:blocktime}{}
+    \caption{Block QuickSort Time}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{Classical vs Block Partition Time.pdf}
+\end{figure}
 
 The most intriguing result has been given by the 1-Pivot Hoare' BlockQuickSort variation with least amount of time cost, nearly the half as the original, as a result of less than 3\% improvement on cache misses and approximately 70\% improvement on branch misses.
 It is already of much progress I would have to say, but the 2-Pivot Lomuto's BlockQuickSort variation also has a decent amount of improvements, with up to 18\% less time cost than the original.
@@ -1230,7 +964,7 @@ Although this won't be the deterministic evidence to say that the cache misses a
 
 
 % TODO: talk about pivot selection and skewed pivot selection like page 11 of block quick sort paper.
-% TODO: 
+% TODO: talk about the sorting functions exported to python by ffi
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 \section{Full Charts}

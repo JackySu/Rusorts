@@ -78,5 +78,5 @@ algorithms.*
 *.drawio
 FYPReport.*
 !FYPReport.tex
+*.pdf
 !FYPReport.pdf
-pivot.drawio.pdf

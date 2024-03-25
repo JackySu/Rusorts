@@ -1,0 +1,31 @@
+Method,Size,Mean,SD,Median
+1-Pivot Hoare,100,2.1751 μs,7.3394 μs,2.1724 μs
+1-Pivot Hoare,1000,33.659 μs,203.14 μs,33.553 μs
+1-Pivot Hoare,10000,442.01 μs,2.1185 μs,441.58 μs
+1-Pivot Hoare,100000,5.5583 ms,79.072 μs,5.5294 ms
+1-Pivot Hoare,1000000,66.392 ms,1.0688 ms,66.594 ms
+1-Pivot Hoare,10000000,776.49 ms,3.7364 ms,776.07 ms
+1-Pivot Hoare Block Partition,100,1.6938 µs,4.7546 ns,1.6926 µs
+1-Pivot Hoare Block Partition,1000,21.782 µs,107.85 ns,21.743 µs
+1-Pivot Hoare Block Partition,10000,259.09 µs,490.99 ns,258.97 µs
+1-Pivot Hoare Block Partition,100000,2.9872 ms,9.5993 µs,2.9855 ms
+1-Pivot Hoare Block Partition,1000000,33.808 ms,159.14 µs,33.788 ms
+1-Pivot Hoare Block Partition,10000000,394.79 ms,2.9162 ms,395.56 ms
+1-Pivot Lomuto,100,2.0334 µs,5.281 ns,2.0322 μs
+1-Pivot Lomuto,1000,31.105 µs,123.19 ns,31.062 µs
+1-Pivot Lomuto,10000,419.93 µs,3.2284 µs,418.01 µs
+1-Pivot Lomuto,100000,5.2008 ms,19.270 µs,5.1963 ms
+1-Pivot Lomuto,1000000,62.292 ms,452.07 µs,62.217 ms
+1-Pivot Lomuto,10000000,745.10 ms,6.7564 ms,743.02 ms
+1-Pivot Lomuto Block Partition,100,1.6698 µs,4.2852 ns,1.6689 µs
+1-Pivot Lomuto Block Partition,1000,28.453 µs,87.002 ns,28.424 µs
+1-Pivot Lomuto Block Partition,10000,392.02 µs,1.3621 µs,391.81 µs
+1-Pivot Lomuto Block Partition,100000,4.7857 ms,42.338 µs,4.7824 ms
+1-Pivot Lomuto Block Partition,1000000,56.288 ms,884.73 µs,56.358 ms
+1-Pivot Lomuto Block Partition,10000000,668.14 ms,21.283 ms,662.61 ms
+2-Pivot Lomuto Block,100,1.6387 µs,4.3470 ns,1.6373 µs
+2-Pivot Lomuto Block,1000,27.249 µs,52.407 ns,27.249 µs
+2-Pivot Lomuto Block,10000,374.62 µs,3.3842 µs,373.88 µs
+2-Pivot Lomuto Block,100000,4.5048 ms,31.057 µs,4.5022 ms
+2-Pivot Lomuto Block,1000000,52.149 ms,802.78 µs,52.234 ms
+2-Pivot Lomuto Block,10000000,605.61 ms,13.676 ms,602.31 ms
