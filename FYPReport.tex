@@ -250,11 +250,11 @@ I replaced the original swap function in the rearrangement phase with a cyclic p
 For better understanding, we can compare this cyclic permutation to a rotate-2n operation where n is the minium number of elements that need to be swapped to the right places.
 As a result of this, mostly there will be elements left in one of the buffer blocks, but we will just shift the other side of block and rearrange the elements not swapped yet in the next iteration.
 
-% TODO: 29th page of 'how good is multi-pivot quicksort' discusses that the write-back is supported by modern cpus that has much less cost than write-through,
-% which explains why keep writing to the same cache line is not a big deal for blockquicksort when dealing with storing offsets into the 128 size blocks.
 Another thing we might concern is the \hyperlink{RegardlessWrite}{regardless write} of the offsets in the buffer blocks, which will overwrite the previous value unless the offset index is incremented by 1 in the last step of scan.
-This doesn't add much overhead as the write-back policy of the cache line is supported by modern CPUs, replacing the old value with the new one in the cache line to get rid of the excessive and expensive 
-direct main memory manipulation. This action is penalty-free and the cost is much less than write-through operations that updates the memory every time a write happens.
+This doesn't add much overhead as the write-back policy of the cache line is supported by modern CPUs, replacing the old value with the new one in the cache line to get rid of the expensive 
+direct main memory manipulation. This action is penalty-free and the cost is much less than write-through operations that updates the main memory every time a write operation occurs.
+After all the buffer blocks will be written back to the main memory eventually, in a deterministic manner.
+This is ensured by the write-back policy of the cache line, and is a common stable feature in modern CPUs to avoid excessive memory access.
 To give you a better visual comprehension of the cyclic permutation, I will provide a simple figure \hyperlink{fig:cyclicpermu}{`} of how it works.
 
 \begin{center}
@@ -916,6 +916,21 @@ somewhat partially due to its decent cache behavior, but more importantly, it ha
 
 % TODO: talk about some failed layouts that is way too complicated to implement, like with 2 unknown segments and 2 pivot hoare block partition.
 
+With the help of my supervisor Dr. David Gregg I reached out to new layouts that might shift our perspectives on classical QuickSorts. Unfortunately they proved to be too complicated to implement or just not possible to be implemented by far.
+One of the layouts is the 2 unknown segments for 2-Pivot QuickSort.
+
+\begin{figure}[H]
+    \hypertarget{fig:2pivotnewlayout}{}
+    \caption{2-Pivot New Layout}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{2pivot_new_layout.drawio.pdf}
+\end{figure}
+
+Obviously, this will dramatically add the complexities to our algorithms when introducing one more unknown segment, which means 2 more unknown elements at the boundaries of the unknown region. Worst cases is, the comparison procedure will be consist of 4 if-else nested branches, each deciding the final destination of one of the 4 unknown elements at index $i, j, k, l$.
+This could be a disaster for branch prediction, and the cache misses will be increased as well, as the elements are more likely to be swapped between the unknown regions, contributing the form of vicious cycle that will cause the performance degradation. This early exploration has been abandoned due to the complexity and the potential performance issues it might bring.
+
 While searching for the solutions to the branch misses, I have found that BlockQuickSort could refresh us with a new vision of partitioning, it's easily adaptable to most of the partition methods and its direct impact on the performance is beyond amazing
 according to what has been observed in the tests below.
 
@@ -929,7 +944,7 @@ according to what has been observed in the tests below.
 \end{figure}
 
 With the help of Block Partition together with branchless comparisons and branchless additions on counters, we reduced about 70\% of the branch misses in the 1-Pivot Hoare's method, and 40\% in the 1-Pivot Lomuto's method. These results will only increase as the size of the array grows.
-On gigantic arrays of size 10 million, we achieved 77\% and 55\% branch miss reductions respectively. That's a huge success so far.
+On gigantic arrays of size 10 million, we achieved 77\% and 55\% branch miss reductions respectively as a result. \hyperlink{FullTables}{Full tables} of detailed statistics could be found in the final appendix. That's a huge success so far, though it doesn't show superior performance on smaller arrays, but the average branch misses barely even increase as the size grows exponentially.
 
 \begin{figure}[H]
     \hypertarget{fig:blockcachemiss}{}
@@ -955,6 +970,7 @@ But as we observe the CPU instructions count and the time cost, we will find out
 
 It seems the Hoare's Block Partition has the most significant improvements on the CPU cycles, with about half of the reductions on total cycles.
 The block partition doesn't seem to improve much with the Lomuto's scheme, which is still a mystery to me together with its dramatic standard deviation, but the 2-Pivot Lomuto's Block Partition has a decent amount of improvements.
+Still, the cache misses for small arrays seem completely random, so are the standard deviations. There seems no way that we could analyse these results. But the time cost will give us a clear answer.
 
 \begin{figure}[H]
     \hypertarget{fig:blocktime}{}
@@ -976,7 +992,8 @@ Although this won't be the deterministic evidence to say that the cache misses a
 % TODO: talk about the sorting functions exported to python by ffi
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
-\section{Full Charts}
+\section{Full Tables}
+\hypertarget{FullTables}{}
 \begin{center}
     \small
     \begin{tabular}{ |c c | c c c| }
