@@ -60,13 +60,13 @@ macro_rules! sort_ordnum_f {
 macro_rules! impl_rotate_n {
     ($func: ident, $n: expr) => {
         #[inline(always)]
-        pub unsafe fn $func<T>(arr: &mut [T], idx: [usize; $n]) {
+        pub unsafe fn $func<T>(arr: *mut T, idx: [usize; $n]) {
             // cycle the elements in the idx array
-            let tmp = std::ptr::read(&arr[idx[0]]);
+            let tmp = std::ptr::read(arr.add(idx[0]));
             for i in 1..$n {
-                std::ptr::copy_nonoverlapping(arr.get_unchecked(idx[i]), arr.get_unchecked_mut(idx[i - 1]), 1);
+                std::ptr::copy_nonoverlapping(arr.add(idx[i]), arr.add(idx[i - 1]), 1);
             }
-            std::ptr::copy_nonoverlapping(&tmp, arr.get_unchecked_mut(idx[$n - 1]), 1);
+            std::ptr::copy_nonoverlapping(&tmp, arr.add(idx[$n - 1]), 1);
         }
     };
 }

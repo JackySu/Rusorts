@@ -666,19 +666,17 @@ which is equivalent to the following code:
 \end{verbatim}
 In Rust I implemented the rotate-n operation as follows:
 \begin{verbatim}
-pub unsafe fn rotate_$n<T>(arr: &mut [T], idx: [usize; $n]) {
-    // cycle the elements in the idx array
-    let tmp = ptr::read(&arr[idx[0]]);
+#[inline(always)]
+pub unsafe fn rotate_$n<T>(arr: *mut T, idx: [usize; $n]) {
+    let tmp = std::ptr::read(arr.add(idx[0]));
     for i in 1..$n {
-        ptr::copy_nonoverlapping(arr.get_unchecked(idx[i]),
-            arr.get_unchecked_mut(idx[i - 1]), 1);
+        ptr::copy_nonoverlapping(arr.add(idx[i]), arr.add(idx[i - 1]), 1);
     }
-    ptr::copy_nonoverlapping(&tmp,
-        arr.get_unchecked_mut(idx[n - 1]), 1);
+    ptr::copy_nonoverlapping(&tmp, arr.add(idx[$n - 1]), 1);
 }
 \end{verbatim}
 
-Using direct pointer manipulation and $get_unchecked$ function, we can avoid the overhead of the Rust borrow checker and array boundary checking to maximize the performance.
+Using direct pointer manipulation, we can avoid the overhead of the Rust borrow checker and array boundary checking to maximize the performance.
 
 
 \subsection{Multi-Pivot QuickSort}

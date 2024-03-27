@@ -232,7 +232,7 @@ pub fn double_pivot_quicksort_new_partition_block<T: Ord>(mut arr: &mut [T]) {
                     }
                     let idx_off = cmp::min(offsets[idx_p1], offsets[block_t - 1 - idx_p2]);                    
                     if idx_off == offsets[idx_p1] {
-                        rotate4(arr, [k + idx_off as usize, k + l, j, i]);
+                        rotate4(arr.as_mut_ptr(), [k + idx_off as usize, k + l, j, i]);
                         i += 1;
                         idx_p1 += 1;
                     } else {
@@ -244,7 +244,7 @@ pub fn double_pivot_quicksort_new_partition_block<T: Ord>(mut arr: &mut [T]) {
                 }
                 if idx_p1 < num_p1 {
                     for idx_off in idx_p1..num_p1 {
-                        rotate3(arr, [k + offsets[idx_off] as usize, j, i]);
+                        rotate3(arr.as_mut_ptr(), [k + offsets[idx_off] as usize, j, i]);
                         i += 1;
                         j += 1;
                     }
@@ -620,7 +620,7 @@ pub fn triple_pivot_quicksort<T: Ord>(arr: &mut [T]) {
 					if arr[k].cmp(&p1) == Ordering::Less {
 						// if arr[j] > p3 and arr[k] < p1, 
 						// rotate arr[j] to k and arr[k] to i because arr[<i] < p1
-						rotate3(arr, [j, i, k]);
+						rotate3(arr.as_mut_ptr(), [j, i, k]);
 						i += 1;
 					} else {
 						// if arr[j] > p3 and arr[k] >= p1,
@@ -634,7 +634,7 @@ pub fn triple_pivot_quicksort<T: Ord>(arr: &mut [T]) {
 				} else { 
 					// if arr[j] <= p3, we do the same logic as above
 					if arr[k].cmp(&p1) == Ordering::Less {
-						rotate3(arr, [j, i, k]);
+						rotate3(arr.as_mut_ptr(), [j, i, k]);
 						i += 1;
 					} else {
 						arr.swap_unchecked(j, k);
@@ -653,7 +653,7 @@ pub fn triple_pivot_quicksort<T: Ord>(arr: &mut [T]) {
 		l += 1;
 		// at this point arr[<=i] < p1, arr[i..=j] >= p1 and <= p2, arr[k..=l] >= p2 and <= p3, arr[>=l] > p3 (j == k)
 		// move p2 from arr[left + 1] to vacant position arr[j] (in the middle) 
-		rotate3(arr, [left + 1, i, j]);
+		rotate3(arr.as_mut_ptr(), [left + 1, i, j]);
 		// arr.swap_unchecked(left + 1, i);
 		// arr.swap_unchecked(i, j);
 
@@ -715,7 +715,7 @@ pub fn quad_pivot_quicksort<T: Ord>(arr: &mut [T]) {
             // | < p1 | >= p1 and < p2 | >= p2 and < p3 | unknown
             while arr[k].cmp(&p3) == Ordering::Less {
                 if arr[k].cmp(&p1) == Ordering::Less {
-                    rotate3(arr, [k, j, i]);
+                    rotate3(arr.as_mut_ptr(), [k, j, i]);
                     i += 1;
                     j += 1;
                 } else if arr[k].cmp(&p2) == Ordering::Less {
@@ -739,11 +739,11 @@ pub fn quad_pivot_quicksort<T: Ord>(arr: &mut [T]) {
                 if arr[k].cmp(&p4) == Ordering::Less {
                     // arr[k] > p3, arr[l] < p3
                     if arr[l].cmp(&p1) == Ordering::Less {
-                        rotate4(arr, [k, j, i, l]);
+                        rotate4(arr.as_mut_ptr(), [k, j, i, l]);
                         i += 1;
                         j += 1;
                     } else if arr[l].cmp(&p2) == Ordering::Less {
-                        rotate3(arr, [k, j, l]);
+                        rotate3(arr.as_mut_ptr(), [k, j, l]);
                         j += 1;
                     } else {
                         arr.swap_unchecked(k, l);
@@ -751,12 +751,12 @@ pub fn quad_pivot_quicksort<T: Ord>(arr: &mut [T]) {
                 } else {
                     // arr[k] > p4, arr[l] < p3
                     if arr[l].cmp(&p2) == Ordering::Greater { // arr[l] goes to (p2, p3), increase k
-                        rotate3(arr, [k, l, m]);
+                        rotate3(arr.as_mut_ptr(), [k, l, m]);
                     } else if arr[l].cmp(&p1) == Ordering::Greater { // arr[l] goes to (p1, p2), increase j and k
-                        rotate4(arr, [k, j, l, m]);
+                        rotate4(arr.as_mut_ptr(), [k, j, l, m]);
                         j += 1;
                     } else { // arr[l] goes to leftmost side
-                        rotate5(arr, [k, j, i, l, m]);
+                        rotate5(arr.as_mut_ptr(), [k, j, i, l, m]);
                         i += 1;
                         j += 1;
                     }
@@ -777,11 +777,11 @@ pub fn quad_pivot_quicksort<T: Ord>(arr: &mut [T]) {
         // because the indexes (left + 1 > i ?) are not always ascending
         // so it could lead to a panic
         // anyway, I leave the rotate_n macro for you to try out in `src/util.rs`
-        rotate3(arr, [left + 1, i, j]);
+        rotate3(arr.as_mut_ptr(), [left + 1, i, j]);
         i -= 1;
         arr.swap_unchecked(left, i);
         
-        rotate3(arr, [right - 1, m, l]);
+        rotate3(arr.as_mut_ptr(), [right - 1, m, l]);
         m += 1;
         arr.swap_unchecked(right, m);
 
