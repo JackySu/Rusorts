@@ -3,6 +3,7 @@
 \usepackage[utf8]{inputenc} % Use UTF-8 encoding
 \usepackage{textgreek} % For Greek letters
 
+\usepackage{float}
 \usepackage{microtype}
 \usepackage{xspace}
 \bibliographystyle{plainurl}% the recommended bibstyle
@@ -1569,67 +1570,85 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
     \end{tabular}
 \end{center}
 
-\subsection{New Layout of 2-Pivot Lomuto's Block Partition}
-\begin{center}
-    \small
-    \begin{tabular}{ |c c | c c c| }
-        \hline
-        Branch Misses   & Size     & Mean           & SD            & Median \\
-        \hline
-        1-Pivot Hoare   & 100      & 150.9847       & 0.0653        & 150.9726 \\
-                        & 1000     & 2318.4835      & 9.9296        & 2317.9223 \\
-                        & 10000    & 31167.1394     & 80.6562       & 31184.6376 \\
-                        & 100000   & 371744.0274    & 2827.6261     & 372691.0625 \\
-                        & 1000000  & 4334773.9875   & 102158.1340   & 4335591.3750 \\
-                        & 10000000 & 51459230.9000  & 1557769.9690  & 51377714.5000 \\
-        \hline
-    \end{tabular}
+\subsection{New Layout of 2-Pivot Lomuto's Block Partition Tests}
 
-    \vspace{1em}
+\small
+\begin{table}[H]
+    \centering
     \small
-    \begin{tabular}{ |c c | c c c| }
+    \caption{Branch Misses}
+    \vspace{1em}
+    \begin{tabular}{ | c | c c c| }
         \hline
-        Cache Misses    & Size     & Mean           & SD            & Median \\
+        Size     & Mean           & SD            & Median \\
         \hline
-                        & 100      & 0.0205         & 0.0339        & 0.0112 \\
-                        & 1000     & 0.2856         & 0.1491        & 0.2300 \\
-                        & 10000    & 15.8177        & 56.1246       & 2.8154 \\
-                        & 100000   & 1411.5398      & 82.2908       & 1392.3521 \\
-                        & 1000000  & 27392.0125     & 875.9860      & 27313.2500 \\
-                        & 10000000 & 670240.8000    & 15488.9557    & 668665.5000 \\
+        100      & 150.9847       & 0.0653        & 150.9726 \\
+        1000     & 2318.4835      & 9.9296        & 2317.9223 \\
+        10000    & 31167.1394     & 80.6562       & 31184.6376 \\
+        100000   & 371744.0274    & 2827.6261     & 372691.0625 \\
+        1000000  & 4334773.9875   & 102158.1340   & 4335591.3750 \\
+        10000000 & 51459230.9000  & 1557769.9690  & 51377714.5000 \\
         \hline
     \end{tabular}
+\end{table}
 
-    \vspace{1em}
+\begin{table}[H]
+    \centering
     \small
-    \begin{tabular}{ |c c | c c c| }
+    \caption{Cache Misses}
+    \vspace{1em}
+    \begin{tabular}{ | c | c c c| }
         \hline
-        CPU Cycles      & Size     & Mean           & SD            & Median \\
+        Size     & Mean           & SD            & Median \\
         \hline
-                        & 100      & 9484.3716      & 120.3484      & 9448.6366 \\
-                        & 1000     & 156216.1596    & 128.3762      & 156217.6846 \\
-                        & 10000    & 2186118.3441   & 7013.3473     & 2184792.1616 \\
-                        & 100000   & 27635332.3081  & 167125.6873   & 27670210.5496 \\
-                        & 1000000  & 333242126.0500 & 4954054.1009  & 331742534.7500 \\
-                        & 10000000 & 3997343820.250 & 62970785.7480 & 3995304309.5000 \\
+        100      & 0.0205         & 0.0339        & 0.0112 \\
+        1000     & 0.2856         & 0.1491        & 0.2300 \\
+        10000    & 15.8177        & 56.1246       & 2.8154 \\
+        100000   & 1411.5398      & 82.2908       & 1392.3521 \\
+        1000000  & 27392.0125     & 875.9860      & 27313.2500 \\
+        10000000 & 670240.8000    & 15488.9557    & 668665.5000 \\
         \hline
     \end{tabular}
+\end{table}
 
-    \vspace{1em}
+\begin{table}[H]
+    \centering
     \small
-    \begin{tabular}{ |c c | c c c| }
+    \caption{CPU Cycles}
+    \vspace{1em}
+    \begin{tabular}{ | c | c c c | }
         \hline
-        Time            & Size     & Mean         & SD          & Median \\
+        Size     & Mean           & SD            & Median \\
         \hline
-                        & 100      & 2.2327 µs    & 29.601 ns   & 2.2257 µs \\
-                        & 1000     & 36.708 µs    & 142.53 ns   & 36.662 µs \\
-                        & 10000    & 518.56 µs    & 2.1303 µs   & 518.11 \\
-                        & 100000   & 6.5765 ms    & 46.260 µs   & 6.5651 ms \\
-                        & 1000000  & 79.235 ms    & 882.47 µs   & 79.284 ms \\
-                        & 10000000 & 951.74 ms    & 16.173 ms   & 948.58 ms \\
+        100      & 9484.3716      & 120.3484      & 9448.6366 \\
+        1000     & 156216.1596    & 128.3762      & 156217.6846 \\
+        10000    & 2186118.3441   & 7013.3473     & 2184792.1616 \\
+        100000   & 27635332.3081  & 167125.6873   & 27670210.5496 \\
+        1000000  & 333242126.0500 & 4954054.1009  & 331742534.7500 \\
+        10000000 & 3997343820.250 & 62970785.7480 & 3995304309.5000 \\
         \hline
     \end{tabular}
-\end{center}
+\end{table}
+    
+\begin{table}[H]
+    \centering
+    \small
+    \caption{Time}
+    \vspace{1em}
+    \begin{tabular}{ | c | c c c | }
+        \hline
+        Size     & Mean         & SD          & Median \\
+        \hline
+        100      & 2.2327 µs    & 29.601 ns   & 2.2257 µs \\
+        1000     & 36.708 µs    & 142.53 ns   & 36.662 µs \\
+        10000    & 518.56 µs    & 2.1303 µs   & 518.11 \\
+        100000   & 6.5765 ms    & 46.260 µs   & 6.5651 ms \\
+        1000000  & 79.235 ms    & 882.47 µs   & 79.284 ms \\
+        10000000 & 951.74 ms    & 16.173 ms   & 948.58 ms \\
+        \hline
+    \end{tabular}
+\end{table}
+\clearpage
 
 \subsection{Cachegrind Results}
 \hypertarget{cachegrindresult}{}
