@@ -13,10 +13,17 @@
 \usepackage{hyperref}
 \usepackage{fourier}
 \usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{patterns}
 \usepackage{array}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
 
 \DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n}
 \SetMathAlphabet{\mathcal}{bold}{OMS}{cmsy}{b}{n}
+
 \newcommand{\bigO}{\mathcal{O}}
 \newcommand{\cousize}{{\bf uint}\xspace}
 \newcommand{\bs}{\ensuremath{B}\xspace}
@@ -29,10 +36,26 @@
 \newcommand{\LineWhile}[2]{%
 	\State\algorithmicwhile\ {#1}\ \algorithmicdo\ {#2} \algorithmicend\ \algorithmicwhile%
 }
+
 \newcommand{\pluseq}{\ensuremath{\mathrel{{+}\!\!\;{=}}}}
 \newcommand{\minuseq}{\ensuremath{\mathrel{{-}\!\!\;{=}}}}
 \newcommand{\plusplus}{\ensuremath{{+}\!\!\;{+}}}
 \newcommand{\minusminus}{\ensuremath{{-}\!\!\;{-}}}
+
+\newcommand\ips{\textsf{IPS$^4$o}}
+\newcommand\blockqs{\textsf{BlockQS}}
+\newcommand\stdsort{\textsf{stdsort}}
+\newcommand\lomutoone{\textsf{BlockLomuto1}}
+\newcommand\lomutotwo{\textsf{BlockLomuto2}}
+
+\definecolor{gruen}{rgb}{0.95,0.95,0.95}
+\definecolor{dunkelgruen}{rgb}{0.35, 0.7, 0.67}
+\definecolor{hellgruen}{rgb}{0.84, 0.7, 0.39}
+
+\newcommand{\gruen}{\color{gruen}}
+\newcommand{\dunkelgruen}{\color{dunkelgruen}}
+\newcommand{\hellgruen}{\color{hellgruen}}
+
 
 \begin{document}
 
@@ -83,10 +106,16 @@ in the next level of recursion and we can conclude the maximum depth of recursio
 Greater the n is, less the depth. Better memory behaviors can bring effects that can not be achieved by any of other traditional means such as choosing a better pivot value
 among samples extracted from different parts of the array, but the drawbacks are also obvious, 
 branch misprediction could be terrible as the different outcomes of comparisons can largely impact on the runtime performance.
-A delay of 14 to 19 stages on a typical Intel desktop CPU or 20 to 25 stages on AMD's Zen CPUs could lead to huge efficiency loss for our algorithm,
+
+\hypertarget{ref:BranchMisses}{}
+\textit{This phenomenon was first observed by Kaligosi and Sanders (2006) on a Pentium 4 Prescott CPU, a processor with an extremely long pipeline, where the branch misprediction penalty was so high that a very skewed pivot choice outperformed the typically optimal median pivot, even though the latter leads to much fewer executed instructions in total.
+The effect was not reproducible, however, on the slightly different Pentium 4 Willamette. Here two effects counteract: a biased pivot makes branches easier to predict but also gives unbalanced partition sizes. Brodal and Moruz have shown that this is a general trade-off in comparison-based sorting: One can only save comparisons at the price of additional branch misses.}
+\cite{AnalysisOfBranchMissesInQuickSort}
+
+This could also cause a delay of 14 to 19 stages on a typical Intel desktop CPU or 20 to 25 stages on AMD's Zen CPUs could lead to huge efficiency loss for our algorithm,
 and this number only grows as the number of pivots increases and on more complicatad architectures. These are the trade-offs we have to consider when we are choosing the number of pivots,
 although these side effects can be mitigated by the use of branchless comparisons and modern CPUs are able to run conditional move operations (CMOVE on x86) to avoid branches,
-these overheads still remain as concerns.
+these overheads still remain as concerns, but it could relief the conflicting situations between total comparisons and the cost of branch mispredictions in some ways.
 Apart from that, it could be really tricky when it comes to moving the elements to the right places among multiple partitions, especially when the number of pivots is large.
 Additionally, comparisons are the second expensive things next to swaps we are dealing with, and the more pivots we choose, the more comparisons we have to make.
 Even for the case of using only one pivot, the average number of comparisons remain unoptimial, being $1.38n\log n + \bigO(n)$ compared with the $n\log n + \bigO(n)$ of the Merge Sort,
@@ -187,115 +216,7 @@ L1 and L2 caches are usually private to each core, while L3 cache is shared amon
 When the CPU needs to access data, it will first check the L1 cache, if the data is not found, it will check the L2 cache, and then the L3 cache, and finally the main memory, accelerating the memory access.
 With the context of sorting algorithms, it is a convention to switch to insertion sort when it comes to arrays with sizes less than a cache line size, the exact threshold could be around 9 to 30 elements, varying on the architecture.
 
-\subsection{Block Partitioning}
-The following code is directly taken from the BlockQuickSort paper by Stefan Edelkamp and Armin Weiß \cite{BlockQuickSort} who hold the copyrights of the code.
-It makes use of a block buffer of constant size to store the index offsets of out-of-order elements on both sides of the array, and swaps them in a second pass to rearrange them.
-In the actual implementation I used the block size of 128, as the index offsets in this case would be 0 to 127 (\textbf{0b1111 1111}) as 1 byte for each buffer,
-and a block size of 128, which in turn would be 128 bytes in total, would perfectly fit into 2 cache lines, with each cache line being 64 bytes on the test machine.
-What's better is that the block size is a power of 2, which could be easily optimized by the compiler to use bitwise operations to calculate the offsets.
-Additionally, they are placed on stack to get rid of the extra memory allocation and deallocation overheads on heap. Let's dive into the details of its implementation by following the pseudocode.
-
-\begin{algorithm}[H]
-    \small
-	\caption{Block partitioning}\label{BlockPartition}
-	\begin{algorithmic}[1]
-		\Procedure{BlockPartition}{$A[\ell,\dots, r]$, pivot}
-		\State \cousize $\mathrm{offsets}_L[0, \dots, \bs - 1], \mathrm{offsets}_R[0, \dots, \bs - 1]$
-		\State  \cousize $\mathrm{start}_L,\mathrm{start}_R, \mathrm{num}_L,\mathrm{num}_R \gets 0$
-		\While{$r - \ell + 1 > 2 \bs$}\Comment{start main loop}
-		\If{$\mathrm{num}_L = 0$}\Comment{if left buffer is empty, refill it}
-		\State $\mathrm{start}_L \gets 0$
-		\For{$i = 0,\dots, \bs - 1$} 
-		\State $\mathrm{offsets}_L[\mathrm{num}_L ] \gets i$\Comment{Will this regardless write slows it down?}\hypertarget{RegardlessWrite}
-		\State $\mathrm{num}_L \pluseq (\mathrm{pivot} \geq A[\ell + i] )$\Comment{scanning phase for left side} 
-		\EndFor
-		\EndIf
-		\If{$\mathrm{num}_R = 0$}\Comment{if right buffer is empty, refill it}
-		\State $\mathrm{start}_R \gets 0$
-		\For{$i = 0,\dots, \bs - 1$}
-		\State $\mathrm{offsets}_R[\mathrm{num}_R ] \gets i$
-		\State $\mathrm{num}_R \pluseq (\mathrm{pivot} \leq A[r - i] )$ \Comment{scanning phase for right side}
-		\EndFor	
-		\EndIf
-		\State \cousize num $= \min(\mathrm{num}_L, \mathrm{num}_R)$
-		% \For{$j = 0,\dots, \mathrm{num} - 1$}
-		% \State swap($A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr], A\bigl[r- \mathrm{offsets}_R[\mathrm{start}_R + j]\bigr]$)\Comment{rearrangement}
-		% \EndFor
-        \State temp $\gets A\bigl[\ell +
-        \mathrm{offsets}_L[\mathrm{start}_L]\bigr]$ \Comment{rearrangement using cyclic permutation} 
-        \State $A\bigl[\ell +
-        \mathrm{offsets}_L[\mathrm{start}_L]\bigr] \gets
-        A\bigl[r- \mathrm{offsets}_R[\mathrm{start}_R]\bigr]$
-        \For{$j = 1,\dots, \mathrm{num} - 1$} 
-        \State $A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + j - 1]\bigr] \gets
-        A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr]$ 
-        \State $A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr]
-        \gets A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + j ]\bigr]$ 
-        \EndFor 
-        \State $A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + \mathrm{num} - 1]\bigr] \gets$temp
-
-		\State  $\mathrm{num}_L, \mathrm{num}_R \minuseq \mathrm{num}$; 
-		$\mathrm{start}_L, \mathrm{start}_R \pluseq \mathrm{num}$ \Comment{update the counters for buffers}
-		\LineIf{$(\mathrm{num}_L = 0)$} {$\ell \pluseq \bs$} \Comment{if left buffer is empty, move the left pointer}
-		\LineIf{$(\mathrm{num}_R = 0)$} {$r \minuseq \bs$} \Comment{Vice versa}
-		\EndWhile\Comment{end main loop}
-		\State rearrange remaining elements with the standard Hoare's method
-		\EndProcedure
-	\end{algorithmic}
-\end{algorithm}
-
-
-The block partitioning method is a novel approach that not only reduces the number of swaps but also improves the spatial locality of both the memory access and cache access.
-I replaced the original swap function in the rearrangement phase with a cyclic permutation method also given in the referred thesis, which is a more efficient way to rearrange the elements in the buffer blocks.
-For better understanding, we can compare this cyclic permutation to a rotate-2n operation where n is the minium number of elements that need to be swapped to the right places.
-As a result of this, mostly there will be elements left in one of the buffer blocks, but we will just shift the other side of block and rearrange the elements not swapped yet in the next iteration.
-
-Another thing we might concern is the \hyperlink{RegardlessWrite}{regardless write} of the offsets in the buffer blocks, which will overwrite the previous value unless the offset index is incremented by 1 in the last step of scan.
-This doesn't add much overhead as the write-back policy of the cache line is supported by modern CPUs, replacing the old value with the new one in the cache line to get rid of the expensive 
-direct main memory manipulation. This action is penalty-free and the cost is much less than write-through operations that updates the main memory every time a write operation occurs.
-After all the buffer blocks will be written back to the main memory eventually, in a deterministic manner.
-This is ensured by the write-back policy of the cache line, and is a common stable feature in modern CPUs to avoid excessive memory access.
-To give you a better visual comprehension of the cyclic permutation, I will provide a simple figure \hyperlink{fig:cyclicpermu}{`} of how it works.
-
-\begin{center}
-\begin{figure}[H]
-    \hypertarget{fig:cyclicpermu}{}
-    \caption{Cyclic Permutation}
-    \centering
-    % \vspace*{+0.1\textheight}
-    \includegraphics[width=1\textwidth]{cyclicpermu.drawio.pdf}
-\end{figure}
-\end{center}
-
-\begin{algorithm}[H]
-\small
-\caption{Cyclic Permutation}\label{CyclicPermutation}
-\begin{algorithmic}
-    \State temp $\gets A\bigl[\ell +
-    \mathrm{offsets}_L[\mathrm{start}_L]\bigr]$ \Comment{(1) preserve the last element in temp variable} 
-    
-    \State $A\bigl[\ell +
-    \mathrm{offsets}_L[\mathrm{start}_L]\bigr] \gets
-    A\bigl[r- \mathrm{offsets}_R[\mathrm{start}_R]\bigr]$\Comment{(2) start with the first one}
-    
-    \For{$j = 1,\dots, \mathrm{num} - 1$}\Comment{main cyclic for loop}
-
-    \State $A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + j - 1]\bigr] \gets
-    A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr]$     
-    \State $A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr]
-    \gets A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + j ]\bigr]$ 
-
-    \EndFor
-    \State $A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + \mathrm{num} - 1]\bigr] \gets$
-    temp \Comment{(3) put the preserved element back to the last place}
-\end{algorithmic}
-\end{algorithm}
-
-Here we mapped the pseudocode in parts to the steps in the figure, the first step is to preserve the last element in the left buffer block in a temporary variable,
-then we doing the cyclic permutation in the main loop, shifting misplaced elements from buffers on one side to the other to make sure they are well partitioned, and finally we put the preserved element back to the last place in the right buffer block.
-This rotate-2n like method is basically made up of copying from pointers and reduces the number of swaps to the minimum, a great improvement over the original Hoare's partition.
-
-\subsection{Multi-Pivot QuickSort}
+\subsection{Classical QuickSort}
 \begin{algorithm}[H]
     \caption{QuickSort with Hoare Partition}\label{HoarePartition}
     \begin{algorithmic}[1]
@@ -368,6 +289,400 @@ But Lomuto's scheme uses less auxiliary variables and is easier to implement, pa
 However, these theoretical analysis must be brought into practice to see if the assumptions hold true, and the performance of the two partition methods could vary depending on the actual data and the size of the array.
 Contexts and conduct empirical experiments are needed to verify the assumptions and to determine which one to use.
 
+\subsection{Block Partitioning}
+The following pseudocode is directly taken from the BlockQuickSort paper by Stefan Edelkamp and Armin Weiß \cite{BlockQuickSort} who hold the copyrights of the original code,
+a parallel and branch misprediction friendly version of the classical QuickSort algorithm that makes use of a block buffer of constant size to store the index offsets of out-of-order elements on both sides of the array, and swaps them in a second pass to rearrange them.
+In the actual implementation I used the block size of 128, as the index offsets in this case would be 0 to 127 (\textbf{0b1111 1111}) as 1 byte for each buffer,
+and a block size of 128, which in turn would be 128 bytes in total, would perfectly fit into 2 cache lines, with each cache line being 64 bytes on the test machine.
+It is also reflected in their paper that the block size of over 256 bytes will bring down the performance and is less stack memory friendly, especially on large data structures like 10-dimensional array of 64-bit vectors and 'records', referring to 21-dimensional array of 32-bit integers.
+What's better is that the block size is a power of 2, which could be easily optimized by the compiler to use bitwise operations to calculate the offsets.
+Additionally, they are placed on stack to get rid of the extra memory allocation and deallocation overheads on heap. Let's dive into the details of its implementation by following the pseudocode.
+
+\begin{algorithm}[H]
+    \small
+	\caption{Block Partition Hoare}\label{BlockPartition}
+	\begin{algorithmic}[1]
+		\Procedure{BlockPartitionHoare}{$A[\ell,\dots, r]$, pivot}
+		\State \cousize $\mathrm{offsets}_L[0, \dots, \bs - 1], \mathrm{offsets}_R[0, \dots, \bs - 1]$
+		\State  \cousize $\mathrm{start}_L,\mathrm{start}_R, \mathrm{num}_L,\mathrm{num}_R \gets 0$
+		\While{$r - \ell + 1 > 2 \bs$}\Comment{start main loop}
+		\If{$\mathrm{num}_L = 0$}\Comment{if left buffer is empty, refill it}
+		\State $\mathrm{start}_L \gets 0$
+		\For{$i = 0,\dots, \bs - 1$} 
+		\State $\mathrm{offsets}_L[\mathrm{num}_L ] \gets i$\Comment{Will this regardless write slows it down?}\hypertarget{RegardlessWrite}
+		\State $\mathrm{num}_L \pluseq (\mathrm{pivot} \geq A[\ell + i] )$\Comment{branchless comparison to add counter} 
+		\EndFor
+		\EndIf
+		\If{$\mathrm{num}_R = 0$}\Comment{if right buffer is empty, refill it}
+		\State $\mathrm{start}_R \gets 0$
+		\For{$i = 0,\dots, \bs - 1$}
+		\State $\mathrm{offsets}_R[\mathrm{num}_R ] \gets i$
+		\State $\mathrm{num}_R \pluseq (\mathrm{pivot} \leq A[r - i] )$ \Comment{branchless comparison to add counter}
+		\EndFor	
+		\EndIf
+		\State \cousize num $= \min(\mathrm{num}_L, \mathrm{num}_R)$
+		% \For{$j = 0,\dots, \mathrm{num} - 1$}
+		% \State swap($A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr], A\bigl[r- \mathrm{offsets}_R[\mathrm{start}_R + j]\bigr]$)\Comment{rearrangement}
+		% \EndFor
+        \State temp $\gets A\bigl[\ell +
+        \mathrm{offsets}_L[\mathrm{start}_L]\bigr]$ \Comment{rearrangement using cyclic permutation} 
+        \State $A\bigl[\ell +
+        \mathrm{offsets}_L[\mathrm{start}_L]\bigr] \gets
+        A\bigl[r- \mathrm{offsets}_R[\mathrm{start}_R]\bigr]$
+        \For{$j = 1,\dots, \mathrm{num} - 1$} 
+        \State $A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + j - 1]\bigr] \gets
+        A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr]$ 
+        \State $A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr]
+        \gets A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + j ]\bigr]$ 
+        \EndFor 
+        \State $A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + \mathrm{num} - 1]\bigr] \gets$temp
+
+		\State  $\mathrm{num}_L, \mathrm{num}_R \minuseq \mathrm{num}$; 
+		$\mathrm{start}_L, \mathrm{start}_R \pluseq \mathrm{num}$ \Comment{update the counters for buffers}
+		\LineIf{$(\mathrm{num}_L = 0)$} {$\ell \pluseq \bs$} \Comment{if left buffer is empty, move the left pointer}
+		\LineIf{$(\mathrm{num}_R = 0)$} {$r \minuseq \bs$} \Comment{Vice versa}
+		\EndWhile\Comment{end main loop}
+		\State rearrange remaining elements with the standard Hoare's method
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+In this pseudocode, we have seen a perfect instance of how branchless comparisons come into play, the counter of elements less than the pivot is incremented by 1 if the condition is met,
+by converting the result into a boolean value and adding it to the counter, an elegant way that eliminates the branch itself. The same goes for the right buffer.
+
+The block partitioning method is a novel approach that not only reduces the number of swaps but also improves the spatial locality of both the memory access and cache access.
+I replaced the original swap function in the rearrangement phase with a cyclic permutation method also given in the referred thesis, which is a more efficient way to rearrange the elements in the buffer blocks.
+For better understanding, we can compare this cyclic permutation to a rotate-2n operation where n is the minium number of elements that need to be swapped to the right places.
+As a result of this, mostly there will be elements left in one of the buffer blocks, but we will just shift the other side of block and rearrange the elements not swapped yet in the next iteration.
+
+For testing machine with 32MB L3 cache, the block size of 128 bytes would be a good choice, as it would fit into 2 cache lines, even for the maximum testing size of $10^7$ elements, the maximum recursion depth would be $\ceil\log_{2} 10^7 = 24$,
+the maximum stack usage would be around $24 \times 128bytes = 3KB$, a small amount for both memory and cache even with little extra space required by RIP, RBP registers and other local variables, ensuring its cache friendliness and cache efficiency.
+
+Another thing we might concern is the \hyperlink{RegardlessWrite}{regardless write} of the offsets in the buffer blocks, which will overwrite the previous value unless the offset index is incremented by 1 in the last step of scan.
+This doesn't add much overhead as the write-back policy of the cache line is supported by modern CPUs, replacing the old value with the new one in the cache line to get rid of the expensive 
+direct main memory manipulation. This action is penalty-free and the cost is much less than write-through operations that updates the main memory every time a write operation occurs.
+After all the buffer blocks will be written back to the main memory eventually, in a deterministic manner.
+This is ensured by the write-back policy of the cache line, and is a common stable feature in modern CPUs to avoid excessive memory access.
+To give you a better visual comprehension of the cyclic permutation, I will provide a simple figure \hyperlink{fig:cyclicpermu}{`} of how it works.
+
+\begin{center}
+\begin{figure}[H]
+    \hypertarget{fig:cyclicpermu}{}
+    \caption{Cyclic Permutation}
+    \centering
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1\textwidth]{cyclicpermu.drawio.pdf}
+\end{figure}
+\end{center}
+
+\begin{algorithm}[H]
+\small
+\caption{Cyclic Permutation}\label{CyclicPermutation}
+\begin{algorithmic}
+    \State temp $\gets A\bigl[\ell +
+    \mathrm{offsets}_L[\mathrm{start}_L]\bigr]$ \Comment{(1) preserve the last element in temp variable} 
+    
+    \State $A\bigl[\ell +
+    \mathrm{offsets}_L[\mathrm{start}_L]\bigr] \gets
+    A\bigl[r- \mathrm{offsets}_R[\mathrm{start}_R]\bigr]$\Comment{(2) start with the first one}
+    
+    \For{$j = 1,\dots, \mathrm{num} - 1$}\Comment{main cyclic for loop}
+
+    \State $A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + j - 1]\bigr] \gets
+    A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr]$     
+    \State $A\bigl[\ell + \mathrm{offsets}_L[\mathrm{start}_L + j]\bigr]
+    \gets A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + j ]\bigr]$ 
+
+    \EndFor
+    \State $A\bigl[r - \mathrm{offsets}_R[\mathrm{start}_R + \mathrm{num} - 1]\bigr] \gets$
+    temp \Comment{(3) put the preserved element back to the last place}
+\end{algorithmic}
+\end{algorithm}
+
+Here we mapped the pseudocode in parts to the steps in the figure, the first step is to preserve the last element in the left buffer block in a temporary variable,
+then we doing the cyclic permutation in the main loop, shifting misplaced elements from buffers on one side to the other to make sure they are well partitioned, and finally we put the preserved element back to the last place in the right buffer block.
+This rotate-2n like method is basically made up of multiple copys from pointers and reduces the number of swaps to the minimum, a great improvement over the original Hoare's partition.
+
+We also have adaptions of the Block Lomuto's partition method. Comprehension won't be hard with our fundamental understandings of the classical Lomuto's partition method.
+
+\begin{algorithm}[t!]
+    \small
+    \caption{One-Pivot Block Partition Lomuto}\samepage\label{algo:single:pivot:partitioning}
+    \textbf{procedure} \lomutoone($\textit{A}[1..\textit{n}]$)
+    \begin{algorithmic}[1]
+        \Require $\textit{n} > 1, \text{Pivot in $\textit{A}[\textit{n}]$}$
+        \State $\texttt{p} \gets \textit{A}[\textit{n}]$; 
+    \State \textbf{integer} $\text{block}[0, \ldots, \textit{B} - 1]$, $\texttt{i}, \texttt{j} \gets 1$, $\texttt{num} \gets 0$
+    \While{$\texttt{j} < \textit{n}$}
+    \State $\texttt{t} \gets \text{min}(\textit{B}, \textit{n} - \texttt{j} )$;
+\For{$\texttt{c} \gets 0; \texttt{c} < \texttt{t}; \texttt{c} \gets \texttt{c} + 1$} 
+                \State $\text{block}[\texttt{num}] \gets \texttt{c}$;
+            \State $\texttt{num} \gets \texttt{num} +  (\texttt{p} > \textit{A}[\texttt{j} + \texttt{c}])$;
+            \EndFor
+            \For{$\texttt{c} \gets 0; \texttt{c} < \texttt{num}; \texttt{c} \gets \texttt{c} + 1$} 
+        \State \text{Swap $\textit{A}[\texttt{i}]$ and $\textit{A}[\texttt{j} + \text{block}[\texttt{c}]]$}
+        \State $\texttt{i} \gets \texttt{i} + 1$
+            \EndFor
+            \State $\texttt{num} \gets 0$;
+        \State $\texttt{j} \gets \texttt{j} + \texttt{t}$;
+        \EndWhile
+        \State Swap $\textit{A}[\texttt{i}]$ and $\textit{A}[\textit{n}]$;\\
+    \Return $\texttt{i}$;
+    \end{algorithmic}
+\end{algorithm}
+\begin{figure}[t!]
+\vspace*{-1.5em}
+\centering
+\begin{tikzpicture}[xscale = 1.0]
+% main array
+\draw[fill=hellgruen!30] (0,0) rectangle (1.5, 0.5);
+\draw[fill=dunkelgruen!30] (1.5,0) rectangle (3.5, 0.5);
+\draw[fill=dunkelgruen!30] (7.5,0) rectangle (8, 0.5);
+\fill[fill=dunkelgruen!30] (4.5,0.25) rectangle (7.5, 0.5);
+\fill[fill=hellgruen!30] (4.5,0) rectangle (7.5, 0.25);
+\fill[fill=dunkelgruen!30] (3.5,0) rectangle (3.75, 0.5);
+\fill[fill=hellgruen!30] (3.75,0) rectangle (4.0, 0.5);
+\fill[fill=hellgruen!30] (4,0) rectangle (4.25, 0.5);
+\fill[fill=dunkelgruen!30] (4.25,0) rectangle (4.5, 0.5);
+\draw (0,0) rectangle (8, 0.5);
+\draw (7.5, 0) -- (7.5, 0.5);
+\draw (1.5, 0) -- (1.5, 0.5);
+\draw (3.5, 0) -- (3.5, 0.5);
+\draw[dotted, thick] (5.5, 0) -- (5.5, 0.5);
+\node at (7.75, 0.25) {$p$};
+\node at (0.75, 0.25) {$< p$};
+\node at (2.5, 0.25) {$\geq p$};
+\node at (6.5, 0.25) {? $\cdots$ ?};
+\node at (1.65, -0.25) {\small$\uparrow$};
+\node at (1.65, -0.65) {$\texttt{i}$};
+\node at (3.65, -0.25) {\small$\uparrow$};
+\node at (3.65, -0.65) {$\texttt{j}$};
+\node at (4.65, -0.25) {\small$\uparrow$};
+\node at (4.65, -0.65) {$\texttt{j} + \texttt{c}$};
+\draw [decorate, decoration={brace,amplitude=5pt},yshift=2pt](3.5,0.5)--(5.5,0.5) node [midway,yshift=15pt]{$B$};
+%\draw [step = .25, blue, opacity=0.3] (0, -1.5) grid (\columnwidth, 0.5);
+%block
+\draw (6.25,-1) rectangle (8.25, -0.5);
+\draw (6.25, -1) -- (6.25, -0.5);
+\draw (6.75, -1) -- (6.75, -0.5);
+\draw (7.25, -1) -- (7.25, -0.5);
+\draw (7.75, -1) -- (7.75, -0.5);
+\draw (8.25, -1) -- (8.25, -0.5);
+\node at (6.5, -0.75) {1};
+\node at (7, -0.75) {2};
+\node at (7.5, -0.75) {3};
+\node at (7.5, -1.25) {\small$\uparrow$};
+\node at (7.5, -1.6) {$\texttt{num}$};
+\node at (6.25, -1.3) {$\texttt{block}$};
+
+\end{tikzpicture}
+\vspace{-1.5em}
+%\includegraphics[width=\columnwidth]{fig-lomuto-block.png}
+\caption{BlockQuicksort with Lomuto's partitioning scheme.} %Picture depicts the situation where Algorithm~\ref{algo:single:pivot:partitioning} is currently on Line~7 with $\texttt{c} = 4$. So far, the block contains the indexes 1 and 2, representing that $A[\texttt{j} + 1]$ and $A[\texttt{j} + 2]$ are smaller than $p$. In general, given that $\texttt{c}$ has value $c$ and $\texttt{num}$ is \textit{num}, $\texttt{block}[0..\textit{num} - 1]$ contains the indexes (relative to $\texttt{j}$) of all misplaced elements in $A[\texttt{j}..\texttt{j} + c]$. Unlabeled elements have only half the width of the array cell depicting $p$ in the picture.}
+\label{fig:lomuto:block:invariant}
+\end{figure}
+
+Partition left to the index j is the sub-result of last iteration, we are currently scanning on the block which covers the range of $A[j..j+B-1]$, and the block buffer is used to store the index offsets of the misplaced elements inside.
+The first element with index 0 is neglected for being blue -- greater than the pivot, and the yellow elements with index 1 and 2 -- less than the pivot, are stored in the buffer. The third blue element with index 2, temporarily stored in the buffer, will be replaced soon by the next misplaced item in the next iteration that deals with unknown values that can be either less or greater than the pivot.
+
+\begin{algorithm}[t!]
+    \small
+    \caption{Two-Pivot Block Partition Lomuto}\samepage\label{algo:dual:pivot:partitioning}
+    \textbf{procedure} \lomutotwo($\textit{A}[1..\textit{n}]$)
+    \begin{algorithmic}[1]
+        \Require $n > 1$, \text{Pivots in $\textit{A}[1] \leq \textit{A}[\textit{n}]$}
+        \State $\texttt{p} \gets \textit{A}[1]$; $\texttt{q} \gets \textit{A}[n]$; 
+    \State \textbf{integer} $\text{block}[0, \ldots, \textit{B} - 1]$
+    \State  $\texttt{i}, \texttt{j}, \texttt{k} \gets 2$, $\texttt{num}_{< \texttt{p}}, \texttt{num}_{\leq \texttt{q}} \gets 0$
+    \While{$\texttt{k} < \textit{n}$}
+    \State $\texttt{t} \gets \text{min}(\textit{B}, \textit{n} - \texttt{k} )$;
+\For{$\texttt{c} \gets 0; \texttt{c} < \texttt{t}; \texttt{c} \gets \texttt{c} + 1$} 
+            \State $\text{block}[\texttt{num}_{\leq \texttt{q}}] \gets \texttt{c}$;
+        \State $\texttt{num}_{\leq \texttt{q}} \gets \texttt{num}_{\leq \texttt{q}} +  (\texttt{q} \geq \textit{A}[\texttt{k} + \texttt{c}])$;
+            \EndFor
+            \For{$\texttt{c} \gets 0; \texttt{c} < \texttt{num}_{\leq \texttt{q}}; \texttt{c} \gets \texttt{c} + 1$} 
+        \State \text{Swap $\textit{A}[\texttt{j} + \texttt{c}]$ and $\textit{A}[\texttt{k} + \text{block}[\texttt{c}]]$}
+            \EndFor
+            \State $\texttt{k} \gets \texttt{k} + \texttt{t}$;
+            \For{$\texttt{c} \gets 0; \texttt{c} < \texttt{num}_{\leq \texttt{q}}; \texttt{c} \gets \texttt{c} + 1$} 
+        \State $\text{block}[\texttt{num}_{< \texttt{p}}] \gets \texttt{c}$;
+    \State $\texttt{num}_{< \texttt{p}} \gets \texttt{num}_{< \texttt{p}} +  (\texttt{p} > \textit{A}[\texttt{j} + \texttt{c}])$;
+            \EndFor
+            \For{$\texttt{c} \gets 0; \texttt{c} < \texttt{num}_{< \texttt{p}}; \texttt{c} \gets \texttt{c} + 1$} 
+        \State \text{Swap $\textit{A}[\texttt{i}]$ and $\textit{A}[\texttt{j} + \text{block}[\texttt{c}]]$}
+        \State $\texttt{i} \gets \texttt{i} + 1$
+            \EndFor
+            \State $\texttt{j} \gets \texttt{j} + \texttt{num}_{\leq \texttt{q}}$;
+    \State $\texttt{num}_{< \texttt{p}}, \texttt{num}_{\leq \texttt{q}} \gets 0$;
+        \EndWhile
+        \State Swap $\textit{A}[\texttt{i} - 1]$ and $\textit{A}[1]$;
+    \State Swap $\textit{A}[\texttt{j}]$ and $\textit{A}[\textit{n}]$;\\
+\Return $(\texttt{i} - 1,\texttt{j})$;
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{figure}[H]
+\vspace*{-1em}
+\centering
+\scalebox{.92}{
+\begin{tikzpicture}[xscale = 1.05, xshift=0.5cm]
+\draw[fill=gruen!30] (-0.5, 0) rectangle (0, 0.5);
+\draw[fill=hellgruen!30] (0,0) rectangle (1, 0.5);
+\draw[fill=gruen!30] (1,0) rectangle (3, 0.5);
+\draw[fill=dunkelgruen!30] (3, 0) rectangle (4, 0.5);
+\draw[fill=gruen!30] (7.5,0) rectangle (8, 0.5);
+\fill[fill=dunkelgruen!30] (4,0) rectangle (4.25, 0.5);
+\fill[fill=gruen!30] (4.25,0.25) rectangle (4.75, 0.5);
+\fill[fill=hellgruen!30] (4.25,0) rectangle (4.75, 0.25);
+\fill[fill=hellgruen!30] (4.75,0) rectangle (7.5, 0.16);
+\fill[fill=gruen!30] (4.75,0.16) rectangle (7.5, 0.33);
+\fill[fill=dunkelgruen!30] (4.75,0.33) rectangle (7.5, 0.5);
+
+
+% \fill[fill=hellgruen!30] (4.5,0.25) rectangle (7.5, 0.5);
+% \fill[fill=dunkelgruen!30] (3.5,0) rectangle (3.75, 0.5);
+% \fill[fill=hellgruen!30] (3.75,0) rectangle (4.0, 0.5);
+% \fill[fill=hellgruen!30] (4,0) rectangle (4.25, 0.5);
+% \fill[fill=dunkelgruen!30] (4.25,0) rectangle (4.5, 0.5);
+\draw (0,0) rectangle (8, 0.5);
+\draw (7.5, 0) -- (7.5, 0.5);
+%\draw (1, 0) -- (1, 0.5);
+%\draw (3.5, 0) -- (3.5, 0.5);
+\draw[dotted, thick] (5.5, 0) -- (5.5, 0.5);
+\node at (-0.25, 0.25) {$p$};
+\node at (7.75, 0.25) {$q$};
+\node at (0.5, 0.25) {$< p$};
+\node at (2, 0.25) {$p \leq \dots \leq q$};
+\node at (3.5, 0.25) {$> q$};
+\node at (6.5, 0.25) {? $\cdots$ ?};
+\node at (1.05, -0.25) {\small$\uparrow$};
+\node at (1.05, -0.65) {$\texttt{i}$};
+\node at (3.05, -0.25) {\small$\uparrow$};
+\node at (3.05, -0.65) {$\texttt{j}$};
+\node at (4.05, -0.25) {\small$\uparrow$};
+\node at (4.05, -0.65) {$\texttt{k}$};
+\node at (4.85, -0.25) {\small$\uparrow$};
+\node at (4.85, -0.65) {$\texttt{k} + \texttt{c}$};
+\draw [decorate, decoration={brace,amplitude=5pt},yshift=2pt](4,0.5)--(5.5,0.5) node [midway,yshift=15pt]{$B$};
+%\draw [step = .25, blue, opacity=0.3] (0, -1.5) grid (\columnwidth, 0.5);
+%block
+\draw (6.25,-1) rectangle (8.25, -0.5);
+\draw (6.25, -1) -- (6.25, -0.5);
+\draw (6.75, -1) -- (6.75, -0.5);
+\draw (7.25, -1) -- (7.25, -0.5);
+\draw (7.75, -1) -- (7.75, -0.5);
+\draw (8.25, -1) -- (8.25, -0.5);
+\node at (6.5, -0.75) {1};
+\node at (7, -0.75) {2};
+\node at (7.5, -0.75) {3};
+\node at (7.5, -1.25) {\small$\uparrow$};
+\node at (7.5, -1.6) {$\texttt{num}_{\leq \texttt{q}}$};
+\node at (6.25, -1.3) {$\texttt{block}$};
+
+
+\begin{scope}[yshift = -3cm]
+
+
+% main array
+\draw[fill=gruen!30] (-0.5, 0) rectangle (0, 0.5);
+\draw[fill=hellgruen!30] (0,0) rectangle (1, 0.5);
+\draw[fill=gruen!30] (1,0) rectangle (3, 0.5);
+\draw[fill=dunkelgruen!30] (3.75, 0) rectangle (5.5, 0.5);
+\draw[fill=gruen!30] (7.5,0) rectangle (8, 0.5);
+%\fill[fill=dunkelgruen!30] (4,0) rectangle (4.25, 0.5);
+%\fill[fill=gruen!30] (4.25,0.25) rectangle (4.75, 0.5);
+%\fill[fill=hellgruen!30] (4.25,0) rectangle (4.75, 0.25);
+\fill[fill=hellgruen!30] (5.5,0) rectangle (7.5, 0.16);
+\fill[fill=gruen!30] (5.5,0.16) rectangle (7.5, 0.33);
+\fill[fill=dunkelgruen!30] (5.5,0.33) rectangle (7.5, 0.5);
+\fill[fill=hellgruen!30] (3, 0) rectangle (3.25, 0.5);
+\fill[fill=hellgruen!30] (3.25,0.0) rectangle (3.75, 0.25);
+\fill[fill=gruen!30] (3.25,0.25) rectangle (3.75, 0.5);
+
+
+% \fill[fill=hellgruen!30] (4.5,0.25) rectangle (7.5, 0.5);
+% \fill[fill=dunkelgruen!30] (3.5,0) rectangle (3.75, 0.5);
+% \fill[fill=hellgruen!30] (3.75,0) rectangle (4.0, 0.5);
+% \fill[fill=hellgruen!30] (4,0) rectangle (4.25, 0.5);
+% \fill[fill=dunkelgruen!30] (4.25,0) rectangle (4.5, 0.5);
+\draw (0,0) rectangle (8, 0.5);
+\draw (7.5, 0) -- (7.5, 0.5);
+%\draw (1, 0) -- (1, 0.5);
+%\draw (3.5, 0) -- (3.5, 0.5);
+%\draw[dotted, thick] (5.5, 0) -- (5.5, 0.5);
+\node at (-0.25, 0.25) {$p$};
+\node at (7.75, 0.25) {$q$};
+\node at (0.5, 0.25) {$< p$};
+\node at (2, 0.25) {$p \leq \dots \leq q$};
+\node at (4.65, 0.25) {$> q$};
+\node at (6.5, 0.25) {? $\cdots$ ?};
+\node at (1.05, -0.25) {\small$\uparrow$};
+\node at (1.05, -0.65) {$\texttt{i}$};
+\node at (3.05, -0.25) {\small$\uparrow$};
+\node at (3.05, -0.65) {$\texttt{j}$};
+\node at (5.55, -0.25) {\small$\uparrow$};
+\node at (5.55, -0.65) {$\texttt{k}$};
+\draw[->] (3.6, -0.75) -- (3.35, - 0.1);
+\node at (3.6, -1) {$\texttt{j} + \texttt{c}$};
+\draw [decorate, decoration={brace,amplitude=5pt},yshift=2pt](3,0.5)--(3.75,0.5) node [midway,yshift=15pt]{$\texttt{num}_{\leq \texttt{q}}$};
+%\draw [step = .25, blue, opacity=0.3] (0, -1.5) grid (\columnwidth, 0.5);
+%block
+\draw (6.25,-1) rectangle (8.25, -0.5);
+\draw (6.25, -1) -- (6.25, -0.5);
+\draw (6.75, -1) -- (6.75, -0.5);
+\draw (7.25, -1) -- (7.25, -0.5);
+\draw (7.75, -1) -- (7.75, -0.5);
+\draw (8.25, -1) -- (8.25, -0.5);
+\node at (6.5, -0.75) {0};
+\node at (7, -0.75) {1};
+\node at (7.0, -1.25) {\small$\uparrow$};
+\node at (7.0, -1.7) {$\texttt{num}_{< \texttt{p}}$};
+\node at (6.25, -1.3) {$\texttt{block}$};
+\end{scope}
+\end{tikzpicture}}
+%\includegraphics[width=\columnwidth]{fig-lomuto-block-2.png}
+\vspace*{-2em}
+\caption{Lomuto block partitioning with two pivots. Top: Algorithm~\ref{algo:dual:pivot:partitioning}
+compares elements with $q$ and is on Line~8 with $\texttt{c} = 3$, cf.~Figure~\ref{fig:lomuto:block:invariant}. Bottom: Algorithm compares the $\texttt{num}_{\leq \texttt{q}}$ elements at most as large as $q$ to $p$. Algorithm is on Line~14 with $\texttt{c} = 1$.}
+\label{fig:lomuto:two:block:invariant}
+\end{figure}
+
+We can observe that there exists one more pass for 2-Pivot Block Lomuto's partition method than the 1-Pivot one. The first pass compares with the larger pivot $q$ and the second pass compares with the smaller pivot $p$.
+The intermediate state between the 2 passes shows a mixture of elements that are less than $p$ and at most as large as $q$ swapped to the exchange area in the first pass. The second pass will then move the elements that are less than $p$ to the left side of the array.
+
+\subsection{rotate-n operations}
+\hypertarget{rotate-n}
+The rotate-n operation is a common operation in the Quicksort algorithm, where we shift the elements by their indices in batch to get rid of the duplicated swaps, and to make the partitioning process more plain and simple to understand.
+This improves slightly the performance of the Quicksort algorithm, and is widely used in tweaked Multi-Pivot QuickSort. The rotate-n operation is defined as follows:
+\begin{verbatim}
+    rotaten(A, [index1, index2, ... indexn]);
+\end{verbatim}
+which is equivalent to the following code:
+\begin{verbatim}
+    T temp = A[index1];
+    A[index1] = A[index2];
+    ...
+    A[indexn] = temp;
+\end{verbatim}
+In Rust I implemented the rotate-n operation as follows:
+\begin{verbatim}
+pub unsafe fn rotate_$n<T>(arr: &mut [T], idx: [usize; $n]) {
+    // cycle the elements in the idx array
+    let tmp = ptr::read(&arr[idx[0]]);
+    for i in 1..$n {
+        ptr::copy_nonoverlapping(arr.get_unchecked(idx[i]),
+            arr.get_unchecked_mut(idx[i - 1]), 1);
+    }
+    ptr::copy_nonoverlapping(&tmp,
+        arr.get_unchecked_mut(idx[n - 1]), 1);
+}
+\end{verbatim}
+
+Using direct pointer manipulation and $get_unchecked$ function, we can avoid the overhead of the Rust borrow checker and array boundary checking to maximize the performance.
+
+
+\subsection{Multi-Pivot QuickSort}
+
 \begin{algorithm}[H]
     \caption{Dual-Pivot QuickSort}\label{DualPivotQuickSort}
     \begin{algorithmic}[1]
@@ -435,21 +750,6 @@ estimations of $1.8n \ln n + \bigO(n)$ comparisons and $1.6n \ln n + \bigO{n}$ s
 It is noteworthy the there still lies a huge gap between the theoretical analysis and the real-world performance. It is time we broaden our horizon and look for more factors that could contribute more to the change of the performance of the Quicksort algorithm.
 The cache misses, branch mis-predictions, and the number of instructions are the things we should take into consideration when we are analyzing on mutated versions of the Quicksort algorithm.
 Apparently, the number of pivots plays a significant role, and is one of the factors that could potentially bring a significant change. Let's dive deeper to see the world of 3-Pivots Quicksort.
-
-\subsection{rotate-n operations}
-\hypertarget{rotate-n}
-The rotate-n operation is a common operation in the Quicksort algorithm, where we shift the elements by their indices in batch to get rid of the duplicated swaps, and to make the partitioning process more plain and simple to understand.
-This improves slightly the performance of the Quicksort algorithm, and is widely used in tweaked Multi-Pivot QuickSort. The rotate-n operation is defined as follows:
-\begin{verbatim}
-    rotaten(A, [index1, index2, ... indexn]);
-\end{verbatim}
-which is equivalent to the following code:
-\begin{verbatim}
-    T temp = A[index1];
-    A[index1] = A[index2];
-    ...
-    A[indexn] = temp;
-\end{verbatim}
 
 \begin{algorithm}[H]
     \caption{3-Pivot QuickSort}\label{3PivotQuickSort}
@@ -987,9 +1287,26 @@ The former example has proven a success, but future works will also be carried o
 the modern CPU architecture has already done a great job on the overall cache hit rate, which can be supported by the cachegrind tests that all the tested algorithms have around less than 10\% cache misses.
 Although this won't be the deterministic evidence to say that the cache misses are not the bottleneck, but it is still a good sign that the cache misses are not the main issue that we have to deal with.
 
+% TODO: talk about the new trial layout of block quick sort, 2 pivots and lomuto, and why it is slower
+
 
 % TODO: talk about pivot selection and skewed pivot selection like page 11 of block quick sort paper.
+The tests above are carried out using constant pivot selection method, choosing half start and half end of the array as the pivots as the most common practice goes,
+but as mentioned earlier in the preliminaries part \hyperlink{ref:AnalysisOfBranchMissesInQuickSort}{`}, the pivot selection is a crucial part of the QuickSort algorithm, and the skewed pivot selection, anti-tuitionally as it seems, could bring better performance than the random pivot selection.
+It doesn't bring us to the conclusion that the skewed pivot selection is always better other methods, even it makes sense to a static branch predictor where it assumes all branches will follow the correct majority path, for instance, if our skewed pivot could divide the array into $x\%$ and $(100-x)\%$ parts, the branch predictor will always predict the $max(x\%, 100-x\%)$ path,
+we can use less time at current stage to finish the partitioning process, but the imbalanced partitions will pose future challenges to maintain the efficiency of overall algorithm. Luckily, skewed pivot always proves unnecessary in the BlockQuickSort, free from the concerns on branch misses' costs,
+proved in the experiments of \cite{BlockQuickSort}. With skew factor 2 (the middlest element is chosen as the pivot), the BlockQuickSort has the least amount of time cost, and larger skew factors will only increase the runtime. Skew factor of 6 appeared to have the best performance in the experiments for classical QuickSorts as a balance between the stalls caused by branch misses and total CPU Instructions.
+
+% TODO: 2 pivot lomuto's block partition is faster than the classical quicksort but slower than the 1 pivot hoare's block partition, why?
+The 2-Pivot Lomuto's Block Partition has less branch misses for smaller arrays, but fail to compete as the size extends, as the duplicated swaps have been amplified when the size of the array grows, 
+Lacking as a key feature to Lomuto's block scheme is the cyclic swaps that relief a lot of duplicated swaps and constant cache to the temp variable. This method has adapted well to the Hoare's scheme, for it starts on both ends and the duplicated swaps are less likely to happen as long as mis-placed elements are spotted on both sides, a prerequisite for the cyclic swaps to take place.
+The cyclic swaps are not only reducing the duplicated swaps, but also reducing the cache misses by the help of write-back policy. The 2-Pivot Lomuto's Block Partition has failed to adapt to the cyclic swaps, and the duplicated swaps are not reduced, but amplified, which might be the meat of the issue for the performance degradation compared with Hoare's block partition. % TODO: is this the real reason? I need to check the code again.
+
+
 % TODO: talk about the sorting functions exported to python by ffi
+For the sake of convenience, the sorting functions are exported to Python using the Foreign Function Interface (FFI) provided by PyO3, which is a safe and easy way to call Rust functions from Python.
+The sorting functions are then tested on the same machine with the same environment, the original Rust results are provided in the appendix in fully detailed \hyperlink{FullTables}{tables}. The Python results are consistent with the Rust tests, reliable and stable.
+Only extra overhead would be the Python interpreter and ffi calls, which is not significant in this case, and is negligible.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 \section{Full Tables}
@@ -1243,6 +1560,7 @@ Although this won't be the deterministic evidence to say that the cache misses a
 \bibitem{Sedgewick} \label{Sedgewick} Sedgewick, R. (1978). Implementing Quicksort Programs. \textit{Communications of the ACM}, 21(10), 847-857.
 \bibitem{Kushagra} \label{Kushagra} {Shrinu Kushagra, Alejandro López-Ortiz, Aurick Qiao, and J. Ian Munro. \textit{Multi-pivot quicksort: Theory and experiments.} In ALENEX, pages 47-60, 2014.}
 \bibitem{Introsort} \label{Introsort} David R. Musser. \textit{Introspective Sorting and Selection Algorithms.} Software: Practice and Experience, 27(8):983-993, 1997.
+\bibitem{AnalysisOfBranchMissesInQuickSort} \label{AnalysisOfBranchMissesInQuickSort} Conrado Martínez, Markus E. Nebel and Sebastian Wild. 2015. \textit{Analysis of Branch Misses in Quicksort}. ANALCO 2015.
 \bibitem{BlockQuickSort} \label{BlockQuickSort} BlockQuicksort: How Branch Mispredictions don't affect Quicksort. \textit{Stefan Edelkamp and Armin Weiß.} 2016.
 \bibitem{OptimalPartitioningForDualPivotQuicksort} \label{OptimalPartitioningForDualPivotQuicksort} Martin Aumüller and Martin Dietzfelbinger. 2013. \textit{Optimal Partitioning for Dual Pivot Quicksort}. In Proc.
 of the 40th International Colloquium on Automata, Languages and Programming (ICALP'13). Springer, 33-44.

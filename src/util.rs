@@ -64,9 +64,9 @@ macro_rules! impl_rotate_n {
             // cycle the elements in the idx array
             let tmp = std::ptr::read(&arr[idx[0]]);
             for i in 1..$n {
-                std::ptr::copy_nonoverlapping(&arr[idx[i]], &mut arr[idx[i - 1]], 1);
+                std::ptr::copy_nonoverlapping(arr.get_unchecked(idx[i]), arr.get_unchecked_mut(idx[i - 1]), 1);
             }
-            std::ptr::copy_nonoverlapping(&tmp, &mut arr[idx[$n - 1]], 1);
+            std::ptr::copy_nonoverlapping(&tmp, arr.get_unchecked_mut(idx[$n - 1]), 1);
         }
     };
 }
