@@ -131,7 +131,9 @@ Fortunately, an efficient approach has been put forward by Stefan Edelkamp and A
 in their thesis of BlockQuickSort \cite{BlockQuickSort}
 which evens the odds of both branch mis-prediction and cache misses which uses one or more buffer blocks of constant sizes on the stack
 to store the index offsets of out-of-order elements, swap them altogether in a second pass to rearrange them in order
-after scanning a large chunk of array with the size of the block. Their approach realized a significant speedup up to 80\% faster compared with the GCC implementation of std sort
+after scanning a large chunk of array with the size of the block.
+It has eliminated almost all the $if$ branches during comparisons, except inevitable branches produced by terminating situation of $for$ loops which traverse the whole array.
+Their approach realized a significant speedup up to 80\% faster compared with the GCC implementation of std sort
 with only one single pivot. The BlockQuickSort has been adapted to the Multi-Pivot Quicksort and the results are also promising,
 the improvements on contiguous memory access significantly improves the spatial locality and reduces both the cache misses and branch mis-predictions.
 Branchless comparisons are also adapted which plays an important role in contributing to the huge performance boost by reducing the overhead
@@ -1091,7 +1093,6 @@ Each test runs in a black box, which blocks the compiler from doing optimization
 The criterion-perf-events plugin is also adapted to capture the hardware events of the CPU, with the help of the well-known profiling tool $perf$ on Linux. Why not cachegrind? Because cachegrind is a simulation tool on the cache misses and introduces a huge overhead on the runtime,
 in previous tests with perf, the overall runtime appeared to have at least 200\% difference with the real-world performance, so it was rejected in the end.
 Comparably, perf is a more lightweight tool that suits our needs and the given results are more reliable. Previous tests with cachegrind are given in the appendix.
-% TODO: Add the appendix of cachegrind results
 
 The compiler flags passed in are the same for all the tests, and the tests are conducted on the same machine with the same environment,
 with 3 seconds of warm-up time and 5 seconds of measurement time for each test. The results are then calculated over regression tests with 100, 1000, 10000, 100000, 1000000 and 10000000 elements,
@@ -1212,7 +1213,7 @@ somewhat partially due to its decent cache behavior, but more importantly, it ha
 % TODO: maybe talk about SSSSort as it uses 127 pivots, technically it is another variation of Multi-Pivot QuickSort, but it is not yet tested in this thesis.
 % and it is really slow on many duplicates, but it is still worth mentioning.
 
-% TODO: talk about some failed layouts that is way too complicated to implement, like with 2 unknown segments and 2 pivot hoare block partition.
+% TODO: talk about some failed layouts that is way too complicated to implement, like 2 pivot hoare block partition.
 
 With the help of my supervisor Dr. David Gregg I reached out to new layouts that might shift our perspectives on classical QuickSorts. Unfortunately they proved to be too complicated to implement or just not possible to be implemented by far.
 One of the layouts is the 2 unknown segments for 2-Pivot QuickSort.
@@ -1285,9 +1286,6 @@ The former example has proven a success, but future works will also be carried o
 the modern CPU architecture has already done a great job on the overall cache hit rate, which can be supported by the cachegrind tests that all the tested algorithms have around less than 10\% cache misses.
 Although this won't be the deterministic evidence to say that the cache misses are not the bottleneck, but it is still a good sign that the cache misses are not the main issue that we have to deal with.
 
-% TODO: talk about the new trial layout of block quick sort, 2 pivots and lomuto, and why it is slower
-
-
 % TODO: talk about pivot selection and skewed pivot selection like page 11 of block quick sort paper.
 The tests above are carried out using constant pivot selection method, choosing half start and half end of the array as the pivots as the most common practice goes,
 but as mentioned earlier in the preliminaries part \hyperlink{ref:AnalysisOfBranchMissesInQuickSort}{`}, the pivot selection is a crucial part of the QuickSort algorithm, and the skewed pivot selection, anti-tuitionally as it seems, could bring better performance than the random pivot selection.
@@ -1299,11 +1297,31 @@ proved in the experiments of \cite{BlockQuickSort}. With skew factor 2 (the midd
 The 2-Pivot Lomuto's Block Partition has less branch misses for smaller arrays, but fail to compete as the size extends, as the duplicated swaps have been amplified when the size of the array grows, 
 Lacking as a key feature to Lomuto's block scheme is the cyclic swaps that relief a lot of duplicated swaps and constant cache to the temp variable. This method has adapted well to the Hoare's scheme, for it starts on both ends and the duplicated swaps are less likely to happen as long as mis-placed elements are spotted on both sides, a prerequisite for the cyclic swaps to take place.
 The cyclic swaps are not only reducing the duplicated swaps, but also reducing the cache misses by the help of write-back policy. The 2-Pivot Lomuto's Block Partition has failed to adapt to the cyclic swaps, and the duplicated swaps are not reduced, but amplified, which might be the meat of the issue for the performance degradation compared with Hoare's block partition. % TODO: is this the real reason? I need to check the code again.
+% TODO: talk about the new trial layout of block quick sort, 2 pivots and lomuto, and why it is slower
+Mimicing the layout of Lomuto's Block Partition, I implemented another 2-Pivots Lomuto's Block Partition which requires only one phase of rearranging, but with more rotate-n moves to shift elements to their correct partitions. This could introduce more complexity as in a chaotic block with 2 types of items less than Pivot 1 or greater than Pivot 1 but less than Pivot 2,
+simply dumping their offsets to the correct partitions regardless will not work, for in each step we have to deal with smaller offset first to make sure our algorithm behaves the same as the classical version which scans the array in one-way order, but this extra min() operation could be a huge drawback for this scheme.
+Results for this is even slower than the classical QuickSort, and it is not recommended to be used in practice, only for academic purposes instead of industrial applications.
+\begin{figure}[H]
+    \hypertarget{fig:newblock}{}
+    \caption{Block QuickSort New 2-Pivot Lomuto}
+    \centering
+    \hspace*{-0.27\textwidth}
+    % \vspace*{+0.1\textheight}
+    \includegraphics[width=1.5\textwidth]{new_lomuto_block.drawio.pdf}
+\end{figure}
+The cache misses also suffer from the new layout, constantly swapping side to read and compare the next minium offset also poses a challenge to the spatial locality of cache,
+causing the general time cost being also higher than the classical QuickSort. In my fuzzy tests of cachegrind \hypertarget{cachegrindresult}, the data read (Dr) rate 28.98\% and data write (Dw) rate 19.41\% all rank the top, and are both much higher than the classical QuickSort even though it has low cache misses.
+My assumption would be these constant memory accesses are caused by the cache write-back policy due to inconsistent spatial locality, though the actual relationship is yet to be confirmed by further tests in the future.
+It reveals from another perspective that the block partition is restricted by the number of pivots, as the experiments in this thesis only shows that the the pattern of comparing with one pivot in one pass is the only way to go, otherwise, like the new layout illustrated above, if we get too greedy to compare with 2 pivots simultaneously,
+the offsets have to be stored in separated chunks and it will introduce the memory accesses as the most expensive overheads that stall the CPU. This puts forward another trade-off between the number of pivots and the block partition, and it is not yet clear how to leverage the best of both worlds.
+The BlockQuickSort is still in its infancy, despite the fact that PDQSort proves a great success in the real-world applications, and the future works will be carried out to explore more possibilities and to find more optimal layout for the BlockQuickSort.
+As to the new layout, for your interest the detailed statistics will be attached in the appendix section.
 
+% TODO: another layout, swap < P1 to the left and swap < P2 to the right. Is it worth trying?
 
 % TODO: talk about the sorting functions exported to python by ffi
 For the sake of convenience, the sorting functions are exported to Python using the Foreign Function Interface (FFI) provided by PyO3, which is a safe and easy way to call Rust functions from Python.
-The sorting functions are then tested on the same machine with the same environment, the original Rust results are provided in the appendix in fully detailed \hyperlink{FullTables}{tables}. The Python results are consistent with the Rust tests, reliable and stable.
+The sorting functions are then tested on the same machine with the same environment with supported types 32 bits IEEE-754 floats and unsigned 32 bits integers. The original Rust results are provided in the appendix in fully elaborated \hyperlink{FullTables}{tables}. The Python results are consistent with the Rust tests, reliable and stable.
 Only extra overhead would be the Python interpreter and ffi calls, which is not significant in this case, and is negligible.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
@@ -1550,6 +1568,200 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
         \hline
     \end{tabular}
 \end{center}
+
+\subsection{New Layout of 2-Pivot Lomuto's Block Partition}
+\begin{center}
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        Branch Misses   & Size     & Mean           & SD            & Median \\
+        \hline
+        1-Pivot Hoare   & 100      & 150.9847       & 0.0653        & 150.9726 \\
+                        & 1000     & 2318.4835      & 9.9296        & 2317.9223 \\
+                        & 10000    & 31167.1394     & 80.6562       & 31184.6376 \\
+                        & 100000   & 371744.0274    & 2827.6261     & 372691.0625 \\
+                        & 1000000  & 4334773.9875   & 102158.1340   & 4335591.3750 \\
+                        & 10000000 & 51459230.9000  & 1557769.9690  & 51377714.5000 \\
+        \hline
+    \end{tabular}
+
+    \vspace{1em}
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        Cache Misses    & Size     & Mean           & SD            & Median \\
+        \hline
+                        & 100      & 0.0205         & 0.0339        & 0.0112 \\
+                        & 1000     & 0.2856         & 0.1491        & 0.2300 \\
+                        & 10000    & 15.8177        & 56.1246       & 2.8154 \\
+                        & 100000   & 1411.5398      & 82.2908       & 1392.3521 \\
+                        & 1000000  & 27392.0125     & 875.9860      & 27313.2500 \\
+                        & 10000000 & 670240.8000    & 15488.9557    & 668665.5000 \\
+        \hline
+    \end{tabular}
+
+    \vspace{1em}
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        CPU Cycles      & Size     & Mean           & SD            & Median \\
+        \hline
+                        & 100      & 9484.3716      & 120.3484      & 9448.6366 \\
+                        & 1000     & 156216.1596    & 128.3762      & 156217.6846 \\
+                        & 10000    & 2186118.3441   & 7013.3473     & 2184792.1616 \\
+                        & 100000   & 27635332.3081  & 167125.6873   & 27670210.5496 \\
+                        & 1000000  & 333242126.0500 & 4954054.1009  & 331742534.7500 \\
+                        & 10000000 & 3997343820.250 & 62970785.7480 & 3995304309.5000 \\
+        \hline
+    \end{tabular}
+
+    \vspace{1em}
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
+        Time            & Size     & Mean         & SD          & Median \\
+        \hline
+                        & 100      & 2.2327 µs    & 29.601 ns   & 2.2257 µs \\
+                        & 1000     & 36.708 µs    & 142.53 ns   & 36.662 µs \\
+                        & 10000    & 518.56 µs    & 2.1303 µs   & 518.11 \\
+                        & 100000   & 6.5765 ms    & 46.260 µs   & 6.5651 ms \\
+                        & 1000000  & 79.235 ms    & 882.47 µs   & 79.284 ms \\
+                        & 10000000 & 951.74 ms    & 16.173 ms   & 948.58 ms \\
+        \hline
+    \end{tabular}
+\end{center}
+
+\subsection{Cachegrind Results}
+\hypertarget{cachegrindresult}{}
+\small
+\begin{verbatim}
+==31674== Cachegrind, a cache and branch-prediction profiler
+==31674== Copyright (C) 2002-2017, and GNU GPL'd, by Nicholas Nethercote et al.
+==31674== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==31674== Command: target/release/cache
+==31674== 
+--31674-- warning: L3 cache found, using its data for the LL simulation.
+
+u32
+std sort 10m array cost: 5987503982ns
+quick sort 1-pivot (hoare partition) 10m array cost: 6949218668ns
+quick sort 1-pivot (lomuto partition) 10m array cost: 5893410786ns
+quick sort 2-pivot 10m array cost: 6050136667ns
+quick sort 3-pivot 10m array cost: 4945230962ns
+quick sort 4-pivot 10m array cost: 5582964437ns
+quick sort 1-pivot (hoare partition block) 10m array cost: 7087265527ns
+quick sort 1-pivot (lomuto partition block) 10m array cost: 13095039428ns
+quick sort 2-pivot (block partition) 10m array cost: 12781142680ns
+quick sort 2-pivot (new block partition) 10m array cost: 21336123394ns
+
+f32
+std sort 10m array cost: 7047995328ns
+quick sort 1-pivot (hoare partition) 10m array cost: 9384315610ns
+quick sort 1-pivot (lomuto partition) 10m array cost: 8849787330ns
+quick sort 2-pivot 10m array cost: 9187125786ns
+quick sort 3-pivot 10m array cost: 6326447943ns
+quick sort 4-pivot 10m array cost: 6182636001ns
+quick sort 1-pivot (hoare partition block) 10m array cost: 11061601282ns
+quick sort 1-pivot (lomuto partition block) 10m array cost: 16044714565ns
+quick sort 2-pivot (block partition) 10m array cost: 16078338106ns
+quick sort 2-pivot (new block partition) 10m array cost: 26167134034ns
+
+==31674== 
+==31674== I   refs:      95,959,007,560
+==31674== I1  misses:             2,469
+==31674== LLi misses:             2,435
+==31674== I1  miss rate:           0.00%
+==31674== LLi miss rate:           0.00%
+==31674== 
+==31674== D   refs:      22,415,640,761  (14,065,770,855 rd   + 8,349,869,906 wr)
+==31674== D1  misses:       230,634,166  (   216,262,654 rd   +    14,371,512 wr)
+==31674== LLd misses:        40,852,371  (    27,095,675 rd   +    13,756,696 wr)
+==31674== D1  miss rate:            1.0% (           1.5%     +           0.2%  )
+==31674== LLd miss rate:            0.2% (           0.2%     +           0.2%  )
+==31674== 
+==31674== LL refs:          230,636,635  (   216,265,123 rd   +    14,371,512 wr)
+==31674== LL misses:         40,854,806  (    27,098,110 rd   +    13,756,696 wr)
+==31674== LL miss rate:             0.0% (           0.0%     +           0.2%  )
+
+--------------------------------------------------------------------------------
+Profile data file 'cachegrind.out.31674'
+--------------------------------------------------------------------------------
+I1 cache:         32768 B, 64 B, 8-way associative
+D1 cache:         32768 B, 64 B, 8-way associative
+LL cache:         33554432 B, 64 B, direct-mapped
+Profiled target:  target/release/cache
+Events recorded:  Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Events shown:     Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Event sort order: Ir I1mr ILmr Dr D1mr DLmr Dw D1mw DLmw
+Thresholds:       99 0 0 0 0 0 0 0 0
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+Ir                      I1mr           ILmr           Dr                      
+--------------------------------------------------------------------------------
+95,959,007,560 (100.0%) 2,469 (100.0%) 2,435 (100.0%) 14,065,770,855 (100.0%) 
+
+--------------------------------------------------------------------------------
+D1mr                 DLmr                Dw                                     
+--------------------------------------------------------------------------------              
+216,262,654 (100.0%) 27,095,675 (100.0%) 8,349,869,906 (100.0%)  
+
+--------------------------------------------------------------------------------
+D1mw                 DLmw
+--------------------------------------------------------------------------------
+14,371,512 (100.0%)  13,756,696 (100.0%)  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+Ir                      I1mr         ILmr         Dr                     
+--------------------------------------------------------------------------------
+21,960,123,024 (22.88%)  47 ( 1.90%)  47 ( 1.93%) 4,076,573,635 (28.98%) 
+13,969,610,982 (14.56%)  19 ( 0.77%)  19 ( 0.78%) 1,491,698,621 (10.61%) 
+13,675,018,865 (14.25%)  33 ( 1.34%)  33 ( 1.36%) 1,735,170,012 (12.34%) 
+ 8,149,209,024 ( 8.49%)  16 ( 0.65%)  16 ( 0.66%)   799,322,583 ( 5.68%) 
+ 7,606,991,471 ( 7.93%)  54 ( 2.19%)  54 ( 2.22%) 1,139,116,007 ( 8.10%) 
+ 6,967,578,920 ( 7.26%)  18 ( 0.73%)  18 ( 0.74%) 1,124,191,062 ( 7.99%) 
+ 6,538,606,429 ( 6.81%)  15 ( 0.61%)  15 ( 0.62%)   994,198,806 ( 7.07%) 
+ 4,862,994,232 ( 5.07%)  27 ( 1.09%)  27 ( 1.11%)   622,009,731 ( 4.42%) 
+ 4,844,423,688 ( 5.05%)  44 ( 1.78%)  44 ( 1.81%)   611,828,274 ( 4.35%) 
+ 4,281,356,909 ( 4.46%)  87 ( 3.52%)  87 ( 3.57%)   877,012,667 ( 6.24%) 
+ 2,194,368,923 ( 2.29%) 161 ( 6.52%) 161 ( 6.61%)   471,403,998 ( 3.35%) 
+
+
+-------------------------------------------------------------------------------- 
+D1mr                 DLmr               Dw                         D1mw           
+--------------------------------------------------------------------------------
+
+20,748,859 ( 9.59%)    889,063 ( 3.28%) 1,620,521,723 (19.41%)     99,933 ( 0.70%)      
+25,897,120 (11.97%)  1,090,334 ( 4.02%) 1,200,472,821 (14.38%)     79,644 ( 0.55%)        
+20,799,962 ( 9.62%)  1,090,123 ( 4.02%) 1,328,750,860 (15.91%)     78,459 ( 0.55%)        
+20,546,480 ( 9.50%)  1,250,024 ( 4.61%)   351,354,604 ( 4.21%)     15,190 ( 0.11%)        
+18,748,990 ( 8.67%)  1,291,970 ( 4.77%)   903,014,938 (10.81%)    119,029 ( 0.83%)        
+15,643,246 ( 7.23%)    937,966 ( 3.46%)   476,735,340 ( 5.71%)     20,062 ( 0.14%)        
+26,847,354 (12.41%)  1,048,761 ( 3.87%)   698,810,467 ( 8.37%)     36,939 ( 0.26%)        
+13,628,374 ( 6.30%)    750,565 ( 2.77%)   475,003,077 ( 5.69%)     24,112 ( 0.17%)        
+13,229,375 ( 6.12%)  1,596,439 ( 5.89%)   465,598,575 ( 5.58%)     22,453 ( 0.16%)        
+15,163,113 ( 7.01%)  1,423,422 ( 5.25%)   662,690,122 ( 7.94%)    118,975 ( 0.83%)      
+12,500,177 ( 5.78%)  3,224,176 (11.90%)    60,624,285 ( 0.73%)  1,250,113 ( 8.70%)  
+
+--------------------------------------------------------------------------------
+    DLmw            file:function
+--------------------------------------------------------------------------------
+    1,038 ( 0.01%)  ???:rust_sorts::qsort::double_pivot_quicksort_new_partition_block
+      738 ( 0.01%)  ???:rust_sorts::qsort::quick_sort_lomuto_partition_block
+      569 ( 0.00%)  ???:rust_sorts::qsort::double_pivot_quicksort_lomuto_partition_block
+      106 ( 0.00%)  ???:rust_sorts::qsort::quick_sort_hoare_partition
+      926 ( 0.01%)  ???:rust_sorts::qsort::quick_sort_hoare_partition_block
+      926 ( 0.01%)  ???:rust_sorts::qsort::quick_sort_hoare_partition_block
+      168 ( 0.00%)  ???:rust_sorts::qsort::double_pivot_quicksort
+      324 ( 0.00%)  ???:rust_sorts::qsort::quick_sort_lomuto_partition
+      311 ( 0.00%)  ???:rust_sorts::qsort::triple_pivot_quicksort
+      261 ( 0.00%)  ???:rust_sorts::qsort::quad_pivot_quicksort
+    1,050 ( 0.01%)  ???:core::slice::sort::recurse
+1,250,113 ( 9.09%)  ???:cache::main
+\end{verbatim}
+
 
 \begin{thebibliography}{99}
 

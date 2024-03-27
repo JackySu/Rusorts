@@ -232,7 +232,7 @@ pub fn double_pivot_quicksort_new_partition_block<T: Ord>(mut arr: &mut [T]) {
                     }
                     let idx_off = cmp::min(offsets[idx_p1], offsets[block_t - 1 - idx_p2]);                    
                     if idx_off == offsets[idx_p1] {
-                        rotate4(arr.as_mut_ptr(), [k + idx_off as usize, k + l, j, i]);
+                        rotate3(arr.as_mut_ptr(), [k + idx_off as usize, j, i]);
                         i += 1;
                         idx_p1 += 1;
                     } else {
