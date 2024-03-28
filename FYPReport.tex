@@ -1068,7 +1068,7 @@ For better understanding, a completed visualization on the iterations will be pr
 
 \subsection{Analysis}
 The analysis on the results of Branch Misses, Cache Misses, Instructions and Time will be conducted below with regard to the Multi-Pivot QuickSorts with traditional partitions.
-The details regarding to the testing machine, environment and compiler settings
+The details regarding to the testing machine, environment and compiler settings are listed as follows:
 \footnote{'opt-level=3' is equivalent to '-O3', 'codegen-units=1' is equivalent to '-fno-merge-all-constants', 'lto="thin"' is equivalent to '-flto=thin' in GCC.} are as follows:
 \begin{center}
     \begin{tabular}{ |c|c|c|c|c| }
@@ -1091,18 +1091,18 @@ The details regarding to the testing machine, environment and compiler settings
     \end{tabular}
 \end{center}
 
-All the tests above are benchmarked using the criterion library, inspired by the Haskell criterion library, which is a powerful and easy-to-use benchmarking tool for Rust.
-Tests are put into groups and each group is a collection of benchmarks that are run together, with the exact same environment and the same settings.
-Each test runs in a black box, which blocks the compiler from doing optimizations that are way too aggressive, such as removing instructions it thinks are redundant.
-The criterion-perf-events plugin is also adapted to capture the hardware events of the CPU, with the help of the well-known profiling tool $perf$ on Linux. Why not cachegrind? Because cachegrind is a simulation tool on the cache misses and introduces a huge overhead on the runtime,
-in previous tests with perf, the overall runtime appeared to have at least 200\% difference with the real-world performance, so it was rejected in the end.
-Comparably, perf is a more lightweight tool that suits our needs and the given results are more reliable. Previous tests with cachegrind \hyperlink{cachegrindresult}{`} are given in the appendix.
+All the tests presented above are benchmarked using the criterion library, drawing inspiration from the Haskell criterion library, renowned for its strength, robustness and user-friendliness in benchmarking Rust crates.
+Tests are organized into groups, with each group a collection of benchmarks that are executed in sequence, comprises of a set of testing functions that are executed under identical environments.
+Each test operates within a black box, constraining the compiler from applying overly aggressive optimizations, such as removing instructions it deems rebundant.
+The criterion-perf-events plugin is also adapted to capture the hardware events of the CPU as an addition, with the help of the well-established profiling tool $perf$ on Linux. The decision to forego cachegrind in favor of $perf$ was because cachegrind is a simulation tool on the cache misses and introduces a huge overhead on the runtime,
+in previous tests with perf, the overall runtime demonstrated runtime deviation of at least 200\% difference with the real-world performance. The use of cachegrind was rejected compared with $perf$.
+perf is a more lightweight tool that suits our needs and the results produced are more reliable in respect. Previous tests with cachegrind \hyperlink{cachegrindresult}{`} are given in the appendix for further references.
 
-The compiler flags passed in are the same for all the tests, and the tests are conducted on the same machine with the same environment,
-with 3 seconds of warm-up time and 5 seconds of measurement time for each test. The results are then calculated over regression tests with 100, 1000, 10000, 100000, 1000000 and 10000000 elements,
-filtering out the outliers and the each item is collected with the mean, standard deviation and median. The results are shown in the figures below.
-The x-axis is uniformed to the size of the array, and the y-axis is the average number of events captured by the perf tool or the average running time in μs per element.
-Standard deviations will be showed as transparent areas around the mean which follow the colors of their corresponding lines.
+The compiler flags passed in remain consistent for all the tests, and the tests are conducted on the same machine with the same environment,
+with 3 seconds of warm-up time, followed by a 5-seconds duration of measurement for each test. The results are obtained and then calculated over regression tests featuring arrays with $10^2 - 10^7$ elements,
+filtering out the outliers. Each sub-test is collected with the mean, standard deviation and median values. The results are shown in the figures below.
+The x-axis is uniformed to the size of the array in logarithmic scale, and the y-axis is the average number of events captured by the perf tool or the average running time per element, unit in μs.
+Standard deviations will be showed as transparent areas around the polyline of mean values, denoted in colors following their respective lines.
 % The next part of the thesis will be the implementation of the Multi-Pivot Quicksort and the BlockQuickSort,
 % followed by the analysis of the results and the comparisons on the performance of the above algorithms using traditional partition methods.
 \begin{center}
@@ -1116,22 +1116,22 @@ Standard deviations will be showed as transparent areas around the mean which fo
 \end{figure}
 \end{center}
 
-From the global picture, after the short rocket for sizes below $10^4$, the growth of branch misses seem to level off for all the partition methods afterwards. 
+From the global perspective, after a notable short rocket on branch misses for array sizes below $10^4$, the growth seem to level off for all the partition methods afterwards and go stablized. 
 The 4-Pivot partition and 1-Pivot Hoare partition seem to fall behind the 3-Pivot Kushagra's partition method and 2-Pivot Yaroslavskiy's method, but soon catch up and surpass them when the size of the array exceeds 10k.
 
-On a smaller scale, the traditional means don't show much difference between the 1-Pivot Hoare and Lomuto partition methods,
-it makes sense that the 1-Pivot Hoare's partition method tend to always have a slightly higher mean of branch misses than the 1-Pivot Lomuto's partition method
-when Hoare's partition method seeks 2 out-of-order elements to swap, while only 1 for Lomuto's. We are bound to have some more branch misses in the former case.
-But the 2-Pivot Yaro's partition method has a slightly higher mean of branch misses. The introduction of the 2nd pivot has brought more branches into concerns,
-the complexities grow linearly with the number of pivots but the standard deviation grows rapidly as the size of array exceeds 10k, and explodes after 1 million.
+Zooming in, the traditional means exhibit minimal variances between the 1-Pivot Hoare and Lomuto partition methods,
+it makes sense that the 1-Pivot Hoare's partition method tend to always have a slightly higher mean of branch misses than the 1-Pivot Lomuto's partition method, due to its need to locate and swap 2 out-of-order elements, while only 1 for Lomuto's.
+We are bound to have some more branch misses in the former case.
+But the 2-Pivot Yaro's partition method presents a slightly higher mean of branch misses, likely owing to the introduction of additional branches with the second pivot.
+While the complexities scale linearly with the number of pivots, the standard deviation grows rapidly as the size of array exceeds 10k, and explodes after 1 million.
 Down follows the 3-Pivot Kush's partition method has a slightly higher mean of branch misses than the 2-Pivot Yaroslavskiy's partition method.
 
-While things go beyond our expectations, the 4-Pivot partition shows better statistics of branch misses than the 3-Pivot partition method for larger arrays, which is a surprise to us,
-even though it has slightly higher means of branch misses than the 2-Pivot Yaroslavskiy's partition method in all, the standard deviation remains at a high level indicating
-the possible instabilities of the 4-Pivot partition method brought by 2 more branches \hypertarget{2MoreBranches}{`} that 1 more pivot introduced. It is still worth our notice, that it can happen when more pivots could reduce the branch misses instead of adding more burdon to the CPU.
-It might be that the layout of 'balanced partition' we are using is more friendly to the CPU's branch predictor, but yet to explain why 2 more branches could bring better effects. This could be a topic in future works, further expand the research on the Multi-Pivot Quicksort algorithm. 
+Things go beyond our expectations, the 4-Pivot partition shows superior statistics of branch misses than the 3-Pivot partition method for larger arrays, which is a surprise to us,
+even though it has slightly higher means of branch misses than the 2-Pivot Yaroslavskiy's partition method in general, the standard deviation remains at a high level indicating
+the possible instabilities of the 4-Pivot partition method brought by 2 more branches \hypertarget{2MoreBranches}{`} that 1 more pivot introduced. It's intriguing to observe that more pivots could potentially reduce branch misses, challenging conventional assumptions.
+It might be that the layout of 'balanced partition' we are using is more friendly to the CPU's branch predictor, but yet to explain why 2 more branches could bring better effects. This warrants further investigation in future works, further expand our understandings on the Multi-Pivot Quicksort algorithm. 
 
-Apart from the branch misses, the cache misses could also play a significant factor that could affect a lot, which is what we are going to shift our focus to.
+Apart from the branch misses, cache misses also merit attention due to their potential impact, which is what we are going to shift our focus to.
 
 \begin{figure}[H]
     \hypertarget{fig:classicalcachemiss}{}
@@ -1142,29 +1142,27 @@ Apart from the branch misses, the cache misses could also play a significant fac
     \includegraphics[width=1.5\textwidth]{Classical QuickSort Cache Misses.pdf}
 \end{figure}
 
-The global trend shows the outburst of cache misses' means when scaling from $10^4$ to $10^5$, possibly due to the drain of the L1 cache.
-Before that the cache misses are relatively low by their means even though the messy standard deviations are still there.
-CPU will run out of L1 cache for size $10^5$ as $10^5 \times 4 {bytes} / element = 4 \times 10^5 {bytes}$, exceeding the total L1 cache size of about $8 \times 32Kb = 2.62144 \times 10^5 bytes$ while the spatial locality of the elements might still struggle to keep the L2 cache misses at a low level.
-Since L2 misses have a much larger latency than L1 misses, the performance of the algorithm is seriously affected by having to wait for the main memory, this amplifies the differences between these algorithms that converge to a stable level after $10^5$, where 2-Pivot Yaroslavskiy, 3-Pivot Kushagra and 4-Pivot partition
-take slow and steady increase of cache misses, while 1-Pivot Hoare and Lomuto partition methods still going a little bit upwards. But all the partition methods seem to reach about the same cache misses for $10^7$ elements. This could be the magic of modern CPU's cache management, where the L3 cache is shared among cores,
+The macro trend reveals the outburst of cache misses' means when scaling from $10^4$ to $10^5$, possibly indicative of L1 cache saturation.
+Prior to this, the cache misses remained relatively low by their means even with the messy and irregular standard deviations still being there.
+CPU will run out of L1 cache for size $10^5$ as $10^5 \times 4 {bytes} / element = 4 \times 10^5 {bytes}$, exceeding the total L1 cache capacity for about $8 \times 32Kb = 2.62144 \times 10^5 bytes$ while the spatial locality of the elements might still struggle to mitigate the L2 cache misses at a low level.
+Given that L2 misses produce much larger latencies than L1 misses, the performance of the algorithm seriously suffered as it awaits the main memory, thereby amplifies the differences between these algorithms. This disparity stablized and converged after $10^5$, where 2-Pivot Yaroslavskiy, 3-Pivot Kushagra and 4-Pivot partition
+exhibit slow and steady increase of cache misses gradually, while 1-Pivot Hoare and Lomuto partition methods still going little bit upwards. However, all the partition methods seem to reach about similar cache misses for $10^7$ elements. This could be due to the magic of modern CPU's cache management, where L3 cache is shared among cores,
 in my case among CCDs (Core Complex Die) and the memory controller, so the cache misses are not that sensitive to the size of the array.
 Changes in rapid growth of standard deviation is also noteworthy, indicating the dramatic influences caused by the cache misses when the size of the array under $10^4$.
 
-In 1-Pivot tests, Lomuto shows much higher cache misses than Hoare for smaller arrays, could be due to the fact that Lomuto's partition method has more overlapping swaps than Hoare's,
-where most swaps take on the elements that are already in the right place. As the number of pivots grow, the cache misses seem to decrease, appeared in the 4-Pivot version,
-might help to support the claim that 'less memory access and fewer cache misses' given the declaration above 'choosing more pivots will significantly reduce the chance we access the same elements again',
-but the high level of standard deviation still remains a concern.
+In 1-Pivot tests, Lomuto shows much higher cache misses than Hoare for smaller arrays, likely due to the fact that Lomuto's partition method's tendency for more overlapping swaps than Hoare's,
+where most swaps take on the elements that are already in the right place. As the number of pivots grow, the cache misses seem to decrease, particularly evident in the 4-Pivot version,
+This lends credence to the claim that choosing more than one pivots can reduce duplicated memory access and cache misses. However, concerns persist regarding the high standard deviation levels.
 
-Among all variations, the 2-Pivot Yaroslavskiy's partition method seems to have the lowest mean of both cache misses and branch misses combined together in most of the larger array tests, with stable standard deviation.
-Comparably, 1-Pivot Hoare's and Lomuto's partitions have less branch misses, but more cache misses, while the opposite for 3 and 4-Pivots. This is a trade-off and it seems Yaroslavskiy's scheme strikes a proper balance between,
-it shows decent deterministic behavior, a potential good sign for the optimistic expectations on performance of the algorithm. 
+Among all variations, the 2-Pivot Yaroslavskiy's partition method consistently hold the lowest mean of both cache misses and branch misses combined together in most of the larger array tests, with stable standard deviations.
+Comparatively, 1-Pivot Hoare's and Lomuto's partitions show less branch misses but more cache misses, while the opposite holds true for 3 and 4-Pivot methods. This underscores Yaroslavskiy's scheme as striking a balance between performance and deterministic behavior, aligning with optimistic expectations for algorithm efficiency. 
 
-For 3-Pivots, the cache behavior didn't seem to fully comply with the theoretical analysis that it is cache friendlier than classical and Yaroslavskiy's 2-Pivot QuickSorts, 
-the cache misses are higher than the 2-Pivot Yaroslavskiy's partition method when the array size is larger than 1 million. The bound between cache misses and the number of pivots is not yet clear.
-Contrary to the conclusion reported on experiments carried out by Kushagra's team, which supports the improvements on Multi-Pivots QuickSort are due to better cache behaviors
-\cite{Kushagra}, the results of the tests conducted in this thesis show that the cache misses are not always decreasing with more pivots. For instance, the 3-Pivot Kush's has more observed cache misses than the 2-Pivot Yaroslavskiy's,
-shows better performance than 2-Pivots during runtime tests. These effects are not yet fully understood and need further discussions, as I'm using Rust to implement the Multi-Pivot QuickSorts,
-whose compiler is based on top of LLVM (Native LLVM as the Rust's bootstrapped backend codegen component Cranelift is far from being mature on x86 architecture), that might have optimized the code in a different way that the cache behaviors are not well reflected in the results, although I enabled the most aggressive optimizations flags in the compiler settings
+However for 3-Pivots, the cache behavior observed didn't seem to fully comply with the theoretical analysis that it is cache friendlier than classical and Yaroslavskiy's 2-Pivot QuickSorts, 
+the cache misses are higher than the 2-Pivot Yaroslavskiy's partition method when the array size exceeds $10^6$. The correlation between cache misses and the number of pivots remains unclear.
+Contrary to the conclusion drawn from experiments carried out by Kushagra's team, which attribute the improvements on Multi-Pivots QuickSort to enhanced cache behaviors
+\cite{Kushagra}, the tests conducted in this thesis show that the cache misses do not consistently decrease with more pivots. For instance, the 3-Pivot Kushagra's method shows more cache misses than the 2-Pivot Yaroslavskiy's,
+despite demonstrating better runtime performance. These effects are not yet fully understood and need further discussions and investigations, particularly given the potential optimizations introduced by the Rust compiler,
+whose is based on top of LLVM (Native LLVM as the Rust's bootstrapped backend codegen component Cranelift is far from being mature on x86 architecture), that might have optimized the code in a different way that the cache behaviors are not well reflected in the results, although I enabled the most aggressive optimizations flags in the compiler settings
 and they are similar as GCC and Clang's. They also reported that their 7-Pivot QuickSort has worse performance than the 3-Pivot QuickSort as a result of poor cache behaviors, which is not yet tested in this thesis.
 But with the counter examples we have, we need to be more cautious about leveraging how much propotions of the performance improvements are due to better cache behaviors. It is still a topic for further research.
 We will discuss about the complicated relationships further when we finish up the analysis on the instructions and time.
@@ -1198,26 +1196,90 @@ The 4-Pivot shows the least amount of cycles and least deviations. Combining all
 % where the author proved that if the average partitioning cost for $n$ elements is $a\cdot n + O(1)$ with a constant $a$, the overall cost then will be $\frac{6}{5}a\cdot n \ln n + \bigO{n}$.
 % TODO: WTF does this mean? I need to understand this first before I can write it down.
 
-Contrary to our expectations, 2-Pivot Yaroslavskiy's method was defeated by the 1-Pivot Lomuto's method in terms of time, even though it outperformed in the cache misses.
-The running time does show the correlation with the branch misses, but the cache misses don't seem to have a significant impact, where Yaroslavskiy's method has the lower cache misses but more cost time than Lomuto's method.
-It also has lower cache misses than Kushagra's 3-Pivot method, but its time cost is still much higher for arrays with over 1 million elements than the 3-Pivot method.
-It seems the past analysis on the cache misses are more or less limited to the size of the array, and perhaps the old CPU architecture's deficiency on large chunk of data.
-What should be noted that the testing CPU, R7 3700x, has a $2 \times 8MB = 16MB$ L3 cache, which has 8MB of cache per CCD, that is, 4 cores share 8MB L3 cache, but L3 caches are not shared between the 2 CCDs.
-This issue was later solved in the Zen 3 architecture, where all the L3 cache is shared thanks to the high-performance ring buses that connect the CCDs and significantly reduce the latency of cross-CCD communication.
+Contrary to our expectations, 2-Pivot Yaroslavskiy's method was defeated by the 1-Pivot Lomuto's method in terms of runtime, even though it outperformed in the cache misses.
+The running time does show the correlation with the branch misses while cache misses don't seem to have a significant impact, evidenced by Yaroslavskiy's method, who has lower cache misses but more cost time than Lomuto's method.
+Similarly, despite of lower cache misses than Kushagra's 3-Pivot method, Yaroslavskiy's method still incurred significantly higher runtime for arrays with over 1 million elements.
+This suggests that the past analysis on the cache misses have been constrained by array size, and perhaps the old CPU architecture's deficiency on handling large chunk of data flooding in and out of cache.
 
-The final running time also supports the exceptional cases above, where cache misses don't necessarily have a direct impact on the final performance of the algorithm.
-Hoare partition, with 2 while loops scanning for the out-of-order elements on both sides, introduced extra overheads on branch misses and didn't manage to compete with other algorithms.
+It brings to our attention that the testing CPU, R7 3700x, features a 16MB L3 cache, which is divided into two 8MB segments per CCD ($2 CCD \times 8MB = 16MB$), with each segment serving 4 cores.
+This limitation was later addressed in the Zen 3 architecture, R5 5600x for instance, where a unified L3 cache is shared across all cores, thanks to the high-performance ring buses that faciliate efficient cross-CCD communication that significantly reduce the latency.
+
+The final running time also supports the exceptional cases mentioned above, indicating that cache misses don't necessarily have a direct impact on the final performance of the algorithm.
+The 1-Pivot Hoare partition, characterized by 2 while loops scanning for the out-of-order elements on both sides, introduces extra overheads on branch misses and didn't manage to compete with other algorithms.
 This could be the actual pain point that the 1-Pivot Hoare's method has to face, the branch misses appear to be the bottleneck, but we will soon find out the way to overcome it in the following sections.
-What's enligntening is that the 4-Pivot method has the least amount of time along with less branch misses and cache misses, the improvements are made in small steps but the overall performance is promising,
+
+What's enligntening is that the 4-Pivot method has the least amount of time, with both less branch misses and less cache misses than 3-Pivot, while the improvements are made in small steps, the overall performance is promising,
 although how the 4-Pivot method has more predicted branches but less actual branch misses still requires further researches.
 
-In conclusion, there exist few things that go out of what we have expected, the 2-Pivot Yaroslavskiy's method has the lowest cache misses but deficient performance, the 4-Pivot method has the least amount of time,
-somewhat partially due to its decent cache behavior, but more importantly, it has more predicted branches but less branch misses in field experiments. This phenomenon could bring us to a new direction for explorations.
+\begin{center}
+\small
+\begin{tabular}{ |c c | c | }
+    \hline
+    Branch Misses   & Size     & Mean         \\
+    \hline
+    2-Pivot Yaro    & 100000   & 635045.30    \\
+                    & 1000000  & 7624533.45   \\
+                    & 10000000 & 90144952.00  \\
+    \hline
+    3-Pivot Kush    & 100000   & 660656.78    \\
+                    & 1000000  & 7881473.75   \\
+                    & 10000000 & 93039500.90  \\
+    \hline
+    4-Pivot         & 100000   & 655540.97    \\
+                    & 1000000  & 7831009.19   \\
+                    & 10000000 & 92702517.35  \\
+    \hline
+\end{tabular}
+
+\small
+\begin{tabular}{ |c c | c | }
+    \hline
+    Cache Misses    & Size     & Mean         \\
+    \hline
+    2-Pivot Yaro    & 100000   & 1200.81      \\
+                    & 1000000  & 22058.59     \\
+                    & 10000000 & 598454.20    \\
+
+    \hline
+    3-Pivot Kush    & 100000   & 1071.02      \\
+                    & 1000000  & 22472.11     \\
+                    & 10000000 & 608203.30    \\
+    \hline
+    4-Pivot         & 100000   & 1158.25      \\
+                    & 1000000  & 22077.32     \\
+                    & 10000000 & 587479.30    \\
+    \hline
+\end{tabular}
+\small
+\begin{tabular}{ |c c | c | }
+    \hline
+    Time            & Size     & Mean         \\
+    \hline
+    2-Pivot Yaro    & 100000   & 5.3164 ms    \\
+                    & 1000000  & 63.092 ms    \\
+                    & 10000000 & 748.26 ms    \\
+
+    \hline
+    3-Pivot Kush    & 100000   & 5.0570 ms    \\
+                    & 1000000  & 60.328 ms    \\
+                    & 10000000 & 717.27 ms    \\
+    \hline
+    4-Pivot         & 100000   & 4.9661 ms    \\
+                    & 1000000  & 58.758 ms    \\
+                    & 10000000 & 696.42 ms    \\
+    \hline
+\end{tabular}
+\end{center}
+
+In conclusion, our experiments reveal unexpected nuances in algorithm performance comparisons, the 2-Pivot Yaroslavskiy's method has lower cache misses than 3-Pivot, least branch misses but deficient performance on $10^7$ size of data, the 4-Pivot method has the least amount of time,
+somewhat partially due to its favorable cache behavior, but more importantly, less branch misses in field experiments than predicted. The discrepancy between predicted and actual branch misses in the 4-Pivot method suggests new avenues for exploration and optimization.
 
 % TODO: maybe talk about SSSSort as it uses 127 pivots, technically it is another variation of Multi-Pivot QuickSort, but it is not yet tested in this thesis.
 % and it is really slow on many duplicates, but it is still worth mentioning.
 
 % TODO: talk about some failed layouts that is way too complicated to implement, like 2 pivot hoare block partition.
+
+% TODO: polish following paragraphs staring from here
 
 With the help of my supervisor Dr. David Gregg I reached out to new layouts that might shift our perspectives on classical QuickSorts. Unfortunately they proved to be too complicated to implement or just not possible to be implemented by far.
 One of the layouts is the 2 unknown segments for 2-Pivot QuickSort.
@@ -1245,6 +1307,35 @@ according to what has been observed in the tests below.
     % \vspace*{+0.1\textheight}
     \includegraphics[width=1.5\textwidth]{Classical vs Block Partition Branch Misses.pdf}
 \end{figure}
+
+\begin{center}
+\small
+\begin{tabular}{ |c c | c | }
+    \hline
+    Branch Misses   & Size     & Mean         \\
+    \hline
+    1-Pivot Hoare   & 100000   & 622681.46    \\
+                    & 1000000  & 7514512.06   \\
+                    & 10000000 & 88601386.65  \\
+    \hline
+1-Pivot Block Partition & 100000   & 174650.07    \\
+                    & 1000000  & 1813011.99   \\
+                    & 10000000 & 20131908.65  \\
+    \hline
+    1-Pivot Lomuto  & 100000   & 599369.59    \\
+                    & 1000000  & 7188431.33   \\
+                    & 10000000 & 85572728.60  \\
+    \hline
+1-Pivot Block Partition & 100000   & 294244.78    \\
+                    & 1000000  & 3309146.60   \\
+                    & 10000000 & 38173447.65  \\
+    \hline
+2-Pivot Lomuto Block& 100000   & 196951.71    \\
+                    & 1000000  & 2134863.07   \\
+                    & 10000000 & 24700025.80  \\
+    \hline
+\end{tabular}
+\end{center}
 
 With the help of Block Partition together with branchless comparisons and branchless additions on counters, we reduced about 70\% of the branch misses in the 1-Pivot Hoare's method, and 40\% in the 1-Pivot Lomuto's method. These results will only increase as the size of the array grows.
 On gigantic arrays of size 10 million, we achieved 77\% and 55\% branch miss reductions respectively as a result. \hyperlink{FullTables}{Full tables} of detailed statistics could be found in the final appendix. That's a huge success so far, though it doesn't show superior performance on smaller arrays, but the average branch misses barely even increase as the size grows exponentially.
