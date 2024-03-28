@@ -70,31 +70,32 @@ Its divide-and-conquer strategy has been widely used and taken into research to 
 The basic Quicksort picks an arbitrary pivot element,
 partitions the array into 2 segments, one with elements less than the pivot and the other greater. 
 It then recursively sorts these segments using the same method. While the original Quicksort method has proven effective,
-the quest of further optimizations and the endless pursuit of efficiency has led to many variations to explore, one of which is the Multi-Pivot Quicksort. 
+the demand of further optimizations and the endless pursuit of efficiency has led to many variations to explore, one of which is the Multi-Pivot Quicksort. 
 
 This thesis is my shallow attempt to unveil the benefits of Multi-Pivot Quicksort, exploring the effects more pivots can bring,
-followed by some potential implementations and the analysis on the benefits that arise from leveraging multiple pivots in the Quicksort process.
+followed by some leveraged implementations of Multi-Pivot QuickSort and other variations alike and derived, analysis on the pros and cons that arise from multiple pivots.
 
 \subsection{History and Related work}
 
-When Quicksort was first invented a great number of variations and modifications were put into research over the years, 
+When Quicksort was first brought to the fore a great number of variations and modifications were put into research over the years,
 such as sorting with a better partition method and a more optimal strategy to select the arbitrary pivot element.
-But the innovative approach of Multi-pivot Quicksort, exemplified by Vladimir Yaroslavskiy \cite{Yaroslavskiy} in 2009,
+The innovative approach of Multi-pivot Quicksort bloomed, exemplified by Vladimir Yaroslavskiy \cite{Yaroslavskiy} in 2009,
 Bentley and Bloch's algorithm (YBB Alogorithm), which was also highlighted by Wild and Nebel, adopted in Sun's Java 7 runtime library, 
 introduces the use of two pivots. Contrary to initial expectations, studies have revealed that employing multiple pivots can enhance the performance,
-challenging prior assumptions derived from the dual-pivot proposal by Sedgewick \cite{Sedgewick} in 1978 where he analyzed a potential dual-pivot approach, 
+challenging prior assumptions derived from the dual-pivot proposal by Sedgewick \cite{Sedgewick} in 1978 where he analyzed a dual-pivot approach, 
 which was deemed inferior to the classical Quicksort in his research. Furthermore, Kushagra presented a 3-pivot Quicksort \cite{Kushagra} algorithm at ALENEX,
-has attracted significant attention, further pushing the researches of multi-pivot strategies. 
+has attracted significant attention, further pushing the researches to broaden the boundaries of multi-pivot strategy. But how does it deal with the worst cases and how does it perform in practice? 
 
-One common pitfall in the performance downgrade of the conventional Quicksort is the degenerated cases,
+One common pitfall in the performance downgrade of the conventional Quicksort is the degenerated case,
 which could often arise when the input array is already mostly sorted or when certain patterns in the data cause the algorithm to consistently choose poor pivots
 that fail to split the data into evenly sized partitions. 
 In such cases, the partitioning process may result in highly imbalanced partitions where the size of one partition is significantly larger than the other, leading to suboptimal performance and
-potentially degrading the time complexity to $\bigO(n^2)$ instead of the expected $\bigO(n\log n)$ for Quicksort.
-Wiser choices of pivot selections could decrease the possiblities of such events from happening, such as the median-of-3 method and its variations of median-of-5 and median-of-7.
-But on mostly ascending or descending arrays, the median-of-3 method still has a chance of choosing the smallest or largest element as the pivot,
-which is not the best ideal approach to prevent the worst case from happening. It also brings to our concerns that in real world applications, duplicated elements are not rare,
-and the median-of-3 method could be easily affected by the duplicated elements, which could lead to the same worst case as the original Quicksort. 
+potentially degrading the time complexity to $\bigO(n^2)$ instead of the expected $\bigO(n\log n)$ for Quicksort. This can be a serious issue when it comes to scalability on large datasets, thus
+wiser choices of pivot selections could decrease the possiblities of such case from happening, such as the median-of-3 method and its variations of median-of-5 and median-of-7.
+But on mostly ascending or descending arrays, whichever pivot we choose doesn't matter, the worst case is inevitable,
+and it might not the best ideal approach to prevent the worst case from happening. Real world applications also bring concerns to us that duplicated elements are not rare,
+and the median-of-n method could be easily affected by the duplicated elements, which could lead to the same worst case as the original Quicksort.
+Of course we can set a threshold to set the minium length to use median-of-n method, but it doesn't fix the problem once and for all.
 There are some other variations of Quicksort that have been proposed to address these specific issues, such as the Introsort algorithm \cite{Introsort} by David Musser,
 which switches to Heapsort when the recursion depth exceeds a certain threshold. Thus the worst running time is guaranteed to be $\bigO(n\log n)$ by doing so.
 
@@ -147,8 +148,9 @@ with a particular focus on the pattern-defeating Quicksort (PDQSort) proposed by
 PDQSort leverages the average-case performance of randomized Quicksort with the rapid worst-case execution of heapsort, 
 while concurrently achieving linear time complexity for slices exhibiting specific patterns. 
 Notably, PDQSort employs a judicious application of randomization to prevent the degenerated case from happening.
-When it does, PDQSort will strategically shuffle or reverse the entire array to simplify the sorting and increase the speed.
-If all the counter measures fail, it also has the final backup plan of switching to Heapsort when bad choices of pivots or the depth of recursions exceed the limit. 
+When it does, PDQSort will strategically shuffle or reverse the entire array to simplify the sorting and potentially could increase the speed.
+If all the counter measures fail, it also has the final backup plan of switching to Heapsort when bad choices of pivots or the depth of recursions exceed the limit,
+learning the lesson from Introsort. 
 In terms of pivot selection, it uses a fixed seed when generating a pseudo-random index to ensure the reproducibility and deterministic behavior.
 Furthermore, in instances where randomly selected elements from the original array appear in a descending order.
 The combination of these optimizations has demonstrated a significant enhancement in performance, showcasing PDQSort as up to twice faster than the original Quicksort algorithm. 
@@ -156,7 +158,7 @@ This outcome illuminates the transformative impact that a comprehensive analysis
 not to mention it is a successful combination of BlockQuickSort's partition method,
 Heap sort when dealing with worst cases and Insertion sort when it comes to small sub-arrays of sizes less than the cache line size. 
 Inspired by PDQSort's success, I dive into the diverse variations of Quicksort,
-motivating a search for novel patterns that may be leveraged to enhance the existing Quicksort algorithms.
+motivating a search for novel patterns finely tweaked to enhance the existing Quicksort algorithms.
 
 \subsection{Contributions}
 \begin{itemize}
@@ -281,25 +283,25 @@ are moved to the places where they belong.
     \end{algorithmic}
 \end{algorithm}
 
-While the Lomuto partition method uses another way, it scans the array in sequential order from left to right using one bare pointer, ascending the index by 1 each time.
-and swaps all the elements less than the pivot to the left side regardless,
-thus duplicated swaps are introduced due to not checking if the elements are already in the right places. Both of these 2 partition methods are straightforward, 
-and their main structures are similar: scan, find mis-placed elements, swap and recursively repeat the same procedure until the whole array is sorted.
+While the Lomuto partition method uses another way, it scans the array in sequential order from left to right using one single pointer, incrementing the index by 1 each time.
+and swaps all the elements less than the pivot to the left side discriminately,
+resulting in rebundant swaps as it fails to check if the elements are already in their correct positions. Despite its simplicity, both of these 2 partition methods are straightforward, 
+and share the same idea of partitioning with similar structures: scanning, identifying misplaced elements, swapping and recursively repeating the procedure until the whole array is sorted.
 
-It is generally believed that Hoare's partition method is more efficient than the Lomuto's, with the support of fewer swaps, partitioning efficiency and memory efficiency.
-Hoare's partition scheme typically involves fewer swaps compared to Lomuto's method, which will perform rebundant swaps for arrays with many duplicated elements or in-order elements.
-But Lomuto's scheme uses less auxiliary variables and is easier to implement, partially contribute to wide adoption in many programming languages and libraries.
-However, these theoretical analysis must be brought into practice to see if the assumptions hold true, and the performance of the two partition methods could vary depending on the actual data and the size of the array.
-Contexts and conduct empirical experiments are needed to verify the assumptions and to determine which one to use.
+It is generally believed that Hoare's partition method is more efficient than the Lomuto's, primarily due to its reduced number of swaps, enhanced partitioning strategy and memory efficiency.
+While Hoare's partition scheme minimizes unnecessary swaps compared to Lomuto's method, which tends to perform rebundant swaps for arrays with many duplicated elements or already sorted elements.
+Nevertheless, Lomuto's scheme boasts simpler implementuses with less auxiliary variables used, contributing to wide adoption in many programming languages and libraries.
+However, these theoretical analysis must be validated through empirical experiments and brought into practice to see if the assumptions hold true, as the performance of the two partition methods could vary depending on the dataset's characteristics and the size of the array.
+Empirical studies are crucial to verify the assumptions and to determine the most suitable method for certain scenarios and contexts.
 
 \subsection{Block Partitioning}
-The following pseudocode is directly taken from the BlockQuickSort paper by Stefan Edelkamp and Armin Weiß \cite{BlockQuickSort} who hold the copyrights of the original code,
-a parallel and branch misprediction friendly version of the classical QuickSort algorithm that makes use of a block buffer of constant size to store the index offsets of out-of-order elements on both sides of the array, and swaps them in a second pass to rearrange them.
-In the actual implementation I used the block size of 128, as the index offsets in this case would be 0 to 127 (\textbf{0b1111 1111}) as 1 byte for each buffer,
-and a block size of 128, which in turn would be 128 bytes in total, would perfectly fit into 2 cache lines, with each cache line being 64 bytes on the test machine.
-It is also reflected in their paper that the block size of over 256 bytes will bring down the performance and is less stack memory friendly, especially on large data structures like 10-dimensional array of 64-bit vectors and 'records', referring to 21-dimensional array of 32-bit integers.
-What's better is that the block size is a power of 2, which could be easily optimized by the compiler to use bitwise operations to calculate the offsets.
-Additionally, they are placed on stack to get rid of the extra memory allocation and deallocation overheads on heap. Let's dive into the details of its implementation by following the pseudocode.
+The following pseudocode is extracted from the BlockQuickSort paper by Stefan Edelkamp and Armin Weiß \cite{BlockQuickSort} who hold the copyrights of the original code.
+This method introduces a parallel-looking and branch misprediction friendly version of the classical QuickSort algorithm that makes use of a block buffer of constant size to store the index offsets of out-of-order elements on both sides of the array, and swaps them in the second pass to rearrange them.
+In the actual implementation I used the block size of 128 suggested by examples with least time costs in the paper, as the index offsets in this case would be 0 to 127 (\textbf{0b1111 1111}) as 1 byte for each cell in the buffer.
+A block size of 128, which in turn would be 128 bytes in total, neatly fits into 2 cache lines, each line 64 bytes on the test machine.
+Notably, it is also reflected in their paper that the block size of over 256 bytes will bring down the performance and is less stack memory friendly, especially on large data structures like 10-dimensional array of 64-bit vectors and 'records', referring to 21-dimensional array of 32-bit integers.
+An advantageous aspect of selecting a power-of-2 block size is it be easily optimized by the compiler to use bitwise operations to calculate the offsets. Loop unrolling inside the LLVM compiler could also give us a hand to optimize the code further and reduce the overhead of the loop termination condition check.
+Furthermore, they are placed on stack to get rid of the extra memory allocation and deallocation overheads on heap. Let's dive into the details of its implementation by following the pseudocode.
 
 \begin{algorithm}[H]
     \small
@@ -350,23 +352,24 @@ Additionally, they are placed on stack to get rid of the extra memory allocation
 	\end{algorithmic}
 \end{algorithm}
 
-In this pseudocode, we have seen a perfect instance of how branchless comparisons come into play, the counter of elements less than the pivot is incremented by 1 if the condition is met,
-by converting the result into a boolean value and adding it to the counter, an elegant way that eliminates the branch itself. The same goes for the right buffer.
+In the presented pseudocode, we witness a notable demonstration of how branchless comparisons are incorporated and function. The counter of elements less than the pivot is incremented by 1 if the condition is met, achieved by converting the result into a boolean value and adding it to the counter. 
+This elegant approach eliminates the occurrences of branching on counter manipulations. The same technique is applied to the right buffer simultaneously, and the minimum number of elements in both buffers is calculated to ensure the correct number of elements are swapped, also in a branchless manner.
 
-The block partitioning method is a novel approach that not only reduces the number of swaps but also improves the spatial locality of both the memory access and cache access.
-I replaced the original swap function in the rearrangement phase with a cyclic permutation method also given in the referred thesis, which is a more efficient way to rearrange the elements in the buffer blocks.
-For better understanding, we can compare this cyclic permutation to a rotate-2n operation where n is the minium number of elements that need to be swapped to the right places.
-As a result of this, mostly there will be elements left in one of the buffer blocks, but we will just shift the other side of block and rearrange the elements not swapped yet in the next iteration.
+The block partitioning method represents a novel approach that not only reduces the number of swaps but also improves the spatial locality of both the memory access and cache access.
+I replaced the original swap function in the rearrangement phase with a cyclic permutation method also outlined in the referenced thesis, a finely tuned way to rearrange the elements in the buffer blocks.
 
-For testing machine with 32MB L3 cache, the block size of 128 bytes would be a good choice, as it would fit into 2 cache lines, even for the maximum testing size of $10^7$ elements, the maximum recursion depth would be $\ceil\log_{2} 10^7 = 24$,
-the maximum stack usage would be around $24 \times 128bytes = 3KB$, a small amount for both memory and cache even with little extra space required by RIP, RBP registers and other local variables, ensuring its cache friendliness and cache efficiency.
+For better understanding, we can compare this cyclic permutation to a rotate-n operation where n stands for the number of elements that need to be swapped to the right places.
+Consequently, there may be elements left in one of the buffer blocks, but we will just shift the other block towards the middle and rearrange the elements left behind in the next iteration.
 
-Another thing we might concern is the \hyperlink{RegardlessWrite}{regardless write} of the offsets in the buffer blocks, which will overwrite the previous value unless the offset index is incremented by 1 in the last step of scan.
-This doesn't add much overhead as the write-back policy of the cache line is supported by modern CPUs, replacing the old value with the new one in the cache line to get rid of the expensive 
-direct main memory manipulation. This action is penalty-free and the cost is much less than write-through operations that updates the main memory every time a write operation occurs.
-After all the buffer blocks will be written back to the main memory eventually, in a deterministic manner.
+For testing machine with 32MB L3 cache, the block size of 128 bytes would be a suitable choice as not only it would fit into 2 cache lines, but for the maximum testing size of $10^7$ elements, the maximum recursion depth would be $\ceil\log_{2} 10^7 = 24$,
+the maximum stack usage would be around $24 \times 128{bytes} = 3{Kb}$, a small amount for both memory and cache even with little extra space required by RIP, RBP registers and other local variables, ensuring its cache friendliness and cache efficiency.
+
+Another thing we might concern is the \hyperlink{RegardlessWrite}{regardless write} of the offsets in the buffer blocks, which overwrites the previous value unless the offset index is incremented by 1 in the last step of scan.
+While this operation doesn't incur much overhead thanks to the write-back policy of the cache line supported by modern CPUs and is crucial for them, which replaces the old value with the new one in the cache line and write back to main memory only if the value is final,
+to get rid of multiple expensive direct main memory manipulation and stalls the entire pipeline. This action is penalty-free and the cost is much less than write-through operations that updates the main memory every time a write operation occurs.
+Eventually, the buffer blocks will be written back to the main memory eventually, in a deterministic manner.
 This is ensured by the write-back policy of the cache line, and is a common stable feature in modern CPUs to avoid excessive memory access.
-To give you a better visual comprehension of the cyclic permutation, I will provide a simple figure \hyperlink{fig:cyclicpermu}{`} of how it works.
+To offer a clearer visual comprehension of the cyclic permutation, a simple figure illustrating how it works is provided right below\hyperlink{fig:cyclicpermu}{`}.
 
 \begin{center}
 \begin{figure}[H]
@@ -404,9 +407,9 @@ To give you a better visual comprehension of the cyclic permutation, I will prov
 
 Here we mapped the pseudocode in parts to the steps in the figure, the first step is to preserve the last element in the left buffer block in a temporary variable,
 then we doing the cyclic permutation in the main loop, shifting misplaced elements from buffers on one side to the other to make sure they are well partitioned, and finally we put the preserved element back to the last place in the right buffer block.
-This rotate-2n like method is basically made up of multiple copys from pointers and reduces the number of swaps to the minimum, a great improvement over the original Hoare's partition.
+This rotate-n like method is basically made up of multiple copys from pointers in order to reduce the number of swaps to the minimum, as swaps will constantly overwrite the value in the temporary variable. It is a great improvement over the original Hoare's partition.
 
-We also have adaptions of the Block Lomuto's partition method. Comprehension won't be hard with our fundamental understandings of the classical Lomuto's partition method.
+We also have adaptions of the Block Lomuto's partition method. Comprehension won't be hard on basis of our fundamental understandings of the classical Lomuto's partition method.
 
 \begin{algorithm}[t!]
     \small
@@ -741,7 +744,7 @@ Hereby, we can see that the Dual-Pivot Quicksort is a generalization of the orig
 
 What's attracting is that there was once a debate on whether multiple pivots could enhance the performance, as Sedgewick,
 who analyzed a dual-pivot approach with an average of $\frac{32}{15}n \ln n + \bigO{n}$ comparisons in 1978, in constrast to the $2n\ln n + \bigO{n}$ of the standard Quick Sort, considered this prototype to be inferior to the classical Quicksort.
-However, the Yaroslavskiy's Dual-Pivot Quicksort has proven to be a success, with the experimental results showing that it has a less amount of $1.9n\ln n + \bigO{n}$ amortized comparisons, but more swaps,
+However, the Yaroslavskiy's Dual-Pivot Quicksort has proved a success, with the experimental results showing that it has a less amount of $1.9n\ln n + \bigO{n}$ amortized comparisons, but more swaps,
 approximately $0.6n\ln n + \bigO{n}$ which is much greater than the $0.33n\ln n + \bigO{n}$ of the original one, is faster than the original Quicksort in most cases.
 It is surprising that even with asymptotically only 5\% of less comparisons and nearly 80\% more swaps, the Dual-Pivot Quicksort still outperforms the original Quicksort in practice.
 What makes this more mysterious, is the variation of Yaroslavskiy's partition method that always compares to the larger pivot, by Martin Aumüller and Martin Dietzfelbinger 2013 in their thesis of 'Optimal Partitioning for Dual Pivot Quicksort' \cite{OptimalPartitioningForDualPivotQuicksort}.
@@ -1141,7 +1144,7 @@ Apart from the branch misses, the cache misses could also play a significant fac
 
 The global trend shows the outburst of cache misses' means when scaling from $10^4$ to $10^5$, possibly due to the drain of the L1 cache.
 Before that the cache misses are relatively low by their means even though the messy standard deviations are still there.
-CPU will run out of L1 cache for size $10^5$ as $10^5 \times 4 bytes / element = 4 \times 10^5 bytes$, exceeding the total L1 cache size of about $8 \times 32Kb = 2.62144 \times 10^5 bytes$ while the spatial locality of the elements might still struggle to keep the L2 cache misses at a low level.
+CPU will run out of L1 cache for size $10^5$ as $10^5 \times 4 {bytes} / element = 4 \times 10^5 {bytes}$, exceeding the total L1 cache size of about $8 \times 32Kb = 2.62144 \times 10^5 bytes$ while the spatial locality of the elements might still struggle to keep the L2 cache misses at a low level.
 Since L2 misses have a much larger latency than L1 misses, the performance of the algorithm is seriously affected by having to wait for the main memory, this amplifies the differences between these algorithms that converge to a stable level after $10^5$, where 2-Pivot Yaroslavskiy, 3-Pivot Kushagra and 4-Pivot partition
 take slow and steady increase of cache misses, while 1-Pivot Hoare and Lomuto partition methods still going a little bit upwards. But all the partition methods seem to reach about the same cache misses for $10^7$ elements. This could be the magic of modern CPU's cache management, where the L3 cache is shared among cores,
 in my case among CCDs (Core Complex Die) and the memory controller, so the cache misses are not that sensitive to the size of the array.
