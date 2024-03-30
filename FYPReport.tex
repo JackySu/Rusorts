@@ -164,8 +164,8 @@ motivating a search for novel patterns finely tweaked to enhance the existing Qu
 \begin{itemize}
     \item Present the variants of Multi-Pivot QuickSort and implement a 4-Pivots Quicksort and evaluate N-Pivots Quicksort from N = 1, 2, 3, 4 experimentally. 
         Comparing the implementations, times, instructions, cache misses and branch mis-predictions with a duration of 3 seconds warm-up time.
-    \item Present a new layout of Multi-Pivot BlockQuickSort that could potentially reduce the memory access and increase the block buffer usage rate. 
-        Analyze this method with all other available variants with block partitioning and compare the pros and cons.
+    \item Present a new layout of Multi-Pivot BlockQuickSort that increases the block buffer usage rate. 
+        Analyze this method with all other available variants with block partitioning and compare the pros and cons, what lessons we can learn from then.
 \end{itemize}
 
 \section{Preliminaries}
@@ -1435,6 +1435,18 @@ The BlockQuickSort is still in its infancy, despite the fact that PDQSort proves
 As to the new layout, for your interest the detailed statistics will be attached in the appendix section.
 
 % TODO: another layout, swap < P1 to the left and swap < P2 to the right. Is it worth trying?
+
+\section{Conclusion}
+\begin{itemize}
+\item The improvements achieved through the utilization of multiple pivots have seemingly reached a plateau. Despite the 4-Pivot method demonstrating the most outperforming runtime costs, the incremental gains do not compensate for the increased complexity.
+\item In the context of modern CPU cache coordination, most of the cache misses have been eliminated for QuickSort algorithms, with branch misses emerging as the primary bottleneck. The Block Partition method shows significant potential in mitigating branch misses.
+    1-Pivot Hoare's Block Partition ranks as the top performer among the tested algorithms, underscoring the importance of a well-optimized layout over the sheer number of pivots.
+    The reduction in branch misses achieved by the Block Partition method indicates a promising future, though challenges of complexities brought by increased pivots count still remain.
+\item Skewed pivot selection demonstrates potential benefits in classical QuickSorts, but a balanced pivot selection works better in BlockQuickSort. Closer the pivot is to the median, better the performance.
+\item The novel layout of 2-Pivot Lomuto's Block Partition exposed the limitations introduced by more pivots introduced. The pattern of comparing with one pivot at a time is still the only way to go by far,
+    otherwise, any deviation from this pattern will pose risks to substantial memory access overheads, impeding CPU performance -- a critical lesson for future research endeavors.
+\end{itemize}
+
 
 % TODO: talk about the sorting functions exported to python by ffi
 For the sake of convenience, the sorting functions are exported to Python using the Foreign Function Interface (FFI) provided by PyO3, which is a safe and easy way to call Rust functions from Python.
