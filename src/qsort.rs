@@ -314,14 +314,10 @@ pub fn quick_sort_hoare_partition<T: Ord>(mut arr: &mut [T]) {
             // arr.swap_unchecked(0, j as usize);
             let (left, right) = arr.split_at_mut((j + 1) as usize);
             if left.len() > right.len() {
-                if right.len() > 1 {
-                    quick_sort_hoare_partition(right);
-                }
+                quick_sort_hoare_partition(right);
                 arr = left;
             } else {
-                if left.len() > 1 {
-                    quick_sort_hoare_partition(left);
-                }
+                quick_sort_hoare_partition(left);
                 arr = right;
             }
         }
