@@ -1,9 +1,8 @@
 [toolchain]
 profile = "minimal"
 
-# 1.79 nightly will cause a build error of num-bigint crate, so use 1.77 instead
 # for more info refer to <https://forge.rust-lang.org/>
-channel = "nightly-2024-01-18"
+channel = "nightly-2024-04-01"
 components = ["rust-src", "llvm-tools", "rustfmt", "clippy"]
 
 # add windows target if you want

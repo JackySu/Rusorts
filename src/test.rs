@@ -5,7 +5,6 @@ mod test {
     use crate::ty::FloatOrd;
     use crate::util::*;
 
-    use introsort::sort_floats;
     use crumsort::ParCrumSort;
 
     use rayon::prelude::*;
@@ -266,21 +265,6 @@ mod test {
         let dur = time_it(|| arr.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap()));
         assert_eq!(is_sorted(&arr), true);
         println!("unstable sort on 1m floats cost: {:?}ns", dur);
-    }
-
-    #[test]
-    fn test_introsort() {
-        let mut arr: Vec<f32> = default_vec(1_000);
-        let dur = time_it(|| sort_floats(&mut arr));
-        assert_eq!(is_sorted(&arr), true);
-        println!("introsort cost: {:?}ns", dur);
-
-        let mut arr: Vec<f32> = default_vec(1_000_000);
-        let dur = time_it(|| sort_floats(&mut arr));
-        assert_eq!(is_sorted(&arr), true);
-        println!("introsort on 1m floats cost: {:?}ns", dur);
-
-        // TODO: test introsort on custom FloatOrd type
     }
 
     #[test]

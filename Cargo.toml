@@ -23,7 +23,6 @@ harness = false
 [dependencies]
 pyo3 = { version = "0.20.3", features = ["extension-module"] }
 rand = "0.8.5"
-introsort = { version = "0.6.0", features = [ "float" ] }
 rustc-serialize = "0.3.25"
 once_cell = "1.19"
 crumsort = "0.1.0"
