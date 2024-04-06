@@ -765,7 +765,12 @@ estimations of $1.8n \ln n + \bigO(n)$ comparisons and $1.6n \ln n + \bigO{n}$ s
 
 It is noteworthy the there still lies a huge gap between the theoretical analysis and the real-world performance. It is time we broaden our horizon and look for more factors that could contribute more to the change of the performance of the Quicksort algorithm.
 The cache misses, branch mis-predictions, and the number of instructions are the things we should take into consideration when we are analyzing on mutated versions of the Quicksort algorithm.
-Apparently, the number of pivots plays a significant role, and is one of the factors that could potentially bring a significant change. Let's dive deeper to see the world of 3-Pivots Quicksort.
+Apparently, the number of pivots plays a significant role, and is one of the factors that could potentially bring a significant change. 
+
+SSSSort, another extreme example of using 127 pivots by default, is an attempt to exploit the full edges of multi pivots with the help of branchless comparisons. While it demonstrated impressive performance in arrays of random permutations for certain ranges of sizes,
+it's not as resilient as the classical Multi-Pivot Quicksorts to arrays with many duplicates, which is a common occurrence in real-world scenarios, given by the tests in comparisons with Block Quick Sort\cite{BlockQuickSort}. However, it does outperform all the other variations when it comes to complicated
+data structures like vectors and records\hyperlink{ref:record}{`}, although these aspects are not the primary focus of this thesis, it is still worth mentioning that the Block Quick Sort is a more general and versatile method that can be applied to a wider range of scenarios. At this moment, we are convinced that more pivots tend to bring better performance in general, but how many?
+Let's dive deeper to see the world of 3-Pivots Quicksort to check it out.
 
 \begin{algorithm}[H]
     \caption{3-Pivot QuickSort}\label{3PivotQuickSort}
@@ -1059,9 +1064,10 @@ Thankfully, for 4-Pivot QuickSort, \hypertarget{2MoreBranches}we are just adding
 compared with the $2 \times 2 = 4$ branches for 3-Pivots into considerations and the branching logic is still under control.
 We declare this as the balanced partition\hypertarget{BalancedPartition} layout that we are using, where each side of the array is filled with $\frac{N + 1}{2}$ partitions for odd number $N$ pivots,
 or one side with $\frac{N}{2}$ partitions and $\frac{N}{2} + 1$ on the other. The comparisons take place like looking for a value in a binary search tree (BST), for instance when there are 3 pivots in total, comparing with the Pivot 2 first, then the Pivot 1 or Pivot 3.
-This search tree is of depth 2 and if we using a unbalanced BST that puts Pivot 1 or Pivot 3 on top, we would have a tree with depth 3, which is not efficient. Bearing this premise in mind, it is not hard to tell that we are going to have 9 branches for 5-Pivot QuickSort (3 partitions on each side, $3 \times 3 = 9$) and 12 branches for 6-Pivot QuickSort (3 partitions on one side and 4 on the other, $3 \times 4 = 12$).
-The complexity of the partitioning method is growing way too far and thus only 4-Pivot QuickSort will be discussed in this thesis. In the \cite{HowGoodIsMultiPivotQuicksort}{'how good is multi-pivot quicksort'} paper, the author sketched an extremal tree for seven pivots in fig 10. It seems to differ from the balanced BST I was expecting and due to the packed time I was given,
-this question should be given to the future work to analyze whether it is the optimal scheme for 7-Pivots or not.
+This search tree is of depth 2, with 2 partitions on the left side for elements less than Pivot 2 and vice versa. Otherwise, if we use a unbalanced BST that puts Pivot 1 or Pivot 3 on top, we would have a tree of depth 3 and is not efficient enough.
+The entire BST would look like a \^{} symbol, we just need to extend the length of its two 'wings' as pivots increase.
+Bearing this layout in mind, it is not hard to tell that we are going to have 9 branches for 5-Pivot QuickSort (3 partitions on each side, $3 \times 3 = 9$) and 12 branches for 6-Pivot QuickSort (3 partitions on one side and 4 on the other, $3 \times 4 = 12$).
+The complexity of the partitioning method is growing way too far and thus only 4-Pivot QuickSort will be discussed in this thesis. In the \cite{HowGoodIsMultiPivotQuicksort}{'how good is multi-pivot quicksort'} paper, the author sketched an extremal tree for seven pivots in fig 10 of his thesis.
 
 % TODO: talk about the similar layout that has been illustrated on page 23 of 'how good is multi-pivot quicksort' paper,
 % but it only analyzed the odd number pivots and the even number pivots need to be further discussed.
@@ -1307,14 +1313,6 @@ although how the 4-Pivot method has more predicted branches but less actual bran
 
 In conclusion, our experiments reveal unexpected nuances in algorithm performance comparisons, the 2-Pivot Yaroslavskiy's method has lower cache misses than 3-Pivot, least branch misses among multi-pivot variations but deficient performance on $10^7$ size of data, the 4-Pivot method has the least amount of time,
 somewhat partially due to its favorable cache behavior, but more importantly, less branch misses in field experiments than predicted. The riddle between predicted and actual branch misses in the 4-Pivot method suggests new avenues for exploration and optimization.
-
-% TODO: put this paragraph somewhere else, better not talk about ssssort here
-% TODO: maybe talk about SSSSort as it uses 127 pivots, technically it is another variation of Multi-Pivot QuickSort, but it is not yet tested in this thesis.
-% and it is really slow on many duplicates, but it is still worth mentioning.
-SSSSort, an extreme example of using 127 pivots by default, is an attempt to exploit the full edges of multi pivots. While it demonstrated impressive performance in arrays of random permutations for certain ranges of sizes,
-it's not as resilient as the classical Multi-Pivot Quicksorts to arrays with many duplicates, which is a common occurrence in real-world scenarios, given by the tests in comparisons with Block Quick Sort\cite{BlockQuickSort}.
-However, it does outperform all the other variations when it comes to complicated data structures like vectors and records\hyperlink{ref:record}{`},
-although these aspects are not the primary focus of this thesis and will be left for future works to explore.
 
 % TODO: talk about some failed layouts that is way too complicated to implement, like 2 pivot hoare block partition.
 % TODO: polish following paragraphs staring from here
