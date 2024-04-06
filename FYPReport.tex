@@ -759,7 +759,7 @@ who analyzed a dual-pivot approach with an average of $\frac{32}{15}n \ln n + \b
 However, the Yaroslavskiy's Dual-Pivot Quicksort has proved a success, with the experimental results showing that it has a less amount of $1.9n\ln n + \bigO{n}$ amortized comparisons, but more swaps,
 approximately $0.6n\ln n + \bigO{n}$ which is much greater than the $0.33n\ln n + \bigO{n}$ of the original one, is faster than the original Quicksort in most cases.
 It is surprising that even with asymptotically only 5\% of less comparisons and nearly 80\% more swaps, the Dual-Pivot Quicksort still outperforms the original Quicksort in practice.
-What makes this more mysterious, is the variation of Yaroslavskiy's partition method that always compares to the larger pivot, by Martin Aumüller and Martin Dietzfelbinger 2013 in their thesis of 'Optimal Partitioning for Dual Pivot Quicksort' \cite{OptimalPartitioningForDualPivotQuicksort}.
+What makes this more mysterious, is the variation of Yaroslavskiy's partition method that always compares to the larger pivot\hypertarget{CmpToLargerPivot}, by Martin Aumüller and Martin Dietzfelbinger 2013 in their thesis of 'Optimal Partitioning for Dual Pivot Quicksort' \cite{OptimalPartitioningForDualPivotQuicksort}.
 The method shows no difference in terms of both comparison and swaps with the original Dual-Pivot Quicksort, but it turned out that it is as fast as the Yaroslavskiy's partition, and even faster than another method along with it, named 'Countering Strategy C', who claimed to have the least 
 estimations of $1.8n \ln n + \bigO(n)$ comparisons and $1.6n \ln n + \bigO{n}$ swaps. This is a great example of how the real-world performance could be different from the theoretical analysis. In fact, in their following tests, the 'Countering Strategy C' method was proven to be the slowest among all the 3 methods.
 
@@ -1063,11 +1063,14 @@ As long as the number of pivots increases, the number of branches will grow line
 Thankfully, for 4-Pivot QuickSort, \hypertarget{2MoreBranches}we are just adding two more branches (As showed in the blue-red and purple-red branches in the \hyperlink{fig:4pivot}{chart} below)
 compared with the $2 \times 2 = 4$ branches for 3-Pivots into considerations and the branching logic is still under control.
 We declare this as the balanced partition\hypertarget{BalancedPartition} layout that we are using, where each side of the array is filled with $\frac{N + 1}{2}$ partitions for odd number $N$ pivots,
-or one side with $\frac{N}{2}$ partitions and $\frac{N}{2} + 1$ on the other. The comparisons take place like looking for a value in a binary search tree (BST), for instance when there are 3 pivots in total, comparing with the Pivot 2 first, then the Pivot 1 or Pivot 3.
-This search tree is of depth 2, with 2 partitions on the left side for elements less than Pivot 2 and vice versa. Otherwise, if we use a unbalanced BST that puts Pivot 1 or Pivot 3 on top, we would have a tree of depth 3 and is not efficient enough.
-The entire BST would look like a \^{} symbol, we just need to extend the length of its two 'wings' as pivots increase.
-Bearing this layout in mind, it is not hard to tell that we are going to have 9 branches for 5-Pivot QuickSort (3 partitions on each side, $3 \times 3 = 9$) and 12 branches for 6-Pivot QuickSort (3 partitions on one side and 4 on the other, $3 \times 4 = 12$).
-The complexity of the partitioning method is growing way too far and thus only 4-Pivot QuickSort will be discussed in this thesis. In the \cite{HowGoodIsMultiPivotQuicksort}{'how good is multi-pivot quicksort'} paper, the author sketched an extremal tree for seven pivots in fig 10 of his thesis.
+or one side with $\frac{N}{2}$ partitions and $\frac{N}{2} + 1$ on the other. Bearing this layout in mind, it is not hard to tell that we are going to have 9 branches for 5-Pivot QuickSort (3 partitions on each side, $3 \times 3 = 9$) and 12 branches for 6-Pivot QuickSort (3 partitions on one side and 4 on the other, $3 \times 4 = 12$).
+The comparisons take place like looking for a value in a binary search tree (BST), for instance when there are 3 pivots in total, comparing with the Pivot 2 first, then the Pivot 1 or Pivot 3.
+For a balanced BST for 3-Pivots, it has depth 2 with 2 partitions on the left, one less than the Pivot 1 and the other greater, and another 2 partitions on the other side. Otherwise, if we use a unbalanced BST that puts Pivot 1 or Pivot 3 on top, we would have a tree of depth 3,
+as mentioned \hyperlink{CmpToLargerPivot}{before} in the 'Countering Strategy C', an unbalanced search tree could be faster in some cases,
+thus the complexity of the partitioning method is growing way too far and only 4-Pivot QuickSort will be discussed in this thesis. 
+In the \textit{'How good is Multi-Pivot Quicksort'} \cite{HowGoodIsMultiPivotQuicksort} paper, the author sketched an extremal tree for seven pivots in fig 10 of his thesis although it might not be the most optimal one without going through thorough analysis,
+it is still a good example to illustrate the complexity of the partitioning method on increasing number of pivots. Besides, fig 12 on page 41 revealed the 4-Pivot QuickSort had the lowest time cost on per element among all variations of Multi-Pivot QuickSorts, which is another reason why we are keeping focus on 4-Pivot QuickSort,
+althrough why 15-Pivots turned out slower than the classical single pivot QuickSort in their thesis puzzles me.
 
 % TODO: talk about the similar layout that has been illustrated on page 23 of 'how good is multi-pivot quicksort' paper,
 % but it only analyzed the odd number pivots and the even number pivots need to be further discussed.
