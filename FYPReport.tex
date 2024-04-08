@@ -1337,7 +1337,7 @@ While the complexities scale linearly with the number of pivots, the standard de
 
 Things go beyond our expectations, the 4-Pivot partition shows superior statistics of branch misses than the 3-Pivot partition method for larger arrays, which is a surprise to us,
 even though it has slightly higher means of branch misses than the 2-Pivot Yaroslavskiy's partition method in general, the standard deviation remains at a high level indicating
-the possible instabilities of the 4-Pivot partition method brought by 2 more branches \hypertarget{2MoreBranches}{[→]} that 1 more pivot introduced. It's intriguing to observe that more pivots could potentially reduce branch misses, challenging conventional assumptions.
+the possible instabilities of the 4-Pivot partition method brought by 2 more branches \hyperlink{2MoreBranches}{[→]} that 1 more pivot introduced. It's intriguing to observe that more pivots should \textbf{reduce} branch misses, challenging conventional assumptions.
 It might be that the layout of 'balanced partition' we are using is more friendly to the CPU's branch predictor, but yet to explain why 2 more branches could bring better effects. This warrants further investigation in future works, further expand our understandings on the Multi-Pivot QuickSort algorithm. 
 
 Apart from the branch misses, cache misses also merit attention due to their potential impact, which is what we are going to shift our focus to.
@@ -1351,13 +1351,13 @@ Apart from the branch misses, cache misses also merit attention due to their pot
     \includegraphics[width=1.5\textwidth]{Classical QuickSort Cache Misses.pdf}
 \end{figure}
 
-The macro trend reveals the outburst of cache misses' means when scaling from $10^4$ to $10^5$, possibly indicative of L1 cache saturation.
+The macro trend reveals the outburst of cache misses' means when scaling from $10^4$ to $10^5$, possibly due to L1 cache saturation.
 Prior to this, the cache misses remained relatively low by their means even with the messy and irregular standard deviations still being there.
-CPU will run out of L1 cache for size $10^5$ as $10^5 \times 4 {bytes} / element = 4 \times 10^5 {bytes}$, exceeding the total L1 cache capacity for about $8 \times 32Kb = 2.62144 \times 10^5 bytes$ while the spatial locality of the elements might still struggle to mitigate the L2 cache misses at a low level.
-Given that L2 misses produce much larger latencies than L1 misses, the performance of the algorithm seriously suffered as it awaits the main memory, thereby amplifies the differences between these algorithms. This disparity stablized and converged after $10^5$, where 2-Pivot Yaroslavskiy, 3-Pivot Kushagra and 4-Pivot partition
+CPU will run out of L1 cache for size $10^5$ as $10^5 \times 4 {bytes} / element = 4 \times 10^5 {bytes}$, exceeding the total L1 cache capacity of $8 \times 32Kb = 2.62144 \times 10^5 bytes$ while the spatial locality of the elements might still struggle to mitigate the L2 cache misses at a low level.
+Given that L2 misses produce much larger latencies than L1 misses, the performance of the algorithm seriously suffered from waiting for the main memory, thereby amplifies the differences between these algorithms. This disparity stablized and converged after $10^5$, where 2-Pivot Yaroslavskiy, 3-Pivot Kushagra and 4-Pivot partition
 exhibit slow and steady increase of cache misses gradually, while 1-Pivot Hoare and Lomuto partition methods still going little bit upwards. However, all the partition methods seem to reach about similar cache misses for $10^7$ elements. This could be due to the magic of modern CPU's cache management, where L3 cache is shared among cores,
-in my case among CCDs (Core Complex Die) and the memory controller, so the cache misses are not that sensitive to the size of the array.
-Changes in rapid growth of standard deviation is also noteworthy, indicating the dramatic influences caused by the cache misses when the size of the array under $10^4$.
+in my case among CCDs (Core Complex Die) and the memory controller, so the cache misses are not that sensitive to the sizes beyond a certain threshold.
+Changes in rapid growth of standard deviation is also noteworthy for sizes under $10^4$, indicating the dramatic influences caused by the cache misses.
 
 In 1-Pivot tests, Lomuto shows much higher cache misses than Hoare for smaller arrays, likely due to the fact that Lomuto's partition method's tendency for more overlapping swaps than Hoare's,
 where most swaps take on the elements that are already in the right place. As the number of pivots grow, the cache misses seem to decrease, particularly evident in the 4-Pivot version,
@@ -1398,7 +1398,7 @@ Comparatively, 1-Pivot Hoare's and Lomuto's partitions show less branch misses b
 However for 3-Pivots, the cache behavior observed didn't seem to fully comply with the theoretical analysis that it is cache friendlier than classical and Yaroslavskiy's 2-Pivot QuickSorts, 
 the cache misses are higher than the 2-Pivot Yaroslavskiy's partition method when the array size exceeds $10^6$. The correlation between cache misses and the number of pivots remains unclear.
 Contrary to the conclusion drawn from experiments carried out by Kushagra's team, which attribute the improvements on Multi-Pivots QuickSort to enhanced cache behaviors
-\cite{Kushagra}, the tests conducted show that the cache misses do not consistently decrease with more pivots. For instance, the 3-Pivot Kushagra's method shows more cache misses than the 2-Pivot Yaroslavskiy's,
+\cite{Kushagra}, the tests conducted show that the \underline{cache misses do not consistently} \underline{decrease with more pivots}. For instance, the 3-Pivot Kushagra's method shows more cache misses than the 2-Pivot Yaroslavskiy's,
 despite demonstrating better runtime performance. These effects are not yet fully understood and need further discussions and investigations, particularly given the potential optimizations introduced by the Rust compiler,
 whose is based on top of LLVM (Native LLVM as the Rust's bootstrapped backend codegen component Cranelift is far from being mature on x86 architecture), that might have optimized the code in a different way that the cache behaviors are not well reflected in the results, although I enabled the most aggressive optimizations flags in the compiler settings
 and they are similar as GCC and Clang's. They also reported that their 7-Pivot QuickSort has worse performance than the 3-Pivot QuickSort as a result of poor cache behaviors, which is not yet tested in this thesis given their link to the original code not being available anymore.
@@ -1433,14 +1433,14 @@ But the 2-Pivot Yaroslavskiy's method exposed its weakness with respect to the 1
 % TODO: WTF does this mean? I need to understand this first before I can write it down.
 
 Contrary to our expectations, 2-Pivot Yaroslavskiy's method was defeated by the 1-Pivot Lomuto's method in terms of runtime, even though it outperformed in the cache misses.
-The running time does show the correlation with the branch misses while cache misses don't seem to have a significant impact, evidenced by Yaroslavskiy's method, who has lower cache misses but more cost time than Lomuto's method.
+\hypertarget{BranchMissMatterMoreThanCache}{}\underline{The running time DOES show the correlation with the branch misses} while cache misses \textbf{don't} seem to have a significant impact, evidenced by Yaroslavskiy's method, who has lower cache misses but more cost time than Lomuto's method.
 Similarly, despite of lower cache misses than Kushagra's 3-Pivot method, Yaroslavskiy's method still incurred significantly higher runtime for arrays with over 1 million elements.
-This suggests that the past analysis on the cache misses have been constrained by array size, and perhaps the old CPU architecture's deficiency on handling large chunk of data flooding in and out of cache.
+This suggests that the past analysis on the cache misses have been constrained by array sizes, and perhaps the old CPU architecture's deficiency on handling large chunk of data flooding in and out of cache.
 
 It brings to our attention that the testing CPU, R7 3700x, features a 16MB L3 cache, which is divided into two 8MB segments per CCD ($2 CCDs \times 8MB = 16MB$), with each segment serving 4 cores.
 This limitation was later addressed in the Zen 3 architecture, R5 5600x for instance, where a unified L3 cache is shared across all cores, thanks to the high-performance ring buses that faciliate efficient cross-CCD communication that significantly reduce the latency.
 
-The final running time also supports the exceptional cases mentioned above, indicating that cache misses don't necessarily have a direct impact on the final performance of the algorithm.
+The final running time also supports the exceptional cases mentioned above, indicating that cache misses \textbf{don't} necessarily have a direct impact on the final performance of the algorithm.
 The 1-Pivot Hoare partition, characterized by 2 while loops scanning for the out-of-order elements on both sides, introduces extra overheads on branch misses and didn't manage to compete with other algorithms.
 This could be the actual pain point that the 1-Pivot Hoare's method has to face, the branch misses appear to be the bottleneck, but we will soon find out the way to overcome it in the following sections.
 
@@ -1469,12 +1469,14 @@ although how the 4-Pivot method has more predicted branches but less actual bran
 \end{tabular}
 \end{center}
 
-In conclusion, our experiments reveal unexpected nuances in algorithm performance comparisons, the 2-Pivot Yaroslavskiy's method has lower cache misses than 3-Pivot, least branch misses among multi-pivot variations but deficient performance on $10^7$ size of data, the 4-Pivot method has the least amount of time,
+\subsubsection{Summary}
+In summary, our experiments reveal unexpected nuances in algorithm performance comparisons, the 2-Pivot Yaroslavskiy's method has lower cache misses than 3-Pivot, least branch misses among multi-pivot variations but deficient performance on $10^7$ size of data, the 4-Pivot method has the least amount of time,
 somewhat partially due to its favorable cache behavior, but more importantly, less branch misses in field experiments than predicted. The riddle between predicted and actual branch misses in the 4-Pivot method suggests new avenues for exploration and optimization.
 
 % TODO: talk about some failed layouts that is way too complicated to implement, like 2 pivot hoare block partition.
 % TODO: polish following paragraphs staring from here
 
+\subsubsection{Unavailable Layouts}
 With the guidance from my supervisor Dr. David Gregg I reached out to new layouts that might shift our perspectives on classical QuickSorts. Regrettably, these methods proved either too complicated or just not possible to be implemented by far.
 For instance, the 2-Pivot Hoare's method with Block Partition, a combination of two partition methods that are not compatible with each other, even though it works with the 1-Pivot Hoare's method, the 2-Pivot Hoare's method is a different story.
 In the case of the 1-Pivot method, at least one of the two blocks shifts towards the center after the rotate-n operation, ensuring elements are properly ordered. Conversely, in the 2-Pivot scenario, if both blocks retain misplaced elements after the rotate-n operation, the algorithm stucks in an infinite loop.
@@ -1562,7 +1564,7 @@ But as we observe the CPU instructions count and the time cost, we will find out
 
 It seems the Hoare's Block Partition has the most significant improvements on the CPU cycles, with about half of the reductions on total cycles.
 The block partition doesn't seem to improve much with the Lomuto's scheme, which is still a mystery to me together with its dramatic standard deviation, but the 2-Pivot Lomuto's Block Partition has a decent amount of improvements.
-Still, the cache misses for small arrays seem completely random, so are the standard deviations. There seems no way that we could analyse these results. But the time cost will give us a clear answer.
+Still, the cache misses for small arrays seem completely random, so are their standard deviations. There seems no way that we could analyse these results. But the time cost will grant us a clear answer.
 
 \begin{figure}[H]
     \hypertarget{fig:blocktime}{}
@@ -1577,20 +1579,21 @@ The most intriguing result has been given by the 1-Pivot Hoare' BlockQuickSort v
 It is already of much progress I would have to say, but the 2-Pivot Lomuto's BlockQuickSort variation also has a decent amount of improvements, with up to 18\% less time cost than the original.
 The former example has proven a success, but future works will also be carried out to improve the cache misses, even though there exists very limited things we could do,
 the modern CPU architecture has already done a great job on the overall cache hit rate, which can be supported by the cachegrind tests that all the tested algorithms have around less than 10\% cache misses.
-Although this won't be the deterministic evidence to say that the cache misses are not the bottleneck, but it is still a good sign that the cache misses are not the main issue that we have to deal with.
+Although this won't be the deterministic evidence to say that the cache misses are not the bottleneck, but it is still a good sign that the cache misses are not the main issue that we are currently dealing with.
 
 % TODO: talk about pivot selection and skewed pivot selection like page 11 of block QuickSort paper.
 The tests above are carried out using constant pivot selection method, choosing half start and half end of the array as the pivots as the most common practice goes,
 but as mentioned earlier in the preliminaries part \hyperlink{ref:AnalysisOfBranchMissesInQuickSort}{[→]}, the pivot selection is a crucial part of the QuickSort algorithm, and the skewed pivot selection, anti-tuitionally as it seems, could bring better performance than the random pivot selection.
-It doesn't bring us to the conclusion that the skewed pivot selection is always better other methods, even it makes sense to a static branch predictor where it assumes all branches will follow the correct majority path, for instance, if our skewed pivot could divide the array into $x\%$ and $(100-x)\%$ parts, the branch predictor will always predict the $max(x\%, 100-x\%)$ path,
-we can use less time at current stage to finish the partitioning process, but the imbalanced partitions will pose future challenges to maintain the efficiency of overall algorithm. Luckily, skewed pivot always proves unnecessary in the BlockQuickSort, free from the concerns on branch misses' costs in the experiments of \cite{BlockQuickSort}. With skew factor 2 (the middlest element is chosen as the pivot), the BlockQuickSort has the least amount of time cost, and larger skew factors will only increase the runtime.
+It doesn't bring us to the conclusion that the skewed pivot selection is always better other methods, even it makes sense to a static branch predictor where it assumes all predictions will follow the majority, for instance, if our skewed pivot could divide the array into $x\%$ and $(100-x)\%$ parts, the branch predictor will always predict the $max(x\%, 100-x\%)$ path,
+we can use less time at current stage to finish the partitioning process, but the imbalanced partitions will pose future challenges to maintaining the efficiency of overall algorithm. \hypertarget{UnnecessarySkewed}{}Luckily, skewed pivot always proves unnecessary in BlockQuickSort, free from the concerns on branch misses' costs in the empirical experiments of the authors' thesis \cite{BlockQuickSort}. With skew factor 2 (the middlest element is chosen as the pivot), the BlockQuickSort has the least amount of time cost, and larger skew factors will only increase the runtime.
 For classical QuickSorts, skew factor of 6 appeared to have the best performance in the experiments as a balance between the stalls caused by branch misses and total CPU Instructions.
 
 % TODO: 2 pivot lomuto's block partition is faster than the classical QuickSort but slower than the 1 pivot hoare's block partition, why?
-The 2-Pivot Lomuto's Block Partition has less branch misses for smaller arrays, but fails to compete when the size extends, as the duplicated swaps have been enlarged when the size of the array grows, 
-Lacking as a key feature to Lomuto's block scheme is the cyclic swaps that relief a lot of duplicated swaps and constant cache to the temp variable. This method has adapted well to the Hoare's scheme, for it starts on both ends and the duplicated swaps are less likely to happen as long as mis-placed elements are spotted on both sides, a prerequisite for the cyclic swaps to take place.
-The cyclic swaps are not only reducing the duplicated swaps, but also reducing the cache misses by the help of write-back policy. The 2-Pivot Lomuto's Block Partition has failed to adapt to the massive cyclic swaps that eliminates the biggest headache of small swaps' costs on frequently changed temp variable, plus the duplicated swaps are not reduced, but amplified, which might be the meat of the issue for the performance degradation compared with Hoare's block partition. % TODO: is this the real reason? I need to check the code again.
+The 2-Pivot Lomuto's Block Partition has less branch misses for smaller arrays, but fails to compete when the size extends, as the duplicated swaps have been enlarged when the size of the array grows. 
+Lacking as a key feature to Lomuto's block scheme is the cyclic swaps that relief a large proportion of duplicated swaps and constant overwrites to the temp variable. This method has adapted well to the Hoare's scheme, for it starts on both ends and the duplicated swaps are less likely to happen as long as mis-placed elements exist on both sides, a prerequisite for the cyclic swaps to take place.
+The cyclic swaps are reducing not only the duplicated swaps, but also the cache misses with the help of write-back policy. The 2-Pivot Lomuto's Block Partition has failed to adapt the rotate-n like cyclic swaps that eliminates the biggest headache --- the overheads of small swaps' frequent manipulations on the temp variable. To make things worse, it also fails to reduce duplicated swaps, causing its performance degradation compared with Hoare's block partition. % TODO: is this the real reason? I need to check the code again.
 % TODO: talk about the new trial layout of block QuickSort, 2 pivots and lomuto, and why it is slower
+
 Mimicing the layout of Lomuto's Block Partition, I implemented another 2-Pivots Lomuto's Block Partition which requires only one phase of rearranging, but with more rotate-n moves to shift elements to their correct partitions. This could introduce more complexity as in a chaotic block with 2 types of items less than Pivot 1 or greater than Pivot 1 but less than Pivot 2,
 simply dumping their offsets to the correct partitions regardless will not work, for in each step we have to deal with smaller offset first to make sure our algorithm behaves the same as the classical version which scans the array in one-way order, but this extra min() operation could be a huge drawback for this scheme.
 Results for this is even slower than the classical QuickSort, and it is not recommended to be used in practice, only for academic purposes instead of industrial applications.
@@ -1603,10 +1606,11 @@ Results for this is even slower than the classical QuickSort, and it is not reco
     \includegraphics[width=1.5\textwidth]{new_lomuto_block.drawio.pdf}
 \end{figure}
 The cache misses also suffer from the new layout, constantly swapping side to read and compare the next minium offset also poses a challenge to the spatial locality of cache,
-causing the general time cost being also higher than the classical QuickSort. In my fuzzy tests of cachegrind \hyperlink{cachegrindresult}, the data read (Dr) rate 28.98\% and data write (Dw) rate 19.41\% all rank the top, and are both much higher than the classical QuickSort even though it has low cache misses.
-My assumption would be these constant memory accesses are caused by the cache write-back policy due to inconsistent spatial locality, though the actual relationship is yet to be confirmed by further tests in the future.
-It reveals from another perspective that the block partition is restricted by the number of pivots, as the experiments in this thesis only shows that the the pattern of comparing with one pivot in one pass is the only way to go, otherwise, like the new layout illustrated above, if we get too greedy to compare with 2 pivots simultaneously,
-the offsets have to be stored at different places, to sequentially organize the elements in the order of their indices, the spatial locality of cache will be broken, and thus constant memory accesses will be introduced, leading to a series of CPU pipeline stalls. This puts forward another trade-off between the number of pivots and the block partition, and it is not yet clear how to leverage the best of both worlds.
+causing the general time cost being also higher than the classical QuickSort. In my fuzzy tests of cachegrind \hyperlink{cachegrindresult}, \hypertarget{SlowMemAccess}{}the constant memory accesses like data read (Dr) rate 28.98\% and data write (Dw) rate 19.41\% all rank the top, and are both much higher than the classical QuickSort even though it has low cache misses.
+My assumption would be these constant memory accesses are caused by the cache \textbf{write-through} policy due to inconsistent spatial locality, though the actual relationship is yet to be confirmed.
+It reveals from another perspective that the block partition is restricted by the number of pivots, as the experiments in this thesis only shows, that \underline{the pattern of comparing with one pivot in one pass is the only way to go\hypertarget{OnlyWayToGo}{}}, otherwise, as the new layout illustrated above, if we are greedy to compare with 2 pivots simultaneously,
+the offsets have to be stored at different ends of a block buffer. To sequentially organize the elements in the order of their indices, we always need to tell which offset at both ends is smaller to manipulate next, thus this conditional operation will pose challenges to instruction caches, leading to a series of CPU pipeline stalls caused by cache misses.
+It puts forward another trade-off between the number of pivots and the block partition, and is not yet clear how to leverage the best of both worlds.
 The BlockQuickSort is still in its infancy, despite the fact that PDQSort proves a great success in the real-world applications, and the future works will be carried out to explore more possibilities and to find more optimal layout for the BlockQuickSort.
 As to the new layout, for your interest the detailed statistics will be attached in the appendix section.
 
@@ -1615,12 +1619,12 @@ As to the new layout, for your interest the detailed statistics will be attached
 \section{Conclusion}
 \begin{itemize}
 \item The improvements achieved through the utilization of multiple pivots have seemingly reached a plateau. Despite the 4-Pivot method demonstrating the most outperforming runtime costs, the incremental gains do not compensate for the increased complexity.
-\item In the context of modern CPU cache coordination, most of the cache misses have been eliminated for QuickSort algorithms, with branch misses emerging as the primary bottleneck. The Block Partition method shows significant potential in mitigating branch misses.
+\item \hyperlink{BranchMissMatterMoreThanCache}{[->]} In the context of modern CPU cache coordination, most of the cache misses have been eliminated for QuickSort algorithms, with branch misses emerging as the primary bottleneck. The Block Partition method shows significant potential in mitigating branch misses.
     1-Pivot Hoare's Block Partition ranks as the top performer among the tested algorithms, underscoring the importance of a well-optimized layout over the sheer number of pivots.
     The reduction in branch misses achieved by the Block Partition method indicates a promising future, though challenges of complexities brought by increased pivots count still remain.
-\item Skewed pivot selection demonstrates potential benefits in classical QuickSorts, but a balanced pivot selection works better in BlockQuickSort. Closer the pivot is to the median, better the performance.
-\item The novel layout of 2-Pivot Lomuto's Block Partition exposed the limitations introduced by more pivots introduced. The pattern of comparing with one pivot at a time is still the only way to go by far,
-    otherwise, any deviation from this pattern will pose risks to substantial memory access overheads, impeding CPU performance -- a critical lesson for future research endeavors.
+\item \hyperlink{UnnecessarySkewed}{[->]} Skewed pivot selection demonstrates potential benefits in classical QuickSorts, but a balanced pivot selection works better in BlockQuickSort. Closer the pivot is to the median, better the performance.
+\item \hyperlink{OnlyWayToGo}{[->]} The novel layout of 2-Pivot Lomuto's Block Partition exposed the limitations introduced by more pivots introduced. The pattern of comparing with one pivot at a time is still the only way to go by far,
+    otherwise, any deviation from this pattern will pose risks to substantial memory access overheads, impeding CPU performance --- a critical lesson for future research endeavors.
 \end{itemize}
 
 
