@@ -1,7 +1,95 @@
-\documentclass{article}
+\documentclass[a4paper,oneside,12pt]{book}
 
 \usepackage[utf8]{inputenc} % Use UTF-8 encoding
 \usepackage{textgreek} % For Greek letters
+
+\newcommand{\thesistitle}{Multi-Pivots QuickSort} % Your thesis title, this is used in the title and abstract
+\newcommand{\degree}{B.A. Integrated Computer Science} % Replace with your degree name, this is used in the title page and abstract
+\newcommand{\typeofthesis}{Final Year Project} % dissertation, Final Year Project, report, etc.
+\newcommand{\authorname}{Shi Su} % Your name, this is used in the title page and PDF stuff
+%% Do not put your Student ID in the document, as TCD will not publish
+%% documents that contain both your name and your Student ID.
+\newcommand{\supervisor}{Dr. David Gregg} % replace with the name of your supervisor
+\newcommand{\keywords}{Sort, Pivot, Multi-Pivots, Rust, Perf, Cachegrind} % Replace with keywords for your thesis
+\newcommand{\school}{\href{https://www.tcd.ie/scss/}{School of Computer Science and Statistics}} % Your school's name and URL, this is used in the title page
+%Edited by HS for engineering
+
+%% Comment out the next line if you don't want a department to appear
+%\newcommand{\department}{\href{http://researchgroup.university.com}{Department Name}} % Your research group's name and URL, this is used in the title page
+
+
+%% Language and font encodings
+\usepackage[T1]{fontenc} 
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
+%% Bibliographical stuff
+\usepackage[]{cite}
+%% Document size
+% include showframe as an option if you want to see the boxes
+\usepackage[a4paper,top=2.54cm,bottom=2.54cm,left=2.54cm,right=2.54cm,headheight=16pt]{geometry}
+\setlength{\marginparwidth}{2cm}
+%% Useful packages
+\usepackage{amsmath}
+\usepackage[autostyle=true]{csquotes} % Required to generate language-dependent quotes in the bibliography
+\usepackage[pdftex]{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=black]{hyperref}
+
+\usepackage{hyperxmp}
+\usepackage{caption} % if no caption, no colon
+% \usepackage{sfmath} %use sans-serif in the maths sections too, but this line would cause error TODO:
+\usepackage[parfill]{parskip}    % Begin paragraphs with an empty line rather than an indent
+\usepackage{setspace} % to permit one-and-a-half or double spacing
+\usepackage{enumerate} % fancy enumerations like (i) (ii) or (a) (b) and suchlike
+\usepackage{booktabs} % To thicken table lines
+\usepackage{fancyhdr}
+\usepackage{xcolor} % to get TCD colour on headings
+% \numberwithin{equation}{chapter} %HS edit for (chapter.equation)
+\pagestyle{plain} % Embrace simplicity!
+
+\definecolor{tcd_blue}{RGB}{5, 105, 185}
+
+%% It's personal taste but...
+%% Uncomment the following block if you want your name and ID at the top of
+%% (almost) every page.
+
+%\pagestyle{fancy}
+%\fancyhf{} % sets both header and footer to nothing
+%\renewcommand{\headrulewidth}{0pt}
+%\cfoot{\thepage}
+%\ifdefined\authorid
+%\chead{\it \authorname\ (\authorid)}
+%\else
+%\chead{\it \authorname}
+%\fi
+%% End of block
+
+%% It is good practise to make your font sans-serif to improve the accessibility of your document.  Comment out the following line to disable it (but you really should not)
+\renewcommand{\familydefault}{\sfdefault} %use the sans-serif font as default
+
+%% If you insist on not using sans-serif (please don't), consider using Palatino instead of the LaTeX standard
+%\usepackage{mathpazo} % Use the Palatino font by default if you prefer it to Computer Modern
+
+
+%% Format Chapter headings appropriately
+\usepackage{titlesec}
+\titleformat{\chapter}[hang]{\normalfont\huge\bfseries\color{tcd_blue}}{\thechapter}{1cm}{}{}
+
+\title{\thesistitle}
+\author{\authorname}
+
+
+\hypersetup{
+   pdftitle=\thesistitle, % Set the PDF's title to your title
+   pdfauthor=\authorname, % Set the PDF's author to your name
+   pdfkeywords=\keywords, % Set the PDF's keywords to your keywords
+   pdfsubject=\degree, % Set the PDF's keywords to your keywords
+   pdfinfo={
+     pdfsupervisor=\supervisor, % Set the PDF's supervisor to your supervisor
+     %pdfcosupervisor=\cosupervisor, % Set the PDF's cosupervisor to your cosupervisor if using
+   }
+}
 
 \usepackage{float}
 \usepackage{microtype}
@@ -57,53 +145,97 @@
 \newcommand{\dunkelgruen}{\color{dunkelgruen}}
 \newcommand{\hellgruen}{\color{hellgruen}}
 
-
 \begin{document}
+
+\input{title.tex}
+\pagenumbering{arabic}
+\section*{\Huge\textcolor{tcd_blue}{Declaration}}
+\vspace{1cm}
+I hereby declare that this \typeofthesis\ is entirely my own work and that it has not been submitted as an exercise for a degree at this or any other university.
+
+\vspace{1cm}
+I have read and I understand the plagiarism provisions in the General Regulations of the University Calendar for the current year, found at \url{http://www.tcd.ie/calendar}.
+\vspace{1cm}
+
+I have completed the Online Tutorial on avoiding plagiarism `Ready Steady Write', located at \url{http://tcd-ie.libguides.com/plagiarism/ready-steady-write}.
+\vspace{1cm}
+
+I consent / do not consent to the examiner retaining a copy of the thesis beyond the examining period, should they so wish (EU GDPR May 2018).
+\vspace{1cm}
+
+% I agree that this thesis will not be publicly available, but will be available to TCD staff and students in the University’s open access institutional repository on the Trinity domain only, subject to Irish Copyright Legislation and Trinity College Library conditions of use and acknowledgement.  \textbf{Please consult with your supervisor on this last item before agreeing, and delete if you do not consent}
+% \vspace{3cm}
+
+\hfill\includegraphics[height=2cm]{signature.png}
+
+% \chapter*{Abstract}
+% A short summary of the problem investigated, the approach taken and the key findings. This should not be more that around 400 words.
+
+
+% This must be on a separate page.
+
+% \chapter*{Lay Abstract}
+% Similar to the actual abstract in terms of the information, but written for a non-specialist. So no jargon, no acronyms. Explain to a member of the general public what this project entailed. Should be no longer than the actual abstract.
+
+
+% This must be on a separate page.
+
+\newpage
+\onehalfspacing\raggedright %\raggedright turns off justification and hyphenation
+
+\section*{\Huge\textcolor{tcd_blue}{Acknowledgements}}
+I would like to thank my supervisor Dr. David Gregg for his rich insights, guidance, and support throughout the course of this project.
+I am grateful for his patience, encouragement, and constructive feedback, which have been invaluable in shaping this work.
+
+My families and friends have been a constant source of support and encouragement, and I am deeply grateful for their unwavering belief in me.
+
+\newpage \tableofcontents
+\clearpage
 
 \section{Introduction}
 Sorting algorithms on modern computers have been playing an important role in Computer Science and can date back to the early 50s and 60s. 
 It is the great efforts that humans have put into the field of developing faster sorting algorithms that shapes the vital parts that formed
 all the significant infrastructures of the vast computer world like databases, data centers, cluster networks etc.
-In the realm of sorting algorithms, Quicksort, introduced by computer scientist Tony Hoare \cite{HoareQuickSort} to the public,
+In the realm of sorting algorithms, QuickSort, introduced by computer scientist Tony Hoare \cite{HoareQuickSort} to the public,
 has made its way into the libc of the GNU/Linux system and stood the test of time as one of the most classical and widely used methods for sorting. 
 Its divide-and-conquer strategy has been widely used and taken into research to fully utilize the performance of sorting.
-The basic Quicksort picks an arbitrary pivot element,
+The basic QuickSort picks an arbitrary pivot element,
 partitions the array into 2 segments, one with elements less than the pivot and the other greater. 
-It then recursively sorts these segments using the same method. While the original Quicksort method has proven effective,
-the demand of further optimizations and the endless pursuit of efficiency has led to many variations to explore, one of which is the Multi-Pivot Quicksort. 
+It then recursively sorts these segments using the same method. While the original QuickSort method has proven effective,
+the demand of further optimizations and the endless pursuit of efficiency has led to many variations to explore, one of which is the Multi-Pivot QuickSort. 
 
-This thesis is my shallow attempt to unveil the benefits of Multi-Pivot Quicksort, exploring the effects more pivots can bring,
+This thesis is my shallow attempt to unveil the benefits of Multi-Pivot QuickSort, exploring the effects more pivots can bring,
 followed by some leveraged implementations of Multi-Pivot QuickSort and other variations alike and derived, analysis on the pros and cons that arise from multiple pivots.
 
 \subsection{History and Related work}
 
-When Quicksort was first brought to the fore a great number of variations and modifications were put into research over the years,
+When QuickSort was first brought to the fore a great number of variations and modifications were put into research over the years,
 such as sorting with a better partition method and a more optimal strategy to select the arbitrary pivot element.
-The innovative approach of Multi-pivot Quicksort bloomed, exemplified by Vladimir Yaroslavskiy \cite{Yaroslavskiy} in 2009,
-Bentley and Bloch's algorithm (YBB Alogorithm), which was also highlighted by Wild and Nebel, adopted in Sun's Java 7 runtime library, 
+The innovative approach of Multi-pivot QuickSort bloomed, exemplified by Vladimir Yaroslavskiy\cite{Yaroslavskiy},
+Bentley and Bloch's algorithm (YBB Alogorithm) in 2009, which was also highlighted by Wild and Nebel, adopted in Sun's Java 7 runtime library, 
 introduces the use of two pivots. Contrary to initial expectations, studies have revealed that employing multiple pivots can enhance the performance,
 challenging prior assumptions derived from the dual-pivot proposal by Sedgewick \cite{Sedgewick} in 1978 where he analyzed a dual-pivot approach, 
-which was deemed inferior to the classical Quicksort in his research. Furthermore, Kushagra presented a 3-pivot Quicksort \cite{Kushagra} algorithm at ALENEX,
+which was deemed inferior to the classical QuickSort in his research. Furthermore, Kushagra presented a 3-pivot QuickSort \cite{Kushagra} algorithm at ALENEX,
 has attracted significant attention, further pushing the researches to broaden the boundaries of multi-pivot strategy. But how does it deal with the worst cases and how does it perform in practice? 
 
-One common pitfall in the performance downgrade of the conventional Quicksort is the degenerated case,
+One common pitfall in the performance downgrade of the conventional QuickSort is the degenerated case,
 which could often arise when the input array is already mostly sorted or when certain patterns in the data cause the algorithm to consistently choose poor pivots
 that fail to split the data into evenly sized partitions. 
 In such cases, the partitioning process may result in highly imbalanced partitions where the size of one partition is significantly larger than the other, leading to suboptimal performance and
-potentially degrading the time complexity to $\bigO(n^2)$ instead of the expected $\bigO(n\log n)$ for Quicksort. This can be a serious issue when it comes to scalability on large datasets, thus
+potentially degrading the time complexity to $\bigO(n^2)$ instead of the expected $\bigO(n\log n)$ for QuickSort. This can be a serious issue when it comes to scalability on large datasets, thus
 wiser choices of pivot selections could decrease the possiblities of such case from happening, such as the median-of-3 method and its variations of median-of-5 and median-of-7.
 But on mostly ascending or descending arrays, whichever pivot we choose doesn't matter, the worst case is inevitable,
 and it might not the best ideal approach to prevent the worst case from happening. Real world applications also bring concerns to us that duplicated elements are not rare,
-and the median-of-n method could be easily affected by the duplicated elements, which could lead to the same worst case as the original Quicksort.
-Of course we can set a threshold to set the minium length to use median-of-n method, but it doesn't fix the problem once and for all.
-There are some other variations of Quicksort that have been proposed to address these specific issues, such as the Introsort algorithm \cite{Introsort} by David Musser,
-which switches to Heapsort when the recursion depth exceeds a certain threshold. Thus the worst running time is guaranteed to be $\bigO(n\log n)$ by doing so.
+and the median-of-n method could be easily affected by the duplicated elements, which could lead to the same worst case as the original QuickSort.
+Of course we can set a threshold to set the minium length to use median-of-n method, but it doesn't fix the problem permanently.
+There are some other variations of QuickSort that have been proposed to mitigate these specific issues, such as the Introsort algorithm \cite{Introsort} by David Musser,
+which switches to Heapsort when the recursion depth exceeds a certain threshold. Thus the worst running time is guaranteed to be $\bigO(n\log n)$.
 
-And this is where Multi-pivot quicksort comes into play. Assuming we are dealing with randomly generated arrays,
+And this is where Multi-pivot QuickSort comes into play. Assuming we are dealing with randomly generated arrays,
 since we don't know the exact size of each partition, the more pivots we choose, the more partitions we divide the array into,
 the less chance it will be that we encounter imbalanced sizes of partitions. 
 Moreover, choosing more pivots will significantly reduce the chance we access the same elements again and the maximum depth of recursion,
-which can translate into better running time. With n pivots we are dividing the array into n+1 partitions, the same things happen on the sub-partitions 
+which can be translated into better running time. With n pivots we are dividing the array into n+1 partitions, the same things happen on the sub-partitions 
 in the next level of recursion and we can conclude the maximum depth of recursion would be $\log_{n+1} L$ given \textbf{n} as the number of pivots and \textbf{L} for the length of array.
 Greater the n is, less the depth. Better memory behaviors can bring effects that can not be achieved by any of other traditional means such as choosing a better pivot value
 among samples extracted from different parts of the array, but the drawbacks are also obvious, 
@@ -119,7 +251,7 @@ The effect was not reproducible, however, on the slightly different Pentium 4 Wi
 
 The above phenomenon could also cause a delay of 14 to 19 cycles on a typical Intel desktop CPU or 20 to 25 cycles on AMD's Zen CPUs could lead to huge efficiency loss for our algorithm,
 and this number only grows as the number of pivots increases and on more complicatad architectures. These are the trade-offs we have to consider when we are choosing the number of pivots,
-although these side effects can be mitigated by the use of branchless comparisons and modern CPUs are able to run conditional move operations (CMOV instructions on x86 architecture) to avoid branches,
+although these side effects can be mitigated by the use of branchless comparisons and modern CPUs are able to run conditional move operations (CMOV family instructions on x86 architecture) to avoid branches,
 these overheads still remain as concerns, but it could relief the conflicting situations between total comparisons and the cost of branch mispredictions in some ways.
 Apart from that, it could be really tricky when it comes to moving the elements to the right places among multiple partitions, especially when the number of pivots is large.
 Additionally, comparisons are the second expensive things next to swaps we are dealing with, and the more pivots we choose, the more comparisons we have to make.
@@ -139,16 +271,16 @@ to store the index offsets of out-of-order elements, swap them altogether in a s
 after scanning a large chunk of array with the size of the block.
 It has eliminated almost all the $if$ branches during comparisons, except inevitable branches produced by terminating situation of $for$ loops which traverse the whole array.
 Their approach realized a significant speedup up to 80\% faster compared with the GCC implementation of std sort
-with only one single pivot. The BlockQuickSort has been adapted to the Multi-Pivot Quicksort and the results are also promising,
+with only one single pivot. The BlockQuickSort has been adapted to the Multi-Pivot QuickSort and the results are also promising,
 the improvements on contiguous memory access significantly improves the spatial locality and reduces both the cache misses and branch mis-predictions.
 Branchless comparisons are also adapted which plays an important role in contributing to the huge performance boost by reducing the overhead
 when increasing the counter of elements stored in the block buffer(s).
 This novel approach has also developed variations that could effectively make the use of different partitioning methods and multiple pivots selected. 
 
-Meanwhile, in the pursuit of advancing the efficiency of the Quicksort algorithm,
+Meanwhile, in the pursuit of advancing the efficiency of the QuickSort algorithm,
 my investigation led me to explore various modifications, 
-with a particular focus on the pattern-defeating Quicksort (PDQSort) proposed by Orson Peters. 
-PDQSort leverages the average-case performance of randomized Quicksort with the rapid worst-case execution of heapsort, 
+with a particular focus on the pattern-defeating QuickSort (PDQSort) proposed by Orson Peters. 
+PDQSort leverages the average-case performance of randomized QuickSort with the rapid worst-case execution of heapsort, 
 while concurrently achieving linear time complexity for slices exhibiting specific patterns. 
 Notably, PDQSort employs a judicious application of randomization to prevent the degenerated case from happening.
 When it does, PDQSort will strategically shuffle or reverse the entire array to simplify the sorting and potentially could increase the speed.
@@ -156,16 +288,17 @@ If all the counter measures fail, it also has the final backup plan of switching
 learning the lesson from Introsort. 
 In terms of pivot selection, it uses a fixed seed when generating a pseudo-random index to ensure the reproducibility and deterministic behavior.
 Furthermore, in instances where randomly selected elements from the original array appear in a descending order.
-The combination of these optimizations has demonstrated a significant enhancement in performance, showcasing PDQSort as up to twice faster than the original Quicksort algorithm. 
+The combination of these optimizations has demonstrated a significant enhancement in performance, showcasing PDQSort as up to twice faster than the original QuickSort algorithm. 
 This outcome illuminates the transformative impact that a comprehensive analysis on the pattern of arrays has on the speed of sorting algorithms,
 not to mention it is a successful combination of BlockQuickSort's partition method,
 Heap sort when dealing with worst cases and Insertion sort when it comes to small sub-arrays of sizes less than the cache line size. 
-Inspired by PDQSort's success, I dive into the diverse variations of Quicksort,
-motivating a search for novel patterns finely tweaked to enhance the existing Quicksort algorithms.
+Inspired by PDQSort's success, I dive into the diverse variations of QuickSort,
+motivating a search for novel patterns finely tweaked to enhance the existing QuickSort algorithms.
 
+\clearpage
 \subsection{Contributions}
 \begin{itemize}
-    \item Present the variants of Multi-Pivot QuickSort and implement a 4-Pivots Quicksort and evaluate N-Pivots Quicksort from N = 1, 2, 3, 4 experimentally. 
+    \item Present the variants of Multi-Pivot QuickSort and implement a 4-Pivots QuickSort and evaluate N-Pivots QuickSort from N = 1, 2, 3, 4 experimentally. 
         Comparing the implementations, times, instructions, cache misses and branch mis-predictions with a duration of 3 seconds warm-up time.
     \item Present a new layout of Multi-Pivot BlockQuickSort that increases the block buffer usage rate while turned out to have worse performance than the original BlockQuickSort. 
         Analyze this method and compare it with other block partitioning variations, list the pros and cons, conclude what lessons we can learn from then.
@@ -254,7 +387,7 @@ With the context of sorting algorithms, it is a convention to switch to insertio
     \end{algorithmic}
 \end{algorithm}
 
-For Quicksorts with single pivot value, the partitioning procedure splits the array into 2 parts where the left part are elements less than the pivot and the right part being greater, 
+For QuickSorts with single pivot value, the partitioning procedure splits the array into 2 parts where the left part are elements less than the pivot and the right part being greater, 
 separated by the pivot value in the middle. Then the main body recursively sorts the left and right part to rearrange all the elements in the correct order. The hoare's partition method
 uses double pointers starting at the leftmost and the rightmost element in the array and scanning towards the middle until they meet. Each pointer scans for mis-placed elements 
 which belong to the other partition by comparing the current element to the pivot. 
@@ -296,6 +429,35 @@ While Hoare's partition scheme minimizes unnecessary swaps compared to Lomuto's 
 Nevertheless, Lomuto's scheme boasts simpler implementuses with less auxiliary variables used, contributing to wide adoption in many programming languages and libraries.
 However, these theoretical analysis must be validated through empirical experiments and brought into practice to see if the assumptions hold true, as the performance of the two partition methods could vary depending on the dataset's characteristics and the size of the array.
 Empirical studies are crucial to verify the assumptions and to determine the most suitable method for certain scenarios and contexts.
+
+\subsection{rotate-n operations}
+\hypertarget{rotate-n}
+The rotate-n operation is a common operation in the QuickSort algorithm, where we shift the elements by their indices in batch to get rid of the duplicated swaps, and to make the partitioning process more plain and simple to understand.
+This improves slightly the performance of the QuickSort algorithm, and is widely used in tweaked Multi-Pivot QuickSort. The rotate-n operation is defined as follows:
+\begin{verbatim}
+    rotaten(A, [index1, index2, ... indexn]);
+\end{verbatim}
+which is equivalent to the following code:
+\begin{verbatim}
+    T temp = A[index1];
+    A[index1] = A[index2];
+    ...
+    A[indexn] = temp;
+\end{verbatim}
+In Rust I implemented the rotate-n operation as follows:
+\begin{verbatim}
+#[inline(always)]
+pub unsafe fn rotate_$n<T>(arr: *mut T, idx: [usize; $n]) {
+    let tmp = ptr::read(arr.add(idx[0]));
+    for i in 1..$n {
+        ptr::copy_nonoverlapping(arr.add(idx[i]), arr.add(idx[i - 1]), 1);
+    }
+    ptr::copy_nonoverlapping(&tmp, arr.add(idx[$n - 1]), 1);
+}
+\end{verbatim}
+
+Using direct pointer manipulation, we can avoid the overhead of the Rust borrow checker and array boundary checking to maximize the performance.
+We will see how this technique fully displays its power in the Cyclic Permutation\hyperlink{CyclicPermutation}{[→]}.
 
 \subsection{Block Partitioning}
 The following pseudocode is extracted from the BlockQuickSort paper by Stefan Edelkamp and Armin Weiß \cite{BlockQuickSort} who hold the copyrights of the original code.
@@ -380,7 +542,7 @@ While this operation doesn't incur much overhead thanks to the write-back policy
 to get rid of multiple expensive direct main memory manipulation and stalls the entire pipeline. This action is penalty-free and the cost is much less than write-through operations that updates the main memory every time a write operation occurs.
 Eventually, the buffer blocks will be written back to the main memory eventually, in a deterministic manner.
 This is ensured by the write-back policy of the cache line, and is a common stable feature in modern CPUs to avoid excessive memory access.
-To offer a clearer visual comprehension of the cyclic permutation, a simple figure illustrating how it works is provided right below\hyperlink{fig:cyclicpermu}{`}.
+To offer a clearer visual comprehension of the cyclic permutation, a simple figure illustrating how it works is provided right below\hyperlink{fig:cyclicpermu}{[→]}.
 
 \begin{center}
 \begin{figure}[H]
@@ -448,7 +610,7 @@ We also have adaptions of the Block Lomuto's partition method. Comprehension won
     \end{algorithmic}
 \end{algorithm}
 \begin{figure}[t!]
-\vspace*{-1.5em}
+\vspace*{-1em}
 \centering
 \begin{tikzpicture}[xscale = 1.0]
 % main array
@@ -493,9 +655,9 @@ We also have adaptions of the Block Lomuto's partition method. Comprehension won
 \node at (6.25, -1.3) {$\texttt{block}$};
 
 \end{tikzpicture}
-\vspace{-1.5em}
+\vspace{-1.0em}
 %\includegraphics[width=\columnwidth]{fig-lomuto-block.png}
-\caption{BlockQuicksort with Lomuto's partitioning scheme.} %Picture depicts the situation where Algorithm~\ref{algo:single:pivot:partitioning} is currently on Line~7 with $\texttt{c} = 4$. So far, the block contains the indexes 1 and 2, representing that $A[\texttt{j} + 1]$ and $A[\texttt{j} + 2]$ are smaller than $p$. In general, given that $\texttt{c}$ has value $c$ and $\texttt{num}$ is \textit{num}, $\texttt{block}[0..\textit{num} - 1]$ contains the indexes (relative to $\texttt{j}$) of all misplaced elements in $A[\texttt{j}..\texttt{j} + c]$. Unlabeled elements have only half the width of the array cell depicting $p$ in the picture.}
+\caption{BlockQuickSort with Lomuto's partitioning scheme.} %Picture depicts the situation where Algorithm~\ref{algo:single:pivot:partitioning} is currently on Line~7 with $\texttt{c} = 4$. So far, the block contains the indexes 1 and 2, representing that $A[\texttt{j} + 1]$ and $A[\texttt{j} + 2]$ are smaller than $p$. In general, given that $\texttt{c}$ has value $c$ and $\texttt{num}$ is \textit{num}, $\texttt{block}[0..\textit{num} - 1]$ contains the indexes (relative to $\texttt{j}$) of all misplaced elements in $A[\texttt{j}..\texttt{j} + c]$. Unlabeled elements have only half the width of the array cell depicting $p$ in the picture.}
 \label{fig:lomuto:block:invariant}
 \end{figure}
 
@@ -658,43 +820,16 @@ The first element with index 0 is neglected for being blue -- greater than the p
 \end{scope}
 \end{tikzpicture}}
 %\includegraphics[width=\columnwidth]{fig-lomuto-block-2.png}
-\vspace*{-2em}
+\vspace*{-1em}
 \caption{Lomuto block partitioning with two pivots. Top: Algorithm~\ref{algo:dual:pivot:partitioning}
 compares elements with $q$ and is on Line~8 with $\texttt{c} = 3$, cf.~Figure~\ref{fig:lomuto:block:invariant}. Bottom: Algorithm compares the $\texttt{num}_{\leq \texttt{q}}$ elements at most as large as $q$ to $p$. Algorithm is on Line~14 with $\texttt{c} = 1$.}
---- Reference: Simple and Fast BlockQuicksort using Lomuto's Partitioning Scheme\cite{BlockQuickSortLomuto}
+--- Reference: Simple and Fast BlockQuickSort using Lomuto's Partitioning Scheme\cite{BlockQuickSortLomuto}
 \label{fig:lomuto:two:block:invariant}
 \end{figure}
 
 We can observe that there exists one more pass for 2-Pivot Block Lomuto's partition method than the 1-Pivot one. The first pass compares with the larger pivot $q$ and the second pass compares with the smaller pivot $p$.
 The intermediate state between the 2 passes shows a mixture of elements that are less than $p$ and at most as large as $q$ swapped to the exchange area in the first pass. The second pass will then move the elements that are less than $p$ to the left side of the array.
 
-\subsection{rotate-n operations}
-\hypertarget{rotate-n}
-The rotate-n operation is a common operation in the Quicksort algorithm, where we shift the elements by their indices in batch to get rid of the duplicated swaps, and to make the partitioning process more plain and simple to understand.
-This improves slightly the performance of the Quicksort algorithm, and is widely used in tweaked Multi-Pivot QuickSort. The rotate-n operation is defined as follows:
-\begin{verbatim}
-    rotaten(A, [index1, index2, ... indexn]);
-\end{verbatim}
-which is equivalent to the following code:
-\begin{verbatim}
-    T temp = A[index1];
-    A[index1] = A[index2];
-    ...
-    A[indexn] = temp;
-\end{verbatim}
-In Rust I implemented the rotate-n operation as follows:
-\begin{verbatim}
-#[inline(always)]
-pub unsafe fn rotate_$n<T>(arr: *mut T, idx: [usize; $n]) {
-    let tmp = std::ptr::read(arr.add(idx[0]));
-    for i in 1..$n {
-        ptr::copy_nonoverlapping(arr.add(idx[i]), arr.add(idx[i - 1]), 1);
-    }
-    ptr::copy_nonoverlapping(&tmp, arr.add(idx[$n - 1]), 1);
-}
-\end{verbatim}
-
-Using direct pointer manipulation, we can avoid the overhead of the Rust borrow checker and array boundary checking to maximize the performance.
 
 
 \subsection{Multi-Pivot QuickSort}
@@ -712,10 +847,10 @@ Using direct pointer manipulation, we can avoid the overhead of the Rust borrow 
         % \EndProcedure
 
         \Procedure{DualPivotPartition}{$A, l, r$}
-        \State $P1, P2 \gets A[l], A[r]$ \Comment{Pivots}
-        \If{$P1 > P2$}
-        \State \textsc{Swap}($P1, P2$)
-        \EndIf
+        \State $P1, P2 \gets A[l], A[r]$ \Comment{Pivots, and DO make sure P1 < P2}
+        % \If{$P1 > P2$}
+        % \State \textsc{Swap}($P1, P2$)
+        % \EndIf
 
         \State $less \gets l + 1$
         \State $greater \gets r - 1$
@@ -743,34 +878,43 @@ Using direct pointer manipulation, we can avoid the overhead of the Rust borrow 
         \State $greater \gets greater + 1$
         \State \textsc{Swap}($A[l], A[less]$) \Comment{Put Pivot1 in the middle}
         \State \textsc{Swap}($A[r], A[greater]$) \Comment{Put Pivot2 in the middle}
+%         \algstore{DualPivotPartition}
+%     \end{algorithmic}
+% \end{algorithm}
+% \begin{algorithm}
+%     \caption{Dual-Pivot QuickSort (Continued)}
+%     \begin{algorithmic}
+%         \algrestore{DualPivotPartition}        
         \State \textbf{return} $less, greater$
         \EndProcedure
     \end{algorithmic}
 \end{algorithm}
 
-With one more pivot added, the two-pivot Quicksort method is introduced by Vladimir Yaroslavskiy in 2009. It uses 2 pivots selected from each end to split the array into 3 parts.
+With one more pivot added, the two-pivot QuickSort method is introduced by Vladimir Yaroslavskiy in 2009. It uses 2 pivots selected from each end to split the array into 3 parts.
 K stands for the current element being scanned, it will be swapped to the left part, which is accumulated by the less pointer, if it is less than the first pivot or do nothing if it is in the middle part.
 Otherwise, if it is greater than the second pivot, it will be swapped to the right part, which is accumulated by the greater pointer.
 We will double check the current element at index k after the swap to see if it is less than the first pivot, if so, we will swap it to the left part and move the less pointer to the right.
-Hereby, we can see that the Dual-Pivot Quicksort is a generalization of the original Quicksort, and the partitioning method is also a generalization of the original Hoare's partition method but with 2 pivots.
+Hereby, we can see that the Dual-Pivot QuickSort is a generalization of the original QuickSort, and the partitioning method is also a generalization of the original Hoare's partition method but with 2 pivots.
+
+\subsubsection{Theoretical Analysis vs Real World Performance}
 
 What's attracting is that there was once a debate on whether multiple pivots could enhance the performance, as Sedgewick,
-who analyzed a dual-pivot approach with an average of $\frac{32}{15}n \ln n + \bigO{n}$ comparisons in 1978, in constrast to the $2n\ln n + \bigO{n}$ of the standard Quick Sort, considered this prototype to be inferior to the classical Quicksort.
-However, the Yaroslavskiy's Dual-Pivot Quicksort has proved a success, with the experimental results showing that it has a less amount of $1.9n\ln n + \bigO{n}$ amortized comparisons, but more swaps,
-approximately $0.6n\ln n + \bigO{n}$ which is much greater than the $0.33n\ln n + \bigO{n}$ of the original one, is faster than the original Quicksort in most cases.
-It is surprising that even with asymptotically only 5\% of less comparisons and nearly 80\% more swaps, the Dual-Pivot Quicksort still outperforms the original Quicksort in practice.
-What makes this more mysterious, is the variation of Yaroslavskiy's partition method that always compares to the larger pivot\hypertarget{CmpToLargerPivot}, by Martin Aumüller and Martin Dietzfelbinger 2013 in their thesis of 'Optimal Partitioning for Dual Pivot Quicksort' \cite{OptimalPartitioningForDualPivotQuicksort}.
-The method shows no difference in terms of both comparison and swaps with the original Dual-Pivot Quicksort, but it turned out that it is as fast as the Yaroslavskiy's partition, and even faster than another method along with it, named 'Countering Strategy C', who claimed to have the least 
+who analyzed a dual-pivot approach with an average of $\frac{32}{15}n \ln n + \bigO{n}$ comparisons in 1978, in constrast to the $2n\ln n + \bigO{n}$ of the standard QuickSort, considered this prototype to be inferior to the classical QuickSort.
+However, the Yaroslavskiy's Dual-Pivot QuickSort has proved a success, with the experimental results showing that it has a less amount of $1.9n\ln n + \bigO{n}$ amortized comparisons, but more swaps,
+approximately $0.6n\ln n + \bigO{n}$ which is much greater than the $0.33n\ln n + \bigO{n}$ of the original one, is faster than the original QuickSort in most cases.
+It is surprising that even with asymptotically only 5\% of less comparisons and nearly 80\% more swaps, the Dual-Pivot QuickSort still outperforms the original QuickSort in practice.
+What makes this more mysterious, is the variation of Yaroslavskiy's partition method that always compares to the larger pivot\hypertarget{CmpToLargerPivot}, by Martin Aumüller and Martin Dietzfelbinger 2013 in their thesis of 'Optimal Partitioning for Dual Pivot QuickSort' \cite{OptimalPartitioningForDualPivotQuickSort}.
+The method shows no difference in terms of both comparison and swaps with the original Dual-Pivot QuickSort, but it turned out that it is as fast as the Yaroslavskiy's partition, and even faster than another method along with it, named 'Countering Strategy C', who claimed to have the least 
 estimations of $1.8n \ln n + \bigO(n)$ comparisons and $1.6n \ln n + \bigO{n}$ swaps. This is a great example of how the real-world performance could be different from the theoretical analysis. In fact, in their following tests, the 'Countering Strategy C' method was proven to be the slowest among all the 3 methods.
 
-It is noteworthy the there still lies a huge gap between the theoretical analysis and the real-world performance. It is time we broaden our horizon and look for more factors that could contribute more to the change of the performance of the Quicksort algorithm.
-The cache misses, branch mis-predictions, and the number of instructions are the things we should take into consideration when we are analyzing on mutated versions of the Quicksort algorithm.
+It is noteworthy the there still lies a huge gap between the theoretical analysis and the real-world performance. It is time we broaden our horizon and look for more factors that could contribute more to the change of the performance of the QuickSort algorithm.
+The cache misses, branch mis-predictions, and the number of instructions are the things we should take into consideration when we are analyzing on mutated versions of the QuickSort algorithm.
 Apparently, the number of pivots plays a significant role, and is one of the factors that could potentially bring a significant change. 
 
 SSSSort, another extreme example of using 127 pivots by default, is an attempt to exploit the full edges of multi pivots with the help of branchless comparisons. While it demonstrated impressive performance in arrays of random permutations for certain ranges of sizes,
-it's not as resilient as the classical Multi-Pivot Quicksorts to arrays with many duplicates, which is a common occurrence in real-world scenarios, given by the tests in comparisons with Block Quick Sort\cite{BlockQuickSort}. However, it does outperform all the other variations when it comes to complicated
-data structures like vectors and records\hyperlink{ref:record}{`}, although these aspects are not the primary focus of this thesis, it is still worth mentioning that the Block Quick Sort is a more general and versatile method that can be applied to a wider range of scenarios. At this moment, we are convinced that more pivots tend to bring better performance in general, but how many?
-Let's dive deeper to see the world of 3-Pivots Quicksort to check it out.
+it's not as resilient as the classical Multi-Pivot QuickSorts to arrays with many duplicates, which is a common occurrence in real-world scenarios, given by the tests in comparisons with Block QuickSort\cite{BlockQuickSort}. However, it does outperform all the other variations when it comes to complicated
+data structures like vectors and records\hyperlink{ref:record}{[→]}, although these aspects are not the primary focus of this thesis, it is still worth mentioning that the Block QuickSort is a more general and versatile method that can be applied to a wider range of scenarios. At this moment, we are convinced that more pivots tend to bring better performance in general, but how many?
+Let's dive deeper to see the world of 3-Pivots QuickSort to check it out.
 
 \begin{algorithm}[H]
     \caption{3-Pivot QuickSort}\label{3PivotQuickSort}
@@ -813,6 +957,19 @@ Let's dive deeper to see the world of 3-Pivots Quicksort to check it out.
                 \EndIf
                 \State $k \gets k - 1$
             \EndWhile
+            \If{$j \leq k$}
+            \If{$A[j] > P3$} \Comment{Deal with 2 branches when A[j] is greater than P3}
+                \If{$A[k] < P1$}
+                    \State \textsc{Rotate3}($A, [j, i, k]$)
+                    \State $i \gets i + 1$
+                \Else
+            \algstore{3PivotPartition}
+        \end{algorithmic}
+    \end{algorithm}
+    \begin{algorithm}
+        \caption{3-Pivot QuickSort (Continued)}
+        \begin{algorithmic}
+            \algrestore{3PivotPartition}  
 			% // if j is still less than k
 			% if j <= k {
 			% 	if arr[j].cmp(&p3) == Ordering::Greater {
@@ -844,12 +1001,7 @@ Let's dive deeper to see the world of 3-Pivots Quicksort to check it out.
 			% 	j += 1;
 			% 	k -= 1;
 			% }
-            \If{$j \leq k$}
-                \If{$A[j] > P3$} \Comment{Deal with 2 branches when A[j] is greater than P3}
-                    \If{$A[k] < P1$}
-                        \State \textsc{Rotate3}($A, [j, i, k]$)
-                        \State $i \gets i + 1$
-                    \Else
+
                         \State \textsc{Swap}($A[j], A[k]$) \Comment{A[j] > P3 and P2 > A[k] $\ge$ P1}
                     \EndIf
                     \State \textsc{Swap}($A[k], A[l]$)
@@ -878,9 +1030,9 @@ Let's dive deeper to see the world of 3-Pivots Quicksort to check it out.
 \end{algorithm}
 
 
-The three-pivot Quicksort, introduced by Shrinu Kushagra, uses the similar hoare-like partition method, is a further generalization of the Dual-Pivot Quicksort.
+The three-pivot QuickSort, introduced by Shrinu Kushagra, uses the similar hoare-like partition method, is a further generalization of the Dual-Pivot QuickSort.
 In the original implementation, the 3 pivots are selected from the leftmost, the second element and the rightmost element of the array, and are sorted in ascending order.
-The scanning procedure is similar to the Dual-Pivot Quicksort, but with 3 pivots, the array is divided into 4 parts, and is repeated until all elements are set.
+The scanning procedure is similar to the Dual-Pivot QuickSort, but with 3 pivots, the array is divided into 4 parts, and is repeated until all elements are set.
 The i, j, k, l pointers are used to scan the array and the elements are swapped to the right places according to the comparison results with the 3 pivots,
 where i stands for the leftmost part where elements less than Pivot 1 belongs, j stands for the middle-left part, k stands for the middle-right part and l stands for the rightmost part.
 Between j and k stands the unknown region where elements are not yet compared with any of the pivots. 
@@ -894,12 +1046,12 @@ We can simplify this part into a 2 if-else nested block, where the outter if-els
 Both of them have 2 branches, one for the case where the current element belongs to the leftmost or the rightmost part, and the other for the case where it belongs to the middle-left or the middle-right part.
 It is not hard to tell there are $2 \times 2 = 4$ branches in total, and the swapping and rotating procedure is applied to each of them. The following \hyperlink{fig:3pivot}{chart} illustrates the 4 branches and their corresponding actions.
 
-The following figure tags elements belonging to the leftmost, the middle-left, the middle-right and the rightmost part with different colors, and the arrows indicate how they get swapped to be in order.
+The following figure \hyperlink{fig:3pivot}{[→]} tags elements belonging to the leftmost, the middle-left, the middle-right and the rightmost part with different colors, and the arrows indicate how they get swapped to be in order.
 
 % \listoffigures
 \begin{figure}[H]
     \hypertarget{fig:3pivot}{}
-    \caption{3-Pivot Quick Sort}
+    \caption{3-Pivot QuickSort}
     \centering
     \hspace*{-0.25\textwidth}
     % \vspace*{+0.1\textheight}
@@ -964,7 +1116,7 @@ The following figure tags elements belonging to the leftmost, the middle-left, t
                     \State $m \gets m - 1$
                 \EndIf
                 \State $l \gets l - 1$
-            \EndWhile
+            \EndWhile 
         %     if k <= l {
         %         if arr[k].cmp(&p4) == Ordering::Less {
         %             // arr[k] > p3, arr[l] < p3
@@ -1013,14 +1165,7 @@ The following figure tags elements belonging to the leftmost, the middle-left, t
                 \ElsIf{$A[l] > P1$}
                     \State \textsc{Rotate4}($A, [k, j, l, m]$)
                     \State $j \gets j + 1$
-                \Else
-                    \State \textsc{Rotate5}($A, [k, j, i, l, m]$)
-                    \State $i \gets i + 1$, $j \gets j + 1$
-                \EndIf
-                \State $m \gets m - 1$
-            \EndIf
-            \State $k \gets k + 1$, $l \gets l - 1$
-        \EndIf
+
         \algstore{4pivots}
     \end{algorithmic}
 \end{algorithm}
@@ -1030,6 +1175,14 @@ The following figure tags elements belonging to the leftmost, the middle-left, t
     \caption{4-Pivot QuickSort (Continued)}\label{4PivotQuickSort2}
     \begin{algorithmic}[1]
         \algrestore{4pivots}
+                \Else
+                \State \textsc{Rotate5}($A, [k, j, i, l, m]$)
+                \State $i \gets i + 1$, $j \gets j + 1$
+            \EndIf
+            \State $m \gets m - 1$
+        \EndIf
+        \State $k \gets k + 1$, $l \gets l - 1$
+        \EndIf
         \EndWhile
         % i -= 1;
         % j -= 1;
@@ -1068,21 +1221,21 @@ The comparisons take place like looking for a value in a binary search tree (BST
 For a balanced BST for 3-Pivots, it has depth 2 with 2 partitions on the left, one less than the Pivot 1 and the other greater, and another 2 partitions on the other side. Otherwise, if we use a unbalanced BST that puts Pivot 1 or Pivot 3 on top, we would have a tree of depth 3,
 as mentioned \hyperlink{CmpToLargerPivot}{before} in the 'Countering Strategy C', an unbalanced search tree could be faster in some cases,
 thus the complexity of the partitioning method is growing way too far and only 4-Pivot QuickSort will be discussed in this thesis. 
-In the \textit{'How good is Multi-Pivot Quicksort'} \cite{HowGoodIsMultiPivotQuicksort} paper, the author sketched an extremal tree for seven pivots in fig 10 of his thesis although it might not be the most optimal one without going through thorough analysis,
+In the \textit{'How good is Multi-Pivot QuickSort'} \cite{HowGoodIsMultiPivotQuickSort} paper, the author sketched an extremal tree for seven pivots in fig 10 of his thesis although it might not be the most optimal one without going through thorough analysis,
 it is still a good example to illustrate the complexity of the partitioning method on increasing number of pivots. Besides, fig 12 on page 41 revealed the 4-Pivot QuickSort had the lowest time cost on per element among all variations of Multi-Pivot QuickSorts, which is another reason why we are keeping focus on 4-Pivot QuickSort,
 although why 15-Pivots turned out slower than the classical single pivot QuickSort in their thesis still puzzles me for being unable to access the full code of the implementation.
 
-% TODO: talk about the similar layout that has been illustrated on page 23 of 'how good is multi-pivot quicksort' paper,
+% TODO: talk about the similar layout that has been illustrated on page 23 of 'how good is multi-pivot QuickSort' paper,
 % but it only analyzed the odd number pivots and the even number pivots need to be further discussed.
 Right after finishing the 4-Pivots implementation, I surprisingly found that similar layout has been depicted in the subsection 7.4
-of the thesis \textit{'How good is Multi-Pivot Quicksort'} \cite{HowGoodIsMultiPivotQuicksort} on page 23, where the odd number of pivots are analyzed.
+of the thesis \textit{'How good is Multi-Pivot QuickSort'} \cite{HowGoodIsMultiPivotQuickSort} on page 23, where the odd number of pivots are analyzed.
 It uses the same \hyperlink{rotate-n}{rotate-n} operation to rearrange the elements in large sizes, and is a key in the partitioning method that
 iteratively shrink the middle unknown region and expand the left and right parts. 
 For better understanding, a completed visualization on the iterations will be provided right below with the chart of 4-Pivot QuickSort.
 
 \begin{figure}[H]
     \hypertarget{fig:4pivot}{}
-    \caption{4-Pivot Quick Sort}
+    \caption{4-Pivot QuickSort}
     \centering
     \hspace*{-0.25\textwidth}
     % \vspace*{+0.1\textheight}
@@ -1120,15 +1273,17 @@ Tests are organized into groups, with each group a collection of benchmarks that
 Each test operates within a black box, constraining the compiler from applying overly aggressive optimizations, such as removing instructions it deems rebundant.
 The criterion-perf-events plugin is also adapted to capture the hardware events of the CPU as an addition, with the help of the well-established profiling tool $perf$ on Linux. The decision to forego cachegrind in favor of $perf$ was because cachegrind is a simulation tool on the cache misses and introduces a huge overhead on the runtime,
 in previous tests with perf, the overall runtime demonstrated runtime deviation of at least 200\% difference with the real-world performance. The use of cachegrind was rejected compared with $perf$.
-perf is a more lightweight tool that suits our needs and the results produced are more reliable in respect. Previous tests with cachegrind \hyperlink{cachegrindresult}{`} are given in the appendix for further references.
+perf is a more lightweight tool that suits our needs and the results produced are more reliable in respect. Previous tests with cachegrind \hyperlink{cachegrindresult}{[→]} are given in the appendix for further references.
 
 The compiler flags passed in remain consistent for all the tests, and the tests are conducted on the same machine with the same environment,
 with 3 seconds of warm-up time, followed by a 5-seconds duration of measurement for each test. The results are obtained and then calculated over regression tests featuring arrays with $10^2 - 10^7$ elements,
 filtering out the outliers. Each sub-test is collected with the mean, standard deviation and median values. The results are shown in the figures below.
 The x-axis is uniformed to the size of the array in logarithmic scale, and the y-axis is the average number of events captured by the perf tool or the average running time per element, unit in μs.
 Standard deviations will be showed as transparent areas around the polyline of mean values, denoted in colors following their respective lines.
-% The next part of the thesis will be the implementation of the Multi-Pivot Quicksort and the BlockQuickSort,
+% The next part of the thesis will be the implementation of the Multi-Pivot QuickSort and the BlockQuickSort,
 % followed by the analysis of the results and the comparisons on the performance of the above algorithms using traditional partition methods.
+\subsection{Classical QuickSort vs Multi-Pivot QuickSort}
+
 \begin{center}
 \begin{figure}[H]
     \hypertarget{fig:classicalbranchmiss}{}
@@ -1182,8 +1337,8 @@ While the complexities scale linearly with the number of pivots, the standard de
 
 Things go beyond our expectations, the 4-Pivot partition shows superior statistics of branch misses than the 3-Pivot partition method for larger arrays, which is a surprise to us,
 even though it has slightly higher means of branch misses than the 2-Pivot Yaroslavskiy's partition method in general, the standard deviation remains at a high level indicating
-the possible instabilities of the 4-Pivot partition method brought by 2 more branches \hypertarget{2MoreBranches}{`} that 1 more pivot introduced. It's intriguing to observe that more pivots could potentially reduce branch misses, challenging conventional assumptions.
-It might be that the layout of 'balanced partition' we are using is more friendly to the CPU's branch predictor, but yet to explain why 2 more branches could bring better effects. This warrants further investigation in future works, further expand our understandings on the Multi-Pivot Quicksort algorithm. 
+the possible instabilities of the 4-Pivot partition method brought by 2 more branches \hypertarget{2MoreBranches}{[→]} that 1 more pivot introduced. It's intriguing to observe that more pivots could potentially reduce branch misses, challenging conventional assumptions.
+It might be that the layout of 'balanced partition' we are using is more friendly to the CPU's branch predictor, but yet to explain why 2 more branches could bring better effects. This warrants further investigation in future works, further expand our understandings on the Multi-Pivot QuickSort algorithm. 
 
 Apart from the branch misses, cache misses also merit attention due to their potential impact, which is what we are going to shift our focus to.
 
@@ -1329,9 +1484,9 @@ This layout was promptly abandoned right after the initial trial. Additionally, 
     \hypertarget{fig:2pivotnewlayout}{}
     \caption{2-Pivot New Layout}
     \centering
-    \hspace*{-0.27\textwidth}
+    \hspace*{-0.10\textwidth}
     % \vspace*{+0.1\textheight}
-    \includegraphics[width=1.5\textwidth]{2pivot_new_layout.drawio.pdf}
+    \includegraphics[width=1.2\textwidth]{2pivot_new_layout.drawio.pdf}
 \end{figure}
 
 Obviously, this will dramatically add the complexities to our algorithms when introducing one more unknown segment, which means 2 more unknown elements at the boundaries of the unknown region. Worst cases is, the comparison procedure will be consist of 4 if-else nested branches, each deciding the final destination of one of the 4 unknown elements at index $i, j, k, l$.
@@ -1340,13 +1495,15 @@ This could be a disaster for branch prediction, and the cache misses will be inc
 While searching for the solutions to the branch misses, I have found that BlockQuickSort could refresh us with a new vision of partitioning, it's easily adaptable to most of the partition methods and its direct impact on the performance is beyond amazing
 according to what has been observed in the tests below.
 
+\subsection{Classical QuickSort vs Block QuickSort with Multi-Pivots}
+
 \begin{figure}[H]
     \hypertarget{fig:blockbranchmiss}{}
     \caption{Block QuickSort Branch Misses}
     \centering
-    \hspace*{-0.27\textwidth}
+    \hspace*{-0.175\textwidth}
     % \vspace*{+0.1\textheight}
-    \includegraphics[width=1.5\textwidth]{Classical vs Block Partition Branch Misses.pdf}
+    \includegraphics[width=1.3\textwidth]{Classical vs Block Partition Branch Misses.pdf}
 \end{figure}
 
 \begin{center}
@@ -1422,18 +1579,18 @@ The former example has proven a success, but future works will also be carried o
 the modern CPU architecture has already done a great job on the overall cache hit rate, which can be supported by the cachegrind tests that all the tested algorithms have around less than 10\% cache misses.
 Although this won't be the deterministic evidence to say that the cache misses are not the bottleneck, but it is still a good sign that the cache misses are not the main issue that we have to deal with.
 
-% TODO: talk about pivot selection and skewed pivot selection like page 11 of block quick sort paper.
+% TODO: talk about pivot selection and skewed pivot selection like page 11 of block QuickSort paper.
 The tests above are carried out using constant pivot selection method, choosing half start and half end of the array as the pivots as the most common practice goes,
-but as mentioned earlier in the preliminaries part \hyperlink{ref:AnalysisOfBranchMissesInQuickSort}{`}, the pivot selection is a crucial part of the QuickSort algorithm, and the skewed pivot selection, anti-tuitionally as it seems, could bring better performance than the random pivot selection.
+but as mentioned earlier in the preliminaries part \hyperlink{ref:AnalysisOfBranchMissesInQuickSort}{[→]}, the pivot selection is a crucial part of the QuickSort algorithm, and the skewed pivot selection, anti-tuitionally as it seems, could bring better performance than the random pivot selection.
 It doesn't bring us to the conclusion that the skewed pivot selection is always better other methods, even it makes sense to a static branch predictor where it assumes all branches will follow the correct majority path, for instance, if our skewed pivot could divide the array into $x\%$ and $(100-x)\%$ parts, the branch predictor will always predict the $max(x\%, 100-x\%)$ path,
 we can use less time at current stage to finish the partitioning process, but the imbalanced partitions will pose future challenges to maintain the efficiency of overall algorithm. Luckily, skewed pivot always proves unnecessary in the BlockQuickSort, free from the concerns on branch misses' costs in the experiments of \cite{BlockQuickSort}. With skew factor 2 (the middlest element is chosen as the pivot), the BlockQuickSort has the least amount of time cost, and larger skew factors will only increase the runtime.
 For classical QuickSorts, skew factor of 6 appeared to have the best performance in the experiments as a balance between the stalls caused by branch misses and total CPU Instructions.
 
-% TODO: 2 pivot lomuto's block partition is faster than the classical quicksort but slower than the 1 pivot hoare's block partition, why?
+% TODO: 2 pivot lomuto's block partition is faster than the classical QuickSort but slower than the 1 pivot hoare's block partition, why?
 The 2-Pivot Lomuto's Block Partition has less branch misses for smaller arrays, but fails to compete when the size extends, as the duplicated swaps have been enlarged when the size of the array grows, 
 Lacking as a key feature to Lomuto's block scheme is the cyclic swaps that relief a lot of duplicated swaps and constant cache to the temp variable. This method has adapted well to the Hoare's scheme, for it starts on both ends and the duplicated swaps are less likely to happen as long as mis-placed elements are spotted on both sides, a prerequisite for the cyclic swaps to take place.
 The cyclic swaps are not only reducing the duplicated swaps, but also reducing the cache misses by the help of write-back policy. The 2-Pivot Lomuto's Block Partition has failed to adapt to the massive cyclic swaps that eliminates the biggest headache of small swaps' costs on frequently changed temp variable, plus the duplicated swaps are not reduced, but amplified, which might be the meat of the issue for the performance degradation compared with Hoare's block partition. % TODO: is this the real reason? I need to check the code again.
-% TODO: talk about the new trial layout of block quick sort, 2 pivots and lomuto, and why it is slower
+% TODO: talk about the new trial layout of block QuickSort, 2 pivots and lomuto, and why it is slower
 Mimicing the layout of Lomuto's Block Partition, I implemented another 2-Pivots Lomuto's Block Partition which requires only one phase of rearranging, but with more rotate-n moves to shift elements to their correct partitions. This could introduce more complexity as in a chaotic block with 2 types of items less than Pivot 1 or greater than Pivot 1 but less than Pivot 2,
 simply dumping their offsets to the correct partitions regardless will not work, for in each step we have to deal with smaller offset first to make sure our algorithm behaves the same as the classical version which scans the array in one-way order, but this extra min() operation could be a huge drawback for this scheme.
 Results for this is even slower than the classical QuickSort, and it is not recommended to be used in practice, only for academic purposes instead of industrial applications.
@@ -1469,8 +1626,8 @@ As to the new layout, for your interest the detailed statistics will be attached
 
 % TODO: talk about the sorting functions exported to python by ffi
 For the sake of convenience, the sorting functions are exported to Python using the Foreign Function Interface (FFI) provided by PyO3, which is a safe and easy way to call Rust functions from Python.
-The sorting functions are then tested on the same machine with the same environment with supported types 32 bits IEEE-754 floats and unsigned 32 bits integers. The original Rust results are provided in the appendix in fully elaborated \hyperlink{FullTables}{tables}. The Python results are consistent with the Rust tests, reliable and stable.
-Only extra overhead would be the Python interpreter and ffi calls, which is not significant in this case, and is negligible. All the code in this thesis is available on the GitHub repository \url{https://github.com/JackySu/Rusorts}.
+The sorting functions are then tested on the same machine with the same environment with types 32-bit integer and float. The original Rust results are provided in the appendix in fully elaborated \hyperlink{FullTables}{tables}.
+Only extra overhead would be the Python interpreter and ffi calls, which is not significant in this case, and is negligible. All the code in this thesis is available on the GitHub repository: \url{https://github.com/JackySu/Rusorts}.
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 \section{Full Tables}
@@ -1520,6 +1677,11 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
                         & 1000000  & 2134863.0700   & 33965.1267    & 2119311.9000 \\
                         & 10000000 & 24700025.8000  & 856684.2381   & 24551996.5000 \\
         \hline
+    \end{tabular}
+
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
         3-Pivot Kush    & 100      & 231.0457       & 0.0996        & 231.0266 \\
                         & 1000     & 3828.0046      & 1.7692        & 3827.5547 \\
                         & 10000    & 52692.9469     & 57.0170       & 52699.8674 \\
@@ -1536,6 +1698,7 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
         \hline
     \end{tabular}
 
+    \vspace{2em}
     \small
     \begin{tabular}{ |c c | c c c| }
         \hline
@@ -1567,6 +1730,11 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
                         & 1000000  & 25346.0800     & 820.9205      & 25164.7000 \\
                         & 10000000 & 664360.6000    & 21405.0063    & 659137.5000 \\
         \hline
+    \end{tabular}
+
+    \small
+    \begin{tabular}{ |c c | c c c| }
+        \hline
         2-Pivot Yaro    & 100      & 0.0470         & 0.1104        & 0.0155 \\
                         & 1000     & 1.3900         & 4.3104        & 0.3234 \\
                         & 10000    & 14.0858        & 30.1847       & 6.7674 \\
@@ -1596,6 +1764,7 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
         \hline
     \end{tabular}
 
+    \vspace{2em}
     \small
     \begin{tabular}{ |c c | c c c| }
         \hline
@@ -1613,6 +1782,11 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
                         & 100000   & 12615251.1810  & 408397.6682   & 12525100.7167 \\
                         & 1000000  & 142142979.8257 & 1816742.9514  & 141750443.9091 \\
                         & 10000000 & 1651547110.850 & 15522352.0233 & 1651945749.0000 \\
+        \hline
+    \end{tabular}
+
+    \small
+    \begin{tabular}{ |c c | c c c| }
         \hline
         1-Pivot Lomuto  & 100      & 8753.9251      & 19.1779       & 8747.1730 \\
                         & 1000     & 133820.5575    & 121.5330      & 133786.0877 \\
@@ -1700,6 +1874,11 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
                         & 1000000  & 52.149 ms    & 802.78 µs   & 52.234 ms \\
                         & 10000000 & 605.61 ms    & 13.676 ms   & 602.31 ms \\
         \hline
+    \end{tabular}
+
+    \small
+    \begin{tabular}{ | c c | c c c| }
+        \hline
         3-Pivot Kush    & 100      & 1.9985 µs    & 9.7010 ns   & 1.9943 µs \\
                         & 1000     & 30.422 µs    & 80.286 ns   & 30.392 µs \\
                         & 10000    & 411.09 µs    & 798.13 ns   & 410.84 µs \\
@@ -1715,7 +1894,10 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
                         & 10000000 & 696.42 ms    & 5.1556 ms   & 696.82 ms \\
         \hline
     \end{tabular}
+
 \end{center}
+
+
 
 \subsection{New Layout of 2-Pivot Lomuto's Block Partition Tests}
 
@@ -1810,27 +1992,27 @@ Only extra overhead would be the Python interpreter and ffi calls, which is not 
 
 u32
 std sort 10m array cost: 5987503982ns
-quick sort 1-pivot (hoare partition) 10m array cost: 6949218668ns
-quick sort 1-pivot (lomuto partition) 10m array cost: 5893410786ns
-quick sort 2-pivot 10m array cost: 6050136667ns
-quick sort 3-pivot 10m array cost: 4945230962ns
-quick sort 4-pivot 10m array cost: 5582964437ns
-quick sort 1-pivot (hoare partition block) 10m array cost: 7087265527ns
-quick sort 1-pivot (lomuto partition block) 10m array cost: 13095039428ns
-quick sort 2-pivot (block partition) 10m array cost: 12781142680ns
-quick sort 2-pivot (new block partition) 10m array cost: 21336123394ns
+QuickSort 1-pivot (hoare partition) 10m array cost: 6949218668ns
+QuickSort 1-pivot (lomuto partition) 10m array cost: 5893410786ns
+QuickSort 2-pivot 10m array cost: 6050136667ns
+QuickSort 3-pivot 10m array cost: 4945230962ns
+QuickSort 4-pivot 10m array cost: 5582964437ns
+QuickSort 1-pivot (hoare partition block) 10m array cost: 7087265527ns
+QuickSort 1-pivot (lomuto partition block) 10m array cost: 13095039428ns
+QuickSort 2-pivot (block partition) 10m array cost: 12781142680ns
+QuickSort 2-pivot (new block partition) 10m array cost: 21336123394ns
 
 f32
 std sort 10m array cost: 7047995328ns
-quick sort 1-pivot (hoare partition) 10m array cost: 9384315610ns
-quick sort 1-pivot (lomuto partition) 10m array cost: 8849787330ns
-quick sort 2-pivot 10m array cost: 9187125786ns
-quick sort 3-pivot 10m array cost: 6326447943ns
-quick sort 4-pivot 10m array cost: 6182636001ns
-quick sort 1-pivot (hoare partition block) 10m array cost: 11061601282ns
-quick sort 1-pivot (lomuto partition block) 10m array cost: 16044714565ns
-quick sort 2-pivot (block partition) 10m array cost: 16078338106ns
-quick sort 2-pivot (new block partition) 10m array cost: 26167134034ns
+QuickSort 1-pivot (hoare partition) 10m array cost: 9384315610ns
+QuickSort 1-pivot (lomuto partition) 10m array cost: 8849787330ns
+QuickSort 2-pivot 10m array cost: 9187125786ns
+QuickSort 3-pivot 10m array cost: 6326447943ns
+QuickSort 4-pivot 10m array cost: 6182636001ns
+QuickSort 1-pivot (hoare partition block) 10m array cost: 11061601282ns
+QuickSort 1-pivot (lomuto partition block) 10m array cost: 16044714565ns
+QuickSort 2-pivot (block partition) 10m array cost: 16078338106ns
+QuickSort 2-pivot (new block partition) 10m array cost: 26167134034ns
 
 ==31674== 
 ==31674== I   refs:      95,959,007,560
@@ -1914,16 +2096,16 @@ D1mr                 DLmr               Dw                         D1mw
 --------------------------------------------------------------------------------
     DLmw            file:function
 --------------------------------------------------------------------------------
-    1,038 ( 0.01%)  ???:rust_sorts::qsort::double_pivot_quicksort_new_partition_block
+    1,038 ( 0.01%)  ???:rust_sorts::qsort::double_pivot_QuickSort_new_partition_block
       738 ( 0.01%)  ???:rust_sorts::qsort::quick_sort_lomuto_partition_block
-      569 ( 0.00%)  ???:rust_sorts::qsort::double_pivot_quicksort_lomuto_partition_block
+      569 ( 0.00%)  ???:rust_sorts::qsort::double_pivot_QuickSort_lomuto_partition_block
       106 ( 0.00%)  ???:rust_sorts::qsort::quick_sort_hoare_partition
       926 ( 0.01%)  ???:rust_sorts::qsort::quick_sort_hoare_partition_block
       926 ( 0.01%)  ???:rust_sorts::qsort::quick_sort_hoare_partition_block
-      168 ( 0.00%)  ???:rust_sorts::qsort::double_pivot_quicksort
+      168 ( 0.00%)  ???:rust_sorts::qsort::double_pivot_QuickSort
       324 ( 0.00%)  ???:rust_sorts::qsort::quick_sort_lomuto_partition
-      311 ( 0.00%)  ???:rust_sorts::qsort::triple_pivot_quicksort
-      261 ( 0.00%)  ???:rust_sorts::qsort::quad_pivot_quicksort
+      311 ( 0.00%)  ???:rust_sorts::qsort::triple_pivot_QuickSort
+      261 ( 0.00%)  ???:rust_sorts::qsort::quad_pivot_QuickSort
     1,050 ( 0.01%)  ???:core::slice::sort::recurse
 1,250,113 ( 9.09%)  ???:cache::main
 \end{verbatim}
@@ -1931,18 +2113,18 @@ D1mr                 DLmr               Dw                         D1mw
 
 \begin{thebibliography}{99}
 
-\bibitem{HoareQuickSort} \label{HoareQuickSort} Hoare, C.A.R. (1962). Quicksort. \textit{The Computer Journal}, 5, 10-15.
-\bibitem{Yaroslavskiy} \label{Yaroslavskiy} Yaroslavskiy, V. (2009). Dual-Pivot Quicksort. \textit{Proceedings of the 6th International Conference on Computer Science and Education}, 13-27.
-\bibitem{Sedgewick} \label{Sedgewick} Sedgewick, R. (1978). Implementing Quicksort Programs. \textit{Communications of the ACM}, 21(10), 847-857.
-\bibitem{Kushagra} \label{Kushagra} Shrinu Kushagra, Alejandro López-Ortiz, Aurick Qiao, and J. Ian Munro. \textit{Multi-pivot quicksort: Theory and experiments.} In ALENEX, pages 47-60, 2014.
+\bibitem{HoareQuickSort} \label{HoareQuickSort} Hoare, C.A.R. (1962). QuickSort. \textit{The Computer Journal}, 5, 10-15.
+\bibitem{Yaroslavskiy} \label{Yaroslavskiy} Yaroslavskiy, V. (2009). Dual-Pivot QuickSort. \textit{Proceedings of the 6th International Conference on Computer Science and Education}, 13-27.
+\bibitem{Sedgewick} \label{Sedgewick} Sedgewick, R. (1978). Implementing QuickSort Programs. \textit{Communications of the ACM}, 21(10), 847-857.
+\bibitem{Kushagra} \label{Kushagra} Shrinu Kushagra, Alejandro López-Ortiz, Aurick Qiao, and J. Ian Munro. \textit{Multi-pivot QuickSort: Theory and experiments.} In ALENEX, pages 47-60, 2014.
 \bibitem{Introsort} \label{Introsort} David R. Musser. \textit{Introspective Sorting and Selection Algorithms.} Software: Practice and Experience, 27(8):983-993, 1997.
-\bibitem{AnalysisOfBranchMissesInQuickSort} \label{AnalysisOfBranchMissesInQuickSort} Conrado Martínez, Markus E. Nebel and Sebastian Wild. 2015. \textit{Analysis of Branch Misses in Quicksort}. ANALCO 2015.
-\bibitem{BlockQuickSortLomuto} \label{BlockQuickSortLomuto} Martin Aumüller and Nikolaj Hass. \textit{Simple and Fast BlockQuicksort using Lomuto's Partitioning Scheme.} 2018.
-\bibitem{BlockQuickSort} \label{BlockQuickSort} Stefan Edelkamp and Armin Weiß. \textit{BlockQuicksort: How Branch Mispredictions don't affect Quicksort.} 2016.
-\bibitem{OptimalPartitioningForDualPivotQuicksort} \label{OptimalPartitioningForDualPivotQuicksort} Martin Aumüller and Martin Dietzfelbinger. 2013. \textit{Optimal Partitioning for Dual Pivot Quicksort}. In Proc.
+\bibitem{AnalysisOfBranchMissesInQuickSort} \label{AnalysisOfBranchMissesInQuickSort} Conrado Martínez, Markus E. Nebel and Sebastian Wild. 2015. \textit{Analysis of Branch Misses in QuickSort}. ANALCO 2015.
+\bibitem{BlockQuickSortLomuto} \label{BlockQuickSortLomuto} Martin Aumüller and Nikolaj Hass. \textit{Simple and Fast BlockQuickSort using Lomuto's Partitioning Scheme.} 2018.
+\bibitem{BlockQuickSort} \label{BlockQuickSort} Stefan Edelkamp and Armin Weiß. \textit{BlockQuickSort: How Branch Mispredictions don't affect QuickSort.} 2016.
+\bibitem{OptimalPartitioningForDualPivotQuickSort} \label{OptimalPartitioningForDualPivotQuickSort} Martin Aumüller and Martin Dietzfelbinger. 2013. \textit{Optimal Partitioning for Dual Pivot QuickSort}. In Proc.
 of the 40th International Colloquium on Automata, Languages and Programming (ICALP'13). Springer, 33-44.
 \bibitem{Hennequin} \label{Hennequin} Hennequin, P. (1991) \textit{Analyse en moyenne d'algorithmes: Tri rapide et arbres de recherche.} Ph.D. Thesis, Ecole Politechnique, Palaiseau.
-\bibitem{HowGoodIsMultiPivotQuicksort} \label{HowGoodIsMultiPivotQuicksort} Martin Aumüller, Martin Dietzfelbinger, Pascal Klaue. \textit{How Good is Multi-Pivot Quicksort?} 2016. \url{https://arxiv.org/src/1510.04676v3}.
+\bibitem{HowGoodIsMultiPivotQuickSort} \label{HowGoodIsMultiPivotQuickSort} Martin Aumüller, Martin Dietzfelbinger, Pascal Klaue. \textit{How Good is Multi-Pivot QuickSort?} 2016. \url{https://arxiv.org/src/1510.04676v3}.
 \end{thebibliography}
 
 \end{document}
