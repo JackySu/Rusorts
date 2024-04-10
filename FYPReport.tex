@@ -1608,9 +1608,19 @@ Results for this is even slower than the classical QuickSort, and it is not reco
 The cache misses also suffer from the new layout, constantly swapping side to read and compare the next minium offset also poses a challenge to the spatial locality of cache,
 causing the general time cost being also higher than the classical QuickSort. In my fuzzy tests of cachegrind \hyperlink{cachegrindresult}, \hypertarget{SlowMemAccess}{}the constant memory accesses like data read (Dr) rate 28.98\% and data write (Dw) rate 19.41\% all rank the top, and are both much higher than the classical QuickSort even though it has low cache misses.
 My assumption would be these constant memory accesses are caused by the cache \textbf{write-through} policy due to inconsistent spatial locality, though the actual relationship is yet to be confirmed.
-It reveals from another perspective that the block partition is restricted by the number of pivots, as the experiments in this thesis only shows, that \underline{the pattern of comparing with one pivot in one pass is the only way to go\hypertarget{OnlyWayToGo}{}}, otherwise, as the new layout illustrated above, if we are greedy to compare with 2 pivots simultaneously,
-the offsets have to be stored at different ends of a block buffer. To sequentially organize the elements in the order of their indices, we always need to tell which offset at both ends is smaller to manipulate next, thus this conditional operation will pose challenges to instruction caches, leading to a series of CPU pipeline stalls caused by cache misses.
+It reveals from another perspective that the block partition is restricted by the number of pivots, as the experiments in this thesis shows, that \underline{the pattern of comparing with one pivot in one pass is the only way to go\hypertarget{OnlyWayToGo}{}}.
+Analysis given by AMD uProf, a powerful cross-platform performance profiler and utilization tool, also highlights the very single step of comparing to 2 Pivots at the same time takes up $0.17$ seconds for array size $10^7$, around $\frac{1}{6}$ of the total CPU time in the \hyperlink{fig:heatmap}{heatmap} below. As the new layout illustrated above, if we are greedy to compare with 2 pivots simultaneously,
+the offsets also have to be stored at different ends of a block buffer. To sequentially organize the elements in the order of their indices, we always need to tell which offset at both ends is smaller to manipulate next, thus this conditional operation will pose challenges to instruction caches, leading to a series of CPU pipeline stalls caused by cache misses.
 It puts forward another trade-off between the number of pivots and the block partition, and is not yet clear how to leverage the best of both worlds.
+\begin{center}
+    \begin{figure}[H]
+        \hypertarget{fig:heatmap}{}
+        \caption{Heatmap of CPU Time}
+        \centering
+        % \vspace*{+0.1\textheight}
+        \includegraphics[width=1\textwidth]{heatmap.png}
+    \end{figure}
+\end{center}
 The BlockQuickSort is still in its infancy, despite the fact that PDQSort proves a great success in the real-world applications, and the future works will be carried out to explore more possibilities and to find more optimal layout for the BlockQuickSort.
 As to the new layout, for your interest the detailed statistics will be attached in the appendix section.
 
