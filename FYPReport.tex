@@ -580,7 +580,7 @@ To offer a clearer visual comprehension of the cyclic permutation, a simple figu
 
 Here we mapped the pseudocode in parts to the steps in the figure, the first step is to preserve the last element in the left buffer block in a temporary variable,
 then we doing the cyclic permutation in the main loop, shifting misplaced elements from buffers on one side to the other to make sure they are well partitioned, and finally we put the preserved element back to the last place in the right buffer block.
-This rotate-n like method is basically made up of multiple copys from pointers in order to reduce the number of swaps to the minimum, as swaps will constantly overwrite the value in the temporary variable. It is a great improvement over the original Hoare's partition.
+This rotate-n like method is basically made up of multiple copys from pointers in order to reduce the number of swaps to the minimum, reducing an amortized $\frac{n}{2}$ writes to temp variable to $\frac{n}{2 \times BLOCK-SIZE} = \frac{n}{256}$, a giant leap ahead.
 
 We also have adaptions of the Block Lomuto's partition method. Comprehension won't be hard on basis of our fundamental understandings of the classical Lomuto's partition method.
 
