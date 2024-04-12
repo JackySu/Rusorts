@@ -78,8 +78,5 @@ algorithms.*
 *.drawio
 FYPReport.*
 !FYPReport.tex
-*.pdf
 !FYPReport.pdf
-Trinity_RGB_transparent_main.png
-signature.png
-heatmap.png
+
