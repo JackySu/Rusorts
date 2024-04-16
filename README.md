@@ -35,8 +35,29 @@ cargo bench
 
 # Latest results
 
-PDQSort >= std_unstable_sort > hoare_block_partition >> 4 Pivots QSort
+See `Conclusion` of [Report](./FYPReport.pdf)
 
-![](sorts.png)
+> • The improvements achieved through the utilization of multiple pivots have seemingly
+> reached a plateau. Despite the 4-Pivot method demonstrating the most outperforming
+> runtime costs, the incremental gains do not compensate for the increased complexity.
+>
+> • In the context of modern CPU cache coordination, most of the cache misses have
+> been eliminated for QuickSort algorithms, with branch misses emerging as the primary
+> bottleneck. The Block Partition method shows significant potential in mitigating branch
+> misses. 1-Pivot Hoare’s Block Partition ranks as the top performer among the tested
+> algorithms, underscoring the importance of a well-optimized layout over the sheer
+> number of pivots. The reduction in branch misses achieved by the Block Partition
+> method indicates a promising future, though challenges of complexities brought by
+> increased pivots count still remain.
+> 
+> • Skewed pivot selection demonstrates potential benefits in classical QuickSorts, but
+> a balanced pivot selection works better in BlockQuickSort. Closer the pivot is to the
+> median, better the performance.
+> 
+> • The novel layout of 2-Pivot Lomuto’s Block Partition exposed the limitations
+> introduced by more pivots. The pattern of comparing with one pivot at a time is still
+> the only way to go by far, otherwise, any deviation from this pattern will pose risks to
+> substantial memory access overheads, impeding CPU performance — a critical lesson
+> for future research endeavors.
 
 ### ⚠ Wrapper type [`FloatOrd`](src/ty.rs) is to fix IEEE-754's NaN, -INF, INF, -0 and 0 ordinary issues and it is USER's call to ensure the validity of data
