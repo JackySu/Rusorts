@@ -530,22 +530,20 @@ pub fn double_pivot_quicksort<T: Ord>(arr: &mut [T]) {
                 arr.swap_unchecked(k, less);
                 less = less + 1;
             }
-			else {
-                if arr[k].cmp(&*pivot2) == Ordering::Greater {
-                    // find the rightmost element less than pivot2
-                    while k < greater && arr[greater].cmp(&*pivot2) == Ordering::Greater {
-                        greater = greater - 1;
-                    }
-                    // swap it with arr[k]
-                    arr.swap_unchecked(k, greater);
+			else if arr[k].cmp(&*pivot2) == Ordering::Greater {
+                // find the rightmost element less than pivot2
+                while k < greater && arr[greater].cmp(&*pivot2) == Ordering::Greater {
                     greater = greater - 1;
+                }
+                // swap it with arr[k]
+                arr.swap_unchecked(k, greater);
+                greater = greater - 1;
 
-                    // if the swapped element is less than pivot1
-                    // then swap it with arr[less]
-                    if arr[k].cmp(&*pivot1) == Ordering::Less {
-                        arr.swap_unchecked(k, less);
-                        less = less + 1;
-                    }
+                // if the swapped element is less than pivot1
+                // then swap it with arr[less]
+                if arr[k].cmp(&*pivot1) == Ordering::Less {
+                    arr.swap_unchecked(k, less);
+                    less = less + 1;
                 }
             }
 			k = k + 1;

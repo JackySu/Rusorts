@@ -1,9 +1,0 @@
-[toolchain]
-profile = "minimal"
-
-# for more info refer to <https://forge.rust-lang.org/>
-channel = "nightly-2024-04-01"
-components = ["rust-src", "llvm-tools", "rustfmt", "clippy"]
-
-# add windows target if you want
-targets = ["x86_64-unknown-linux-gnu"]
