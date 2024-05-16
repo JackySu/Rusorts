@@ -1,3 +1,8 @@
+#![allow(
+    clippy::derive_ord_xor_partial_ord,
+    clippy::transmute_float_to_int,
+)]
+
 use core::cmp::Ordering;
 use core::ops::Deref;
 
@@ -64,6 +69,9 @@ impl Eq for FloatOrd {}
 impl Ord for FloatOrd {
     fn cmp(&self, other: &Self) -> Ordering {
         #[inline]
+        /// manual transmute to bypass Nan/inf checks
+        /// my implementation referred to:
+        /// https://github.com/notriddle/rust-float-ord
         fn f32_bits(a: f32) -> i32 { unsafe { std::mem::transmute(a) } }
         // ideally this would be replaced by a totalorder primitive when that's available
         let mut a = f32_bits(self.0);

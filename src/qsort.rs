@@ -1,5 +1,12 @@
 // #![allow(dead_code)]
-#![allow(clippy::uninit_assumed_init)]
+#![allow(
+    clippy::uninit_assumed_init,
+    clippy::needless_range_loop,
+    clippy::needless_borrow,
+    clippy::assign_op_pattern,
+    clippy::clone_on_copy,
+    invalid_value,
+)]
 use std::simd::{cmp::SimdPartialOrd, *};
 use std::cmp::Ordering;
 use std::{ptr, mem, cmp};
@@ -338,7 +345,7 @@ fn partition_in_blocks<T, F>(v: &mut [T], pivot: &T, is_less: &mut F) -> usize
     let mut offsets_l: [u8; BLOCK] = unsafe { mem::MaybeUninit::uninit().assume_init() };
 
     // The current block on the right side (from `r.offset(-block_r)` to `r`).
-    let mut r = unsafe { l.offset(v.len() as isize) };
+    let mut r = unsafe { l.add(v.len()) };
     let mut block_r = BLOCK;
     let mut start_r = ptr::null_mut();
     let mut end_r = ptr::null_mut();
@@ -423,7 +430,7 @@ fn partition_in_blocks<T, F>(v: &mut [T], pivot: &T, is_less: &mut F) -> usize
         }
 
         if start_l == end_l {
-            l = unsafe { l.offset(block_l as isize) };
+            l = unsafe { l.add(block_l) };
         }
 
         if start_r == end_r {
@@ -801,7 +808,7 @@ pub fn quad_pivot_quicksort<T: Ord>(arr: &mut [T]) {
 
 use once_cell::unsync::Lazy;
 static mut ARENA: Lazy<Vec<Vec<f32>>> = Lazy::new(||
-    vec![Vec::with_capacity(10_000_000); 9]
+    (0..9).map(|_| Vec::with_capacity(10_000_000)).collect::<Vec<_>>()
 );
 
 
